@@ -2,7 +2,7 @@
  * Interfaccia per rappresentare una rata condominiale
  */
 export interface Rata {
-    /** ID univoco della rata */
+    /** ID univoco della rata (o della quota rata) */
     id: number;
     /** Descrizione della rata */
     descrizione: string;
@@ -30,6 +30,18 @@ export interface Rata {
     unita: string;
     /** Importo totale originale della rata */
     importo_totale: number;
+
+    // --- CAMPI AGGIUNTI PER FAR FUNZIONARE LA PRIORITÀ ---
+    // Sono opzionali (?) perché dipendono dalla query del backend
+    
+    /** ID della rata padre (fondamentale per collegare le quote alla rata originale) */
+    rata_padre_id?: number;
+    
+    /** ID alternativo della rata (fallback) */
+    rata_id?: number;
+    
+    /** Alias per data_scadenza usato per l'ordinamento */
+    scadenza?: string;
 }
 
 /**

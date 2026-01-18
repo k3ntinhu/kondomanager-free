@@ -1,10 +1,23 @@
 import { ref } from 'vue';
 import type { Rata, BilancioFinale, PreviewContabile } from '@/types/gestionale/rata';
 
+// Stato globale del composable (o locale se preferisci, qui usiamo ref nel closure per semplicità se vuoi stato condiviso, o dentro la funzione per stato per-componente)
+// ATTENZIONE: Se vuoi che lo stato sia resettato ogni volta che usi il composable, definisci i ref DENTRO la funzione.
+// Se vuoi stato condiviso tra componenti, definiscili FUORI.
+// Per questo caso d'uso (pagina singola), definirli dentro è più sicuro per evitare side-effect tra navigazioni.
+
 export function usePaymentDistribution() {
     const rawRateList = ref<Rata[]>([]);
     const loadingRate = ref(false);
     const mode = ref<'auto' | 'manual'>('auto');
+    
+    // --- 1. AGGIUNTO: Stato Priorità ---
+    const priorityRataId = ref<number | null>(null);
+
+    // --- 2. AGGIUNTO: Funzione Setter ---
+    const setPriorityRataId = (id: number | null) => {
+        priorityRataId.value = id;
+    };
 
     const isScaduta = (data: string | null) => {
         if (!data) return false;
@@ -12,8 +25,46 @@ export function usePaymentDistribution() {
     };
 
     const getRateListByGestione = (gestioneId: number | null) => {
-        if (!gestioneId) return rawRateList.value;
-        return rawRateList.value.filter(r => r.gestione_id === gestioneId);
+        if (!rawRateList.value) return [];
+        
+        let list = rawRateList.value;
+
+        if (gestioneId) {
+            list = list.filter(r => r.gestione_id === gestioneId);
+        }
+
+        // --- 3. AGGIUNTO: Logica Ordinamento Prioritario ---
+        if (priorityRataId.value) {
+            // Questo serve per registrare pagamento rata da evento pagamwento effettuato da utente selezionando una rata specifica 
+            list = [...list].sort((a, b) => {
+                const pId = Number(priorityRataId.value);
+                
+                const aId = Number(a.rata_padre_id || a.rata_id || 0); 
+                const bId = Number(b.rata_padre_id || b.rata_id || 0);
+
+                const aIsPriority = aId === pId;
+                const bIsPriority = bId === pId;
+
+                if (aIsPriority && !bIsPriority) return -1;
+                if (!aIsPriority && bIsPriority) return 1;
+                
+                // FIX TYPESCRIPT: Forniamo una stringa vuota come fallback se la data è undefined
+                const dateA = new Date(a.scadenza || a.data_scadenza || '').getTime();
+                const dateB = new Date(b.scadenza || b.data_scadenza || '').getTime();
+                
+                return dateA - dateB;
+            });
+
+        } else {
+            list = list.sort((a, b) => {
+                // FIX TYPESCRIPT: Stessa correzione qui
+                const dateA = new Date(a.scadenza || a.data_scadenza || '').getTime();
+                const dateB = new Date(b.scadenza || b.data_scadenza || '').getTime();
+                return dateA - dateB;
+            });
+        }
+
+        return list;
     };
 
     const getTotalAllocato = (rateList: Rata[]) => {
@@ -160,6 +211,7 @@ export function usePaymentDistribution() {
         loadingRate,
         mode,
         isScaduta,
+        setPriorityRataId, // <--- 4. IMPORTANTE: Esportiamo la funzione!
         getRateListByGestione,
         getTotalAllocato,
         getTotaleDebito,

@@ -30,6 +30,7 @@ const {
     loadingRate, 
     mode,
     isScaduta,
+    setPriorityRataId,
     getRateListByGestione,
     getTotalAllocato,
     getTotaleDebito,
@@ -60,6 +61,7 @@ const form = useForm({
     descrizione: '',
     dettaglio_pagamenti: [] as any[],
     eccedenza: 0,
+    related_task_id: null as number | null,
 });
 
 // Computed
@@ -184,14 +186,54 @@ watch(() => form.gestione_id, () => {
     if (form.importo_totale > 0) runDistribution();
 });
 
-// --- HOOKS: PREFILL DA URL ---
-onMounted(() => {
-    // Leggiamo i parametri dalla Query String (inviati dall'Action Inbox)
+onMounted(async () => {
     const params = new URLSearchParams(window.location.search);
-    
+    const taskId = params.get('related_task_id');
     const prefillAnagrafica = params.get('prefill_anagrafica_id');
     const prefillImporto = params.get('prefill_importo');
     const prefillDesc = params.get('prefill_descrizione');
+    const prefillRataId = params.get('prefill_rata_id');
+
+    if (taskId) form.related_task_id = parseInt(taskId);
+    if (prefillDesc) form.descrizione = prefillDesc;
+    
+    // 1. Impostiamo la priorità PRIMA di caricare i dati
+    if (prefillRataId) {
+        setPriorityRataId(parseInt(prefillRataId));
+    } else {
+        setPriorityRataId(null);
+    }
+
+    // 2. Impostiamo l'importo (così quando i dati arrivano, distributeAuto lo usa)
+    if (prefillImporto) {
+        form.importo_totale = parseFloat(prefillImporto);
+    }
+
+    // 3. Carichiamo i dati MANUALMENTE e attendiamo
+    if (prefillAnagrafica) {
+        // Impostiamo l'ID nel form (questo farà scattare il watcher, ma noi carichiamo anche qui per sicurezza o gestiamo il doppio caricamento)
+        // Per evitare race conditions col watcher, impostiamo il valore SENZA triggerare il fetch se possibile, 
+        // oppure lasciamo fare al watcher ma siamo sicuri che setPriorityRataId è già avvenuto (punto 1).
+        
+        // Strategia migliore: Impostiamo l'ID. Il watcher scatterà. 
+        // Poiché setPriorityRataId è già stato chiamato (riga sopra), 
+        // quando il watcher chiamerà fetchDebiti -> rawRateList cambia -> computed rateList ricalcola -> getRateListByGestione usa la priorità.
+        form.pagante_id = parseInt(prefillAnagrafica);
+        
+        // Nota: Non serve chiamare fetchDebiti qui se impostiamo form.pagante_id, 
+        // perché il watcher lo farà per noi. L'importante è che setPriorityRataId sia avvenuto PRIMA.
+    }
+});
+
+// --- HOOKS: PREFILL DA URL ---
+/* onMounted(() => {
+    // Leggiamo i parametri dalla Query String (inviati dall'Action Inbox)
+    const params = new URLSearchParams(window.location.search);
+    const taskId = params.get('related_task_id');
+    const prefillAnagrafica = params.get('prefill_anagrafica_id');
+    const prefillImporto = params.get('prefill_importo');
+    const prefillDesc = params.get('prefill_descrizione');
+    const prefillRataId = params.get('prefill_rata_id')
     // Nota: prefill_rata_id c'è, ma lasciamo che l'algoritmo 'Auto' distribuisca sul debito più vecchio per correttezza contabile
 
     if (prefillDesc) {
@@ -202,13 +244,25 @@ onMounted(() => {
         form.importo_totale = parseFloat(prefillImporto);
     }
 
+    // NUOVO: Impostiamo la priorità prima di scaricare i debiti
+    if (prefillRataId) {
+        setPriorityRataId(parseInt(prefillRataId));
+    } else {
+        setPriorityRataId(null);
+    }
+
     if (prefillAnagrafica) {
         // Impostando questo ID, scatta il watcher qui sopra ⬆️
         // Il watcher chiama fetchDebiti -> che scarica le rate -> che vede l'importo -> che lancia distributeAuto()
         // Tutto automatico!
         form.pagante_id = parseInt(prefillAnagrafica);
     }
-});
+
+    if (taskId) {
+        form.related_task_id = parseInt(taskId);
+    }
+    
+}); */
 </script>
 
 <template>

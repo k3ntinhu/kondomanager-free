@@ -3,9 +3,10 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useEventStyling } from '@/composables/useEventStyling';
+import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter'; 
 import { format, differenceInDays } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { Building2, Wallet, Users, Banknote, CalendarDays, FileText, AlertCircle, ArrowRight, CheckCircle, AlertTriangle, CreditCard, Info, Clock, XCircle } from 'lucide-vue-next'; // Aggiunto XCircle
+import { Building2, Wallet, Users, Banknote, CalendarDays, FileText, AlertCircle, ArrowRight, CheckCircle, AlertTriangle, CreditCard, Info, Clock, XCircle } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3'; 
 
@@ -16,6 +17,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['close']);
 const { getEventStyle } = useEventStyling();
+const { euro } = useCurrencyFormatter(); 
 const isProcessing = ref(false); 
 
 const isAdmin = computed(() => props.evento?.meta?.type === 'emissione_rata');
@@ -25,11 +27,10 @@ const isCondomino = computed(() => props.evento?.meta?.type === 'scadenza_rata_c
 const isCredit = computed(() => isCondomino.value && (props.evento?.meta?.importo_restante < 0));
 const daysDiff = computed(() => { if (!props.evento?.start_time) return 0; return differenceInDays(new Date(props.evento.start_time), new Date()); });
 const isExpired = computed(() => !isCredit.value && daysDiff.value < 0);
-// NUOVO: Stato Rejected
 const isRejected = computed(() => props.evento?.meta?.status === 'rejected');
 
 const formatDate = (dateStr: string) => { if(!dateStr) return ''; return format(new Date(dateStr), "d MMMM yyyy", { locale: it }); };
-const formatMoney = (amount: number) => { return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount / 100); };
+// REMOVED: const formatMoney ... (usiamo euro() ora)
 
 // Funzione per inviare la segnalazione
 const reportPayment = () => {
@@ -78,7 +79,7 @@ const reportPayment = () => {
                         <div v-if="evento.meta?.totale_rata || evento.meta?.importo_originale">
                              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">{{ isAdmin ? 'Totale Emissione' : (isCredit ? 'Importo a Credito' : 'Importo Rata') }}</span>
                             <span class="text-4xl font-bold tracking-tight block tabular-nums" :class="isCredit ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white'">
-                                {{ formatMoney(Math.abs(evento.meta.totale_rata || evento.meta.importo_originale)) }}
+                                {{ euro(Math.abs(evento.meta.totale_rata || evento.meta.importo_originale)) }}
                             </span>
                         </div>
                     </div>
@@ -135,13 +136,13 @@ const reportPayment = () => {
 
                     <div v-if="isCondomino && evento.meta?.status === 'reported'" class="mb-6 flex items-center justify-between p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50">
                         <span class="text-amber-700 dark:text-amber-500 flex items-center gap-2 font-semibold text-sm"><Clock class="w-4 h-4" /> Verifica in corso</span>
-                        <span class="font-bold text-lg text-amber-700 dark:text-amber-500">{{ formatMoney(evento.meta.importo_restante) }}</span>
+                        <span class="font-bold text-lg text-amber-700 dark:text-amber-500">{{ euro(evento.meta.importo_restante) }}</span>
                     </div>
 
                     <div v-if="isCondomino && !isCredit && !isRejected && evento.meta?.status !== 'reported' && (evento.meta?.status === 'partial' || evento.meta?.status === 'pending')" class="mb-6 space-y-4">
                         <div class="flex items-center justify-between p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50">
                             <span class="text-amber-700 dark:text-amber-500 flex items-center gap-2 font-semibold text-sm"><AlertCircle class="w-4 h-4" /> Resta da Pagare</span>
-                            <span class="font-bold text-lg text-amber-700 dark:text-amber-500">{{ formatMoney(evento.meta.importo_restante) }}</span>
+                            <span class="font-bold text-lg text-amber-700 dark:text-amber-500">{{ euro(evento.meta.importo_restante) }}</span>
                         </div>
                         
                         <Button 
@@ -166,12 +167,19 @@ const reportPayment = () => {
 
                     <div v-if="isCondomino && isCredit" class="mb-6 flex items-center justify-between p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50">
                         <span class="text-blue-700 dark:text-blue-500 flex items-center gap-2 font-semibold text-sm"><Info class="w-4 h-4" /> Credito Disponibile</span>
-                        <span class="font-bold text-lg text-blue-700 dark:text-blue-500">{{ formatMoney(Math.abs(evento.meta.importo_restante)) }}</span>
+                        <span class="font-bold text-lg text-blue-700 dark:text-blue-500">{{ euro(Math.abs(evento.meta.importo_restante)) }}</span>
                     </div>
 
                     <div v-if="isCondomino && evento.meta?.status === 'paid'" class="mb-6 flex items-center justify-between p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50">
                         <span class="text-emerald-700 dark:text-emerald-500 flex items-center gap-2 font-semibold text-sm"><CheckCircle class="w-4 h-4" /> Pagato</span>
-                        <span class="font-bold text-lg text-emerald-700 dark:text-emerald-500">{{ formatMoney(evento.meta.importo_pagato || evento.meta.importo_originale) }}</span>
+                        
+                        <span class="font-bold text-lg text-emerald-700 dark:text-emerald-500">
+                            {{ 
+                                evento.meta.importo_pagato 
+                                ? euro(evento.meta.importo_pagato, { fromCents: false }) 
+                                : euro(evento.meta.importo_originale) 
+                            }}
+                        </span>
                     </div>
 
                     <div v-if="isAdmin && evento.meta?.action_url" class="mb-6">
