@@ -33,40 +33,54 @@ export function usePaymentDistribution() {
             list = list.filter(r => r.gestione_id === gestioneId);
         }
 
-        // --- 3. AGGIUNTO: Logica Ordinamento Prioritario ---
+        // 1. Funzione di ordinamento base (Data -> Raggruppamento -> Importo)
+        // Questa serve per avere sempre un ordine pulito "sotto"
+        const baseSort = (a: Rata, b: Rata) => {
+            // A. DATA (Cronologico)
+            const dateA = new Date(a.scadenza || a.data_scadenza || '9999-12-31').getTime();
+            const dateB = new Date(b.scadenza || b.data_scadenza || '9999-12-31').getTime();
+            if (dateA !== dateB) return dateA - dateB;
+
+            // B. RAGGRUPPAMENTO PER RATA (Evita salti)
+            const idRataA = a.rata_padre_id || a.rata_id || 0;
+            const idRataB = b.rata_padre_id || b.rata_id || 0;
+            if (idRataA !== idRataB) return idRataA - idRataB;
+
+            // C. IMPORTO DECRESCENTE (Prima i grossi, poi i piccoli)
+            return b.residuo - a.residuo;
+        };
+
+        // 2. Applicazione della Priorità (Se presente)
         if (priorityRataId.value) {
-            // Questo serve per registrare pagamento rata da evento pagamwento effettuato da utente selezionando una rata specifica 
             list = [...list].sort((a, b) => {
                 const pId = Number(priorityRataId.value);
                 
-                const aId = Number(a.rata_padre_id || a.rata_id || 0); 
-                const bId = Number(b.rata_padre_id || b.rata_id || 0);
+                // Controlliamo se la riga corrente corrisponde alla priorità
+                // (sia per ID diretto della riga, sia per ID della rata padre)
+                const aId = Number(a.id); 
+                const bId = Number(b.id);
+                
+                const aIsPriority = (aId === pId) || (a.rata_id === pId) || (a.rata_padre_id === pId);
+                const bIsPriority = (bId === pId) || (b.rata_id === pId) || (b.rata_padre_id === pId);
 
-                const aIsPriority = aId === pId;
-                const bIsPriority = bId === pId;
-
+                // SE A è prioritaria e B no -> A vince (viene prima)
                 if (aIsPriority && !bIsPriority) return -1;
+                // SE B è prioritaria e A no -> B vince
                 if (!aIsPriority && bIsPriority) return 1;
                 
-                // FIX TYPESCRIPT: Forniamo una stringa vuota come fallback se la data è undefined
-                const dateA = new Date(a.scadenza || a.data_scadenza || '').getTime();
-                const dateB = new Date(b.scadenza || b.data_scadenza || '').getTime();
-                
-                return dateA - dateB;
+                // Se entrambi sono prioritari (es. due quote della stessa rata prioritaria)
+                // oppure nessuno lo è -> usiamo l'ordinamento standard intelligente
+                return baseSort(a, b);
             });
 
         } else {
-            list = list.sort((a, b) => {
-                // FIX TYPESCRIPT: Stessa correzione qui
-                const dateA = new Date(a.scadenza || a.data_scadenza || '').getTime();
-                const dateB = new Date(b.scadenza || b.data_scadenza || '').getTime();
-                return dateA - dateB;
-            });
+            // Nessuna priorità -> Solo ordinamento standard intelligente
+            list = list.sort(baseSort);
         }
 
         return list;
     };
-
+    
     const getTotalAllocato = (rateList: Rata[]) => {
         return rateList.reduce((sum, r) => sum + (parseFloat(String(r.da_pagare)) || 0), 0);
     };
