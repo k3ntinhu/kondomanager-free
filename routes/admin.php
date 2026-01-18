@@ -26,31 +26,28 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'role_or_p
     Route::get('/dashboard', DashboardController::class)
         ->name('dashboard');
     
+    /*
+    |--------------------------------------------------------------------------
+    | Inbox console routes
+    |--------------------------------------------------------------------------
+    */
     Route::get('/inbox', ActionInboxController::class)->name('inbox');
 
+    Route::post('/admin/inbox/{task}/reject', [ActionInboxController::class, 'reject'])
+        ->name('inbox.reject');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Anagrafiche e fornitori routes
+    |--------------------------------------------------------------------------
+    */
     Route::get('/fetch-anagrafiche', [FetchAnagraficheController::class, 'fetchAnagrafiche']);
 
-    Route::resource('categorie', CategoriaDocumentoController::class)
-        ->parameters([
-            'categorie' => 'categoria'
-        ]);
-
-    Route::resource('eventi', EventoController::class)
-        ->parameters([
-            'eventi' => 'evento'
-        ]);
-
-    Route::get('/fetch-categorie-documenti', FetchCategorieController::class)
-        ->name('categorie.documenti');
-
-    Route::get('/fetch-categorie-eventi', EventiFetchCategorieController::class)
-        ->name('categorie.eventi');
-    
     Route::resource('anagrafiche', AnagraficaController::class)
         ->parameters([
             'anagrafiche' => 'anagrafica'
         ]);
-
+    
     Route::resource('fornitori', FornitoreController::class)
         ->parameters([
             'fornitori' => 'fornitore'
@@ -68,7 +65,23 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'role_or_p
             'documenti' => 'documento'
             
         ]);
-   
+
+    Route::resource('categorie', CategoriaDocumentoController::class)
+        ->parameters([
+            'categorie' => 'categoria'
+        ]);
+
+    Route::resource('eventi', EventoController::class)
+        ->parameters([
+            'eventi' => 'evento'
+        ]);
+
+    Route::get('/fetch-categorie-documenti', FetchCategorieController::class)
+        ->name('categorie.documenti');
+
+    Route::get('/fetch-categorie-eventi', EventiFetchCategorieController::class)
+        ->name('categorie.eventi');
+    
     Route::resource('segnalazioni', SegnalazioneController::class)
         ->parameters([
             'segnalazioni' => 'segnalazione'

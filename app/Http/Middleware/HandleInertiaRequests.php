@@ -55,6 +55,7 @@ class HandleInertiaRequests extends Middleware
                 return Evento::query()
                     ->whereJsonContains('meta->requires_action', true)
                     ->where(fn($q) => $q->where('visibility', '!=', 'private')->orWhereNull('visibility'))
+                    ->where('is_completed', false)
                     ->count();
             }) : 0,
 

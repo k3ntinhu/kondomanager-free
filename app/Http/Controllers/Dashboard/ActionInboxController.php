@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Evento;
-use App\Models\Anagrafica; // <--- AGGIUNTO QUESTO IMPORT
+use App\Models\Anagrafica; 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,7 +17,7 @@ class ActionInboxController extends Controller
         $counts = $this->getCounts();
         $tasks = $this->getTasks($filter);
 
-        return Inertia::render('dashboard/ActionInbox', [ // O 'Dashboard/ActionInbox' (case sensitive)
+        return Inertia::render('dashboard/ActionInbox', [ 
             'tasks'        => $tasks,
             'counts'       => $counts,
             'activeFilter' => $filter,
@@ -31,6 +31,7 @@ class ActionInboxController extends Controller
         $stats = Evento::query()
             ->whereJsonContains('meta->requires_action', true)
             ->where(fn($q) => $q->where('visibility', '!=', 'private')->orWhereNull('visibility'))
+            ->where('is_completed', false)
             ->selectRaw("
                 COUNT(*) as all_tasks,
                 SUM(CASE WHEN start_time <= ? THEN 1 ELSE 0 END) as urgent,
@@ -52,6 +53,7 @@ class ActionInboxController extends Controller
         $query = Evento::query()
             ->whereJsonContains('meta->requires_action', true)
             ->where(fn($q) => $q->where('visibility', '!=', 'private')->orWhereNull('visibility'))
+            ->where('is_completed', false)
             ->with([
                 'condomini:id,nome',
                 'anagrafiche:id,nome' 
@@ -93,14 +95,11 @@ class ActionInboxController extends Controller
                     'description'  => $task->description, 
                     'date'         => $task->start_time->toISOString(),
                     'condominio'   => $condominio?->nome ?? 'Generale',
-                    
                     'type'         => $task->meta['type'] ?? 'generic',
                     'amount'       => $task->meta['importo_dichiarato'] 
                                    ?? $task->meta['totale_rata'] 
                                    ?? null,
-                    
                     'status'       => $this->getTaskStatus($task),
-                    
                     'context'      => [
                         // Ora qui avrai il nome corretto
                         'anagrafica_nome' => $nomeAnagrafica, 
@@ -122,5 +121,41 @@ class ActionInboxController extends Controller
         }
 
         return 'scheduled';
+    }
+
+    /**
+     * Rifiuta una segnalazione di pagamento.
+     */
+    public function reject(Request $request, Evento $task)
+    {
+        $request->validate([
+            'reason' => 'required|string|max:255', 
+        ]);
+
+        // 1. Recupera l'evento originale del condòmino (collegato via meta)
+        $userEventId = $task->meta['context']['related_event_id'] ?? null;
+        
+        if ($userEventId) {
+            $userEvent = Evento::find($userEventId);
+            if ($userEvent) {
+                // Aggiorniamo l'evento utente diventa 'rejected'
+                $meta = $userEvent->meta;
+                $meta['status'] = 'rejected'; // Stato specifico per dire "ci hai provato ma no"
+                $meta['rejection_reason'] = $request->input('reason');
+                $meta['rejected_at'] = now()->toIso8601String();
+                
+                $userEvent->update(['meta' => $meta]);
+                
+                // QUI: Potresti inviare una notifica email al condòmino ($userEvent->created_by)
+            }
+        }
+
+        // 2. Chiudi il task Admin
+        $task->update([
+            'is_completed' => true, // O cancellalo se preferisci
+            'completed_at' => now(),
+        ]);
+
+        return back()->with('success', 'Segnalazione rifiutata e condòmino notificato.');
     }
 }

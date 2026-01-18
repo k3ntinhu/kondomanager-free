@@ -25,12 +25,16 @@ class Evento extends Model
         'is_approved',
         'timezone',
         'meta',
+        'is_completed',
+        'completed_at',
     ];
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time'   => 'datetime',
         'meta'       => 'array',
+        'is_completed' => 'boolean',
+        'completed_at' => 'datetime',
     ];
 
     public function categoria()

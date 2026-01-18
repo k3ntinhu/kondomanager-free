@@ -3,9 +3,9 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button'; // Import Button
-import { Badge } from '@/components/ui/badge';   // Import Badge
-import { House, TriangleAlert, CalendarClock, HardDrive, Bell } from 'lucide-vue-next'; // Import Bell
+import { Button } from '@/components/ui/button'; 
+import { Badge } from '@/components/ui/badge';   
+import { House, TriangleAlert, CalendarClock, HardDrive, Bell } from 'lucide-vue-next'; 
 import SegnalazioniList from '@/components/segnalazioni/SegnalazioniList.vue';
 import ComunicazioniList from '@/components/comunicazioni/ComunicazioniList.vue';
 import DocumentiList from '@/components/documenti/DocumentiList.vue';

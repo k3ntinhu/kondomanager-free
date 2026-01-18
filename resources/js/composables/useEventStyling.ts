@@ -6,7 +6,7 @@ import {
     AlertCircle, 
     Banknote, 
     AlertTriangle,
-    CalendarClock
+    XCircle // <--- Importiamo l'icona per il Rifiuto
 } from 'lucide-vue-next';
 
 export function useEventStyling() {
@@ -16,7 +16,6 @@ export function useEventStyling() {
         const now = new Date();
         const target = new Date(dateInput);
         
-        // Resettiamo le ore per confrontare solo i giorni puri
         now.setHours(0, 0, 0, 0);
         target.setHours(0, 0, 0, 0);
 
@@ -37,7 +36,6 @@ export function useEventStyling() {
 
         // --- 1. PRIORITÀ AL TIPO ADMIN (Emissione Rata) ---
         if (type === 'emissione_rata') {
-            // MODIFICA: Se Scaduto O scade Oggi (days <= 0) -> ROSSO
             if (days <= 0) {
                 return {
                     color: 'text-red-700 dark:text-red-500 font-bold',
@@ -48,7 +46,6 @@ export function useEventStyling() {
                 };
             }
             
-            // Futuro -> BLU
             return {
                 color: 'text-blue-600 dark:text-blue-400',
                 bgColor: 'bg-blue-50 dark:bg-blue-900/20',
@@ -59,6 +56,18 @@ export function useEventStyling() {
         }
 
         // --- 2. PRIORITÀ ALLO STATO (User) ---
+        
+        // NUOVO: RIFIUTATO (Alta priorità)
+        if (status === 'rejected') {
+            return {
+                color: 'text-red-600 dark:text-red-400 font-bold',
+                bgColor: 'bg-red-50 dark:bg-red-900/20',
+                borderColor: 'border-red-200 dark:border-red-800',
+                icon: XCircle,
+                label: 'Pagamento rifiutato'
+            };
+        }
+
         if (status === 'paid') {
             return {
                 color: 'text-green-600 dark:text-green-400',
@@ -78,6 +87,7 @@ export function useEventStyling() {
                 label: 'In verifica'
             };
         }
+        
 
         // --- 3. URGENZA GENERICA ---
         if (days < 0) {

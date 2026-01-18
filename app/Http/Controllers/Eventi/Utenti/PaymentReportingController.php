@@ -21,15 +21,24 @@ class PaymentReportingController extends Controller
 
         $currentStatus = $evento->meta['status'] ?? 'pending';
 
+        // Blocchiamo solo se pagato o GIÀ in verifica (reported).
+        // Se è 'rejected', lasciamo passare per il retry.
         if ($currentStatus === 'paid') return back()->with('error', 'Già pagata.');
         if ($currentStatus === 'reported') return back()->with('info', 'Già segnalato.');
 
         DB::transaction(function () use ($evento) {
             
-            // 1. Aggiorna stato evento utente
+            // 1. Aggiorna stato evento utente (RESETTA RIFIUTO)
             $meta = $evento->meta;
             $meta['status'] = 'reported'; 
             $meta['reported_at'] = now()->toIso8601String();
+            
+            // PULIZIA: Se era stato rifiutato, rimuoviamo la motivazione così sparisce il box rosso
+            if (isset($meta['rejection_reason'])) {
+                unset($meta['rejection_reason']);
+                unset($meta['rejected_at']);
+            }
+
             $evento->update(['meta' => $meta]);
 
             // 2. Prepara dati
@@ -41,24 +50,8 @@ class PaymentReportingController extends Controller
             $importoFormat = number_format($importoEuro, 2, ',', '.');
             
             $condominioId = $evento->condomini->first()?->id;
-            
-            // 3. Genera Link "Registra Incasso"
-            $actionUrl = null;
 
-            if ($condominioId) {
-                // Generiamo la rotta per la creazione dell'incasso.
-                // Passiamo i dati come parametri GET (Query String) per precompilare il form.
-                $actionUrl = route('admin.gestionale.movimenti-rate.create', [
-                    'condominio' => $condominioId,
-                    // Parametri aggiuntivi che finiranno nell'URL come ?prefill_rata_id=...
-                    'prefill_rata_id'       => $meta['context']['rata_id'] ?? null,
-                    'prefill_anagrafica_id' => $anagrafica?->id,
-                    'prefill_importo'       => $importoEuro,
-                    'prefill_descrizione'   => "Saldo rata condominiale (Segnalazione utente)"
-                ]);
-            }
-
-            // 4. Crea Task Admin
+            // 3. Crea Task Admin (PRIMA creiamo il task, così abbiamo l'ID)
             $adminEvent = Evento::create([
                 'title'       => "Verifica Incasso: {$evento->title}",
                 'description' => "Il condòmino {$nomeAnagrafica} ha segnalato di aver pagato {$importoFormat}€.\n" .
@@ -80,14 +73,34 @@ class PaymentReportingController extends Controller
                     ],
                     'condominio_nome'    => $meta['condominio_nome'] ?? '',
                     'importo_dichiarato' => $meta['importo_restante'] ?? 0,
-                    
-                    // URL FUNZIONANTE
-                    'action_url'         => $actionUrl 
+                    'action_url'         => null // Lo riempiamo tra un attimo
                 ]
             ]);
 
             if ($condominioId) {
                 $adminEvent->condomini()->attach($condominioId);
+            }
+            // Opzionale: colleghiamo anche l'anagrafica per il fix del nome "Sconosciuto"
+            if ($anagrafica) {
+                $adminEvent->anagrafiche()->attach($anagrafica->id);
+            }
+
+            // 4. Genera Link "Registra Incasso" CON ID TASK
+            if ($condominioId) {
+                $actionUrl = route('admin.gestionale.movimenti-rate.create', [
+                    'condominio' => $condominioId,
+                    'prefill_rata_id'       => $meta['context']['rata_id'] ?? null,
+                    'prefill_anagrafica_id' => $anagrafica?->id,
+                    'prefill_importo'       => $importoEuro,
+                    'prefill_descrizione'   => "Saldo rata condominiale (Segnalazione utente)",
+                    // FONDAMENTALE: Passiamo l'ID del task appena creato per chiuderlo dopo
+                    'related_task_id'       => $adminEvent->id 
+                ]);
+
+                // Aggiorniamo il task con l'URL corretto
+                $adminMeta = $adminEvent->meta;
+                $adminMeta['action_url'] = $actionUrl;
+                $adminEvent->update(['meta' => $adminMeta]);
             }
         });
 

@@ -1,12 +1,19 @@
 <script setup lang="ts">
+
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { ref } from 'vue';
 import { 
     Banknote, AlertTriangle, Wrench, CheckCircle, XCircle, 
     ArrowRight, Clock, Inbox, ChevronLeft, Loader2, CalendarDays, Building2, User
 } from 'lucide-vue-next';
+import { 
+    Dialog, DialogContent, DialogDescription, 
+    DialogFooter, DialogHeader, DialogTitle 
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 // --- PROPS ---
 const props = defineProps<{
@@ -16,6 +23,34 @@ const props = defineProps<{
 }>();
 
 const isLoading = ref(false);
+// --- REJECT MODAL STATE ---
+const isRejectModalOpen = ref(false);
+const taskToReject = ref<any>(null);
+
+const rejectForm = useForm({
+    reason: '',
+});
+
+const openRejectModal = (task: any) => {
+    taskToReject.value = task;
+    rejectForm.reason = ''; // Reset
+    rejectForm.clearErrors();
+    isRejectModalOpen.value = true;
+};
+
+const closeRejectModal = () => {
+    isRejectModalOpen.value = false;
+    setTimeout(() => taskToReject.value = null, 300); // Pulisci dopo animazione
+};
+
+const confirmReject = () => {
+    if (!taskToReject.value) return;
+
+    rejectForm.post(route('admin.inbox.reject', taskToReject.value.id), {
+        preserveScroll: true,
+        onSuccess: () => closeRejectModal(),
+    });
+};
 
 // --- DESIGN TOKENS ---
 const STATUS_TOKENS: Record<string, { border: string, bg: string, iconBg: string, iconColor: string, text: string }> = {
@@ -79,7 +114,7 @@ const getDateLabel = (dateStr: string | null, status: string) => {
 </script>
 
 <template>
-    <Head title="Action Inbox" />
+    <Head title="Action inbox" />
 
     <AppLayout>
         <div class="w-full p-6 max-w-7xl mx-auto flex flex-col gap-8 min-h-screen">
@@ -89,13 +124,13 @@ const getDateLabel = (dateStr: string | null, status: string) => {
                     <div class="flex-1">
                         <Link :href="route('admin.dashboard')" class="inline-flex items-center text-sm text-slate-400 hover:text-white transition-colors mb-4 font-medium group">
                             <ChevronLeft class="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
-                            Torna alla Dashboard
+                            Torna alla dashboard
                         </Link>
 
                         <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-white">
-                            Action Inbox
+                            Action inbox
                         </h1>
-                        <p class="text-slate-400 mt-2 text-lg max-w-xl leading-relaxed">
+                        <p class="text-slate-400 mt-2 text-lg leading-relaxed">
                             Il tuo centro di comando. Gestisci scadenze e incassi da un unico punto.
                         </p>
                     </div>
@@ -104,11 +139,13 @@ const getDateLabel = (dateStr: string | null, status: string) => {
                         <span class="text-[10px] uppercase tracking-widest text-slate-500">
                             Attività in scadenza
                         </span>
+
                         <div class="flex items-center justify-between">
                             <span class="text-3xl font-semibold text-white tabular-nums">
                                 {{ counts.all }}
                             </span>
-                            <Inbox class="w-4 h-4 text-red-400" />
+
+                            <div class="h-2 w-2 rounded-full bg-red-500/80"></div>
                         </div>
                     </div>
                 </div>
@@ -136,7 +173,7 @@ const getDateLabel = (dateStr: string | null, status: string) => {
                         </div>
                         <span class="text-3xl font-bold text-slate-900 dark:text-white">{{ counts.payments }}</span>
                     </div>
-                    <span class="text-sm font-semibold text-slate-500 group-hover:text-amber-600 transition-colors">Verifiche Incassi</span>
+                    <span class="text-sm font-semibold text-slate-500 group-hover:text-amber-600 transition-colors">Verifiche incassi</span>
                 </button>
 
                 <button @click="setFilter('maintenance')" 
@@ -153,7 +190,7 @@ const getDateLabel = (dateStr: string | null, status: string) => {
 
                 <button @click="setFilter('all')" 
                      class="group flex flex-col justify-center items-center gap-2 p-5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center h-full">
-                    <span class="text-sm font-bold text-slate-900 dark:text-white">Vedi Tutto</span>
+                    <span class="text-sm font-bold text-slate-900 dark:text-white">Vedi tutto</span>
                     <span class="text-xs text-slate-500">Reset filtri</span>
                 </button>
             </div>
@@ -231,7 +268,14 @@ const getDateLabel = (dateStr: string | null, status: string) => {
 
                             <div class="col-span-3 flex justify-end items-center gap-2">
                                 <template v-if="task.type === 'verifica_pagamento'">
-                                    <Button size="sm" variant="ghost" class="text-slate-400 hover:text-red-600 hover:bg-red-50" title="Rifiuta">
+
+                                    <Button 
+                                        size="sm" 
+                                        variant="ghost" 
+                                        class="text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors" 
+                                        title="Rifiuta segnalazione"
+                                        @click="openRejectModal(task)"
+                                    >
                                         <XCircle class="w-4 h-4" />
                                     </Button>
                                     
@@ -286,5 +330,53 @@ const getDateLabel = (dateStr: string | null, status: string) => {
             </div>
 
         </div>
+
+        <Dialog v-model:open="isRejectModalOpen">
+            <DialogContent class="sm:max-w-[450px]">
+                <DialogHeader>
+                    <DialogTitle class="flex items-center gap-2 text-red-600">
+                        <AlertTriangle class="w-5 h-5" />
+                        Rifiuta segnalazione
+                    </DialogTitle>
+                    <DialogDescription>
+                        Stai per rifiutare il pagamento segnalato da 
+                        <span class="font-bold text-slate-900">{{ taskToReject?.context?.anagrafica_nome || 'Condòmino' }}</span>.
+                        <strong> Attenzione: questa azione sarà irreversibile.</strong>
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="grid gap-4 py-4">
+                    <div class="grid gap-2">
+                        <Label htmlFor="reason" class="text-slate-900">
+                            Motivazione (visibile all'utente)
+                        </Label>
+                        <Textarea 
+                            id="reason" 
+                            v-model="rejectForm.reason" 
+                            placeholder="Es: Bonifico non trovato nell'estratto conto..." 
+                            class="resize-none min-h-[100px]"
+                            :class="{'border-red-500 focus-visible:ring-red-500': rejectForm.errors.reason}"
+                        />
+                        <p v-if="rejectForm.errors.reason" class="text-[11px] text-red-600 font-medium">
+                            {{ rejectForm.errors.reason }}
+                        </p>
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button variant="outline" @click="isRejectModalOpen = false" :disabled="rejectForm.processing">
+                        Annulla
+                    </Button>
+                    <Button 
+                        variant="destructive" 
+                        @click="confirmReject" 
+                        :disabled="rejectForm.processing || !rejectForm.reason"
+                    >
+                        <Loader2 v-if="rejectForm.processing" class="w-4 h-4 mr-2 animate-spin" />
+                        Conferma rifiuto
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>
