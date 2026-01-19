@@ -29,7 +29,7 @@ export const useCurrencyFormatter = (globalOptions: EuroFormatOptions = {}) => {
 
     const config = { ...baseConfig, ...opts };
 
-    // 💡 LOGICA INTELLIGENTE: Dividiamo solo se fromCents è true
+    // LOGICA INTELLIGENTE: Dividiamo solo se fromCents è true
     const value = config.fromCents 
         ? Math.abs(amount) / 100 
         : Math.abs(amount);

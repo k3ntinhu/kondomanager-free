@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use App\Models\Evento;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Builder;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -50,12 +51,17 @@ class HandleInertiaRequests extends Middleware
                 : null,
 
             // Aggiungiamo il contatore globale
-            'inbox_count' => $request->user() ? Cache::remember('inbox_count_' . $request->user()->id, now()->addMinutes(10), function () {
-                // Cache di 60 secondi per non appesantire ogni clic
+            'inbox_count' => $request->user() ? Cache::remember('inbox_count_' . $request->user()->id, now()->addMinutes(10), function () use ($request) {
                 return Evento::query()
+                    // 1. Deve richiedere azione
                     ->whereJsonContains('meta->requires_action', true)
-                    ->where(fn($q) => $q->where('visibility', '!=', 'private')->orWhereNull('visibility'))
+                    // 2. NON deve essere completato
                     ->where('is_completed', false)
+                    // 3. IL FIX: Deve essere "iniziato" (Data inizio <= Adesso)
+                    ->where('start_time', '<=', now()) 
+                    // 4. Logica visibilità (Escludiamo i privati degli utenti se siamo admin, o viceversa, a seconda della logica tua)
+                    // Nota: Assumo che 'hidden' siano i task di sistema visibili all'admin.
+                    ->where(fn(Builder $q) => $q->where('visibility', '!=', 'private')->orWhereNull('visibility'))
                     ->count();
             }) : 0,
 

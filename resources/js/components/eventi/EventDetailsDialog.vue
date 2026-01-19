@@ -1,4 +1,5 @@
 <script setup lang="ts">
+    
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,15 +41,16 @@ const isExpired = computed(() =>
     !isPartial.value 
 );
 
-// 🔥 LOGICA DETERMINISTICA (Inserita qui)
-// Se il flag esiste, usalo. Se non esiste (vecchi eventi), assumiamo false per prudenza.
+// LOGICA DETERMINISTICA
 const isEmitted = computed(() => {
     return props.evento?.meta?.is_emitted === true;
 });
 
+// 🔥 LOGICA CORRETTA (Ripristinata): Se è a credito, NON mostrare avviso emissione
 const showNotEmittedWarning = computed(() => 
     isCondomino.value && 
     !isEmitted.value && 
+    !isCredit.value && 
     !isPaid.value && 
     !isReported.value && 
     !isPartial.value
@@ -74,7 +76,7 @@ const reportPayment = () => {
         <DialogContent class="sm:max-w-3xl p-0 overflow-hidden rounded-xl border-none shadow-2xl bg-white dark:bg-slate-950 block gap-0">
             <div class="flex flex-col md:flex-row h-full min-h-[400px]">
                 
-                <div class="md:w-[35%] bg-slate-50 dark:bg-slate-900/50 p-6 flex flex-col justify-between border-r border-slate-100 dark:border-slate-800">
+                <div class="md:w-[35%] bg-slate-50 dark:bg-slate-900/50 p-6 flex flex-col gap-6 border-r border-slate-100 dark:border-slate-800">
                     
                     <div>
                         <div class="flex flex-row flex-wrap items-center gap-2 mb-6">
@@ -88,7 +90,7 @@ const reportPayment = () => {
                             </Badge>
                         </div>
                         
-                        <div class="mb-8">
+                        <div class="mb-0">
                             <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Data Riferimento</span>
                             <div class="flex items-center gap-2" :class="isExpired && !isRejected ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-200'">
                                 <CalendarDays class="w-5 h-5" :class="isExpired && !isRejected ? 'text-red-400' : 'text-slate-400'" />
@@ -96,59 +98,59 @@ const reportPayment = () => {
                             </div>
                             <span v-if="isExpired && !isRejected" class="text-xs text-red-500 font-medium mt-1 block">Ritardo di {{ Math.abs(daysDiff) }} giorni</span>
                         </div>
+                    </div>
 
-                        <div v-if="evento.meta?.totale_rata || evento.meta?.importo_originale">
-                             <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">{{ isAdmin ? 'Totale Emissione' : (isCredit ? 'Importo a Credito' : 'Importo Rata') }}</span>
-                            <span class="text-4xl font-bold tracking-tight block tabular-nums" :class="isCredit ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white'">
-                                {{ euro(Math.abs(evento.meta.totale_rata || evento.meta.importo_originale)) }}
-                            </span>
+                    <div v-if="evento.meta?.totale_rata || evento.meta?.importo_originale">
+                         <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">{{ isAdmin ? 'Totale Emissione' : (isCredit ? 'Importo a Credito' : 'Importo Rata') }}</span>
+                        <span class="text-4xl font-bold tracking-tight block tabular-nums" :class="isCredit ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white'">
+                            {{ euro(Math.abs(evento.meta.totale_rata || evento.meta.importo_originale)) }}
+                        </span>
 
-                            <div v-if="evento.meta?.dettaglio_quote && evento.meta.dettaglio_quote.length > 0" class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div v-if="evento.meta?.dettaglio_quote && evento.meta.dettaglio_quote.length > 0" class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            
+                            <div class="flex flex-col gap-2 mb-3">
+                                <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Dettaglio Unità</p>
                                 
-                                <div class="flex flex-col gap-2 mb-3">
-                                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Dettaglio Unità</p>
-                                    
-                                    <div class="flex items-center gap-3 text-[10px] font-medium text-slate-500">
-                                        <div class="flex items-center gap-1.5">
-                                            <div class="w-2 h-2 rounded-full bg-emerald-500"></div> Credito
-                                        </div>
-                                        <div class="flex items-center gap-1.5">
-                                            <div class="w-2 h-2 rounded-full bg-orange-400"></div> Da Pagare
-                                        </div>
+                                <div class="flex items-center gap-3 text-[10px] font-medium text-slate-500">
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div> Credito
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="w-2 h-2 rounded-full bg-orange-400"></div> Da Pagare
                                     </div>
                                 </div>
-                                
-                                <ul class="space-y-2">
-                                    <li v-for="(item, idx) in evento.meta.dettaglio_quote" :key="idx" class="flex justify-between items-center text-xs">
-                                        <div class="flex items-center gap-2 overflow-hidden">
-                                            <div class="w-1.5 h-1.5 rounded-full shrink-0" 
-                                                :class="item.importo < 0 ? 'bg-emerald-500' : 'bg-orange-400'">
-                                            </div>
-                                            <span class="text-slate-600 dark:text-slate-400 truncate">{{ item.descrizione }}</span>
+                            </div>
+                            
+                            <ul class="space-y-2">
+                                <li v-for="(item, idx) in evento.meta.dettaglio_quote" :key="idx" class="flex justify-between items-center text-xs">
+                                    <div class="flex items-center gap-2 overflow-hidden">
+                                        <div class="w-1.5 h-1.5 rounded-full shrink-0" 
+                                            :class="item.importo < 0 ? 'bg-emerald-500' : 'bg-orange-400'">
                                         </div>
-                                        
-                                        <span 
-                                            class="font-mono font-medium" 
-                                            :class="item.importo < 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-700 dark:text-slate-200'"
-                                        >
-                                            {{ euro(item.importo) }}
-                                        </span>
-                                    </li>
-                                </ul>
-
-                                <div v-if="isCredit && evento.meta.dettaglio_quote.some((q: any) => q.importo > 0)" 
-                                     class="mt-3 p-2.5 bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 rounded-md text-xs text-emerald-800 dark:text-emerald-400 flex gap-2 items-start shadow-sm">
-                                    <CheckCircle class="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
-                                    <span class="leading-tight">
-                                        <strong>Coperto:</strong> Il tuo credito residuo salda automaticamente la quota di 
-                                        <span class="font-mono font-bold">{{ euro(evento.meta.dettaglio_quote.find((q: any) => q.importo > 0)?.importo || 0) }}</span>.
+                                        <span class="text-slate-600 dark:text-slate-400 truncate">{{ item.descrizione }}</span>
+                                    </div>
+                                    
+                                    <span 
+                                        class="font-mono font-medium" 
+                                        :class="item.importo < 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-700 dark:text-slate-200'"
+                                    >
+                                        {{ euro(item.importo) }}
                                     </span>
-                                </div>
+                                </li>
+                            </ul>
+
+                            <div v-if="isCredit && evento.meta.dettaglio_quote.some((q: any) => q.importo > 0)" 
+                                 class="mt-3 p-2.5 bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30 rounded-md text-xs text-emerald-800 dark:text-emerald-400 flex gap-2 items-start shadow-sm">
+                                <CheckCircle class="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+                                <span class="leading-tight">
+                                    <strong>Coperto:</strong> Il tuo credito residuo salda automaticamente la quota di 
+                                    <span class="font-mono font-bold">{{ euro(evento.meta.dettaglio_quote.find((q: any) => q.importo > 0)?.importo || 0) }}</span>.
+                                </span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-8"> 
+                    <div> 
                         <div v-if="isCondomino" class="flex flex-col gap-3">
                             <div v-if="isReported" class="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800 text-center leading-relaxed">
                                 <span class="font-semibold block mb-1 flex items-center justify-center gap-1"><Clock class="w-3 h-3"/> In attesa di verifica</span>
@@ -312,7 +314,7 @@ const reportPayment = () => {
                         </Button>
                     </div>
 
-                    <div class="mt-auto pt-6 border-t border-slate-100 dark:border-slate-800">
+                    <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
                         <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">{{ evento.description }}</p>
                     </div>
                 </div>
