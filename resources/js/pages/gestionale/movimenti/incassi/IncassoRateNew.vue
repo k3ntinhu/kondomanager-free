@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'; // <--- Aggiunto onMounted
+import { ref, watch, computed, onMounted } from 'vue'; 
 import { useForm, Head } from '@inertiajs/vue3';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle,CheckCircle2,Calculator,RotateCcw,User,Building,ArrowRight,Euro,FileText,Receipt,ArrowRightLeft } from 'lucide-vue-next';
+// 🔥 IMPORTIAMO I COMPONENTI TOOLTIP CHE RISOLVONO L'OVERFLOW
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from '@/components/ui/tooltip';
+import { AlertCircle,CheckCircle2,Calculator,RotateCcw,User,Building,ArrowRight,Euro,FileText,Receipt,ArrowRightLeft,Info } from 'lucide-vue-next';
 import vSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 import { useFormat } from '@/composables/useFormat';
@@ -22,7 +29,6 @@ const props = defineProps<{
     gestioni: any[];
 }>();
 
-// Composables
 const { formatCurrency } = useFormat();
 const { generateRoute } = usePermission();
 const { 
@@ -47,11 +53,9 @@ const {
 
 const { fetchDebiti: fetchDebitiAPI } = useDebitiLoader();
 
-// UI State
 const searchMode = ref<'persona' | 'immobile'>('persona');
 const selectedImmobileId = ref<number | null>(null);
 
-// Form
 const form = useForm({
     pagante_id: null as number | null,
     cassa_id: null,
@@ -64,22 +68,12 @@ const form = useForm({
     related_task_id: null as number | null,
 });
 
-// Computed
 const rateList = computed(() => getRateListByGestione(form.gestione_id));
-
 const totalAllocato = computed(() => getTotalAllocato(rateList.value));
-
 const totaleDebito = computed(() => getTotaleDebito(rateList.value));
+const bilancioFinale = computed(() => getBilancioFinale(totaleDebito.value, form.importo_totale));
+const previewContabile = computed(() => getPreviewContabile(rateList.value, form.importo_totale, form.eccedenza));
 
-const bilancioFinale = computed(() => 
-    getBilancioFinale(totaleDebito.value, form.importo_totale)
-);
-
-const previewContabile = computed(() => 
-    getPreviewContabile(rateList.value, form.importo_totale, form.eccedenza)
-);
-
-// Methods
 const fetchDebiti = async (params: { anagrafica_id?: number | null; immobile_id?: number | null }) => {
     loadingRate.value = true;
     try {
@@ -90,61 +84,21 @@ const fetchDebiti = async (params: { anagrafica_id?: number | null; immobile_id?
             isScaduta
         );
         rawRateList.value = result;
-        
-        // Se c'è già un importo (es. dal prefill), eseguiamo subito la distribuzione
         if (form.importo_totale > 0) runDistribution();
     } finally {
         loadingRate.value = false;
     }
 };
 
-const runDistribution = () => {
-    mode.value === 'auto' ? distributeAuto() : calculateExcessOnly();
-};
-
-const distributeAuto = () => {
-    form.eccedenza = distributeGreedy(rateList.value, form.importo_totale);
-    syncForm();
-};
-
-const handleManualChange = (rata: any, val: string) => {
-    onManualChange(rata, val);
-    calculateExcessOnly();
-    syncForm();
-};
-
-const calculateExcessOnly = () => {
-    form.eccedenza = calculateExcess(rateList.value, form.importo_totale);
-};
-
-const toggleMode = () => {
-    mode.value = mode.value === 'auto' ? 'manual' : 'auto';
-    if (mode.value === 'auto') distributeAuto();
-};
-
-const resetAllocation = () => {
-    resetAllocationComposable(rateList.value);
-    calculateExcessOnly();
-    syncForm();
-};
-
-const pagaTutto = () => {
-    const somma = pagaTuttoComposable(rateList.value);
-    form.importo_totale = somma;
-    calculateExcessOnly();
-    syncForm();
-};
-
-const pagaScadute = () => {
-    const somma = pagaScaduteComposable(rateList.value);
-    form.importo_totale = somma;
-    calculateExcessOnly();
-    syncForm();
-};
-
-const syncForm = () => {
-    form.dettaglio_pagamenti = syncFormData(rateList.value);
-};
+const runDistribution = () => { mode.value === 'auto' ? distributeAuto() : calculateExcessOnly(); };
+const distributeAuto = () => { form.eccedenza = distributeGreedy(rateList.value, form.importo_totale); syncForm(); };
+const handleManualChange = (rata: any, val: string) => { onManualChange(rata, val); calculateExcessOnly(); syncForm(); };
+const calculateExcessOnly = () => { form.eccedenza = calculateExcess(rateList.value, form.importo_totale); };
+const toggleMode = () => { mode.value = mode.value === 'auto' ? 'manual' : 'auto'; if (mode.value === 'auto') distributeAuto(); };
+const resetAllocation = () => { resetAllocationComposable(rateList.value); calculateExcessOnly(); syncForm(); };
+const pagaTutto = () => { const somma = pagaTuttoComposable(rateList.value); form.importo_totale = somma; calculateExcessOnly(); syncForm(); };
+const pagaScadute = () => { const somma = pagaScaduteComposable(rateList.value); form.importo_totale = somma; calculateExcessOnly(); syncForm(); };
+const syncForm = () => { form.dettaglio_pagamenti = syncFormData(rateList.value); };
 
 const toggleSearchMode = (newMode: 'persona' | 'immobile') => {
     searchMode.value = newMode;
@@ -165,24 +119,11 @@ const submit = () => {
     });
 };
 
-// Watchers
-watch(() => form.pagante_id, (newVal) => {
-    if (searchMode.value === 'persona' && newVal) fetchDebiti({ anagrafica_id: newVal });
-});
-
-watch(selectedImmobileId, (newVal) => {
-    if (searchMode.value === 'immobile' && newVal) fetchDebiti({ immobile_id: newVal });
-});
-
-watch(() => form.importo_totale, () => {
-    runDistribution();
-});
-
+watch(() => form.pagante_id, (newVal) => { if (searchMode.value === 'persona' && newVal) fetchDebiti({ anagrafica_id: newVal }); });
+watch(selectedImmobileId, (newVal) => { if (searchMode.value === 'immobile' && newVal) fetchDebiti({ immobile_id: newVal }); });
+watch(() => form.importo_totale, () => { runDistribution(); });
 watch(() => form.gestione_id, () => {
-    rawRateList.value.forEach(r => {
-        r.da_pagare = 0;
-        r.selezionata = false;
-    });
+    rawRateList.value.forEach(r => { r.da_pagare = 0; r.selezionata = false; });
     if (form.importo_totale > 0) runDistribution();
 });
 
@@ -196,35 +137,10 @@ onMounted(async () => {
 
     if (taskId) form.related_task_id = parseInt(taskId);
     if (prefillDesc) form.descrizione = prefillDesc;
-    
-    // 1. Impostiamo la priorità PRIMA di caricare i dati
-    if (prefillRataId) {
-        setPriorityRataId(parseInt(prefillRataId));
-    } else {
-        setPriorityRataId(null);
-    }
-
-    // 2. Impostiamo l'importo (così quando i dati arrivano, distributeAuto lo usa)
-    if (prefillImporto) {
-        form.importo_totale = parseFloat(prefillImporto);
-    }
-
-    // 3. Carichiamo i dati MANUALMENTE e attendiamo
-    if (prefillAnagrafica) {
-        // Impostiamo l'ID nel form (questo farà scattare il watcher, ma noi carichiamo anche qui per sicurezza o gestiamo il doppio caricamento)
-        // Per evitare race conditions col watcher, impostiamo il valore SENZA triggerare il fetch se possibile, 
-        // oppure lasciamo fare al watcher ma siamo sicuri che setPriorityRataId è già avvenuto (punto 1).
-        
-        // Strategia migliore: Impostiamo l'ID. Il watcher scatterà. 
-        // Poiché setPriorityRataId è già stato chiamato (riga sopra), 
-        // quando il watcher chiamerà fetchDebiti -> rawRateList cambia -> computed rateList ricalcola -> getRateListByGestione usa la priorità.
-        form.pagante_id = parseInt(prefillAnagrafica);
-        
-        // Nota: Non serve chiamare fetchDebiti qui se impostiamo form.pagante_id, 
-        // perché il watcher lo farà per noi. L'importante è che setPriorityRataId sia avvenuto PRIMA.
-    }
+    if (prefillRataId) setPriorityRataId(parseInt(prefillRataId)); else setPriorityRataId(null);
+    if (prefillImporto) form.importo_totale = parseFloat(prefillImporto);
+    if (prefillAnagrafica) form.pagante_id = parseInt(prefillAnagrafica);
 });
-
 </script>
 
 <template>
@@ -402,14 +318,73 @@ onMounted(async () => {
 
                                         <td class="p-3 align-top">
                                             <div class="text-xs font-bold text-gray-800 mb-0.5">{{ r.descrizione }}</div>
+                                            
                                             <div class="text-[11px] text-blue-600 font-medium flex items-center gap-1">
                                                 <User class="w-3 h-3 opacity-70"/> 
                                                 {{ r.intestatario }}
-                                                <span v-if="r.tipologia" class="text-gray-400 font-normal ml-1 border-l border-gray-300 pl-1">
-                                                    {{ r.tipologia }}
-                                                </span>
                                             </div>
-                                            <div class="text-[10px] text-gray-400 mt-0.5">{{ r.gestione }} • {{ r.unita }}</div>
+                                            
+                                            <div class="text-[10px] text-gray-400 mt-0.5 flex flex-wrap items-center gap-1">
+                                                <span>{{ r.gestione }}</span>
+                                                
+                                                <div v-if="r.dettaglio_quote && r.dettaglio_quote.length > 0">
+                                                    <TooltipProvider :delayDuration="0">
+                                                        <Tooltip>
+                                                            <TooltipTrigger as-child>
+                                                                <div class="ml-1 inline-flex items-center cursor-help">
+                                                                    <Info class="w-3 h-3 text-blue-400" />
+                                                                </div>
+                                                            </TooltipTrigger>
+                                                            
+                                                            <TooltipContent side="bottom" class="bg-slate-900 border-slate-700 text-slate-200 p-4 w-80 shadow-2xl rounded-lg z-[100]">
+                                                                
+                                                                <div class="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-wider border-b border-slate-700 pb-1 text-center">
+                                                                    Analisi Contabile
+                                                                </div>
+
+                                                                <ul class="space-y-4">
+                                                                    <li v-for="(dett, idx) in r.dettaglio_quote" :key="idx" class="text-[11px]">
+                                                                        <div class="font-bold text-white mb-1.5 pb-0.5 border-b border-slate-700/50 flex items-center gap-2">
+                                                                            <Building class="w-3 h-3 text-slate-500"/> {{ dett.unita }}
+                                                                        </div>
+                                                                        
+                                                                        <div v-if="Math.abs(dett.componente_saldo) > 0.01" class="flex justify-between items-center pl-2 mb-1">
+                                                                            <span class="text-slate-400">Saldo Iniziale:</span>
+                                                                            <span class="font-mono font-medium" :class="dett.componente_saldo < 0 ? 'text-emerald-400' : 'text-red-400'">
+                                                                                {{ formatCurrency(dett.componente_saldo) }}
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <div class="flex justify-between items-center pl-2 mb-1">
+                                                                            <span class="text-slate-400">Quota Rata:</span>
+                                                                            <span class="font-mono font-medium text-slate-200">
+                                                                                + {{ formatCurrency(Math.abs(dett.componente_spesa)) }}
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <div class="flex justify-between items-center pl-2 pt-1 border-t border-slate-800">
+                                                                            <span class="text-[10px] text-slate-500 font-bold uppercase">Totale Unità:</span>
+                                                                            <span class="font-mono font-bold" :class="dett.residuo < 0 ? 'text-emerald-500' : 'text-orange-400'">
+                                                                                {{ formatCurrency(dett.residuo) }}
+                                                                            </span>
+                                                                        </div>
+                                                                    </li>
+                                                                </ul>
+
+                                                                <div class="border-t-2 border-slate-600 pt-2 mt-3 flex justify-between items-center bg-slate-800/50 p-2 rounded -mx-2">
+                                                                    <span class="text-xs font-bold text-white uppercase tracking-wide">Netto da Pagare:</span>
+                                                                    <span class="font-mono font-bold text-sm" :class="r.residuo < 0 ? 'text-emerald-400' : 'text-white'">
+                                                                        {{ r.residuo < 0 ? 'A Credito ' : '' }} 
+                                                                        {{ formatCurrency(Math.abs(r.residuo)) }}
+                                                                    </span>
+                                                                </div>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </div>
+                                                
+                                                <span v-else>• {{ r.unita }}</span>
+                                            </div>
                                         </td>
 
                                         <td class="p-3 text-right align-top">
