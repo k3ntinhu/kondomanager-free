@@ -2,18 +2,15 @@
 
 namespace App\Actions\PianoRate;
 
+use App\Enums\OrigineQuota;
 use App\Models\Gestionale\PianoRate;
 use App\Models\Gestionale\Rata;
 use App\Models\Gestionale\RataQuote;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth; 
 
 class GenerateRateQuotesAction
 {
-    /**
-     * Genera Rate (Testate) e RataQuote (Dettagli) ottimizzando le performance.
-     *
-     * @return array{rate_create:int, quote_create:int, importo_totale_rate:int}
-     */
     public function execute(
         PianoRate $pianoRate,
         array $totaliPerImmobile,
@@ -25,42 +22,44 @@ class GenerateRateQuotesAction
         $quoteCreate = 0;
         $importoTotaleGenerato = 0;
         
-        // Timestamp unico per tutte le righe (ottimizzazione)
         $now = now(); 
 
         foreach ($dateRate as $index => $dataScadenza) {
             $numeroRata = $index + 1;
 
-            // 1. Creiamo la Rata (Testata) - Una per scadenza
+            // 1. Creazione Rata (Testata)
             $rata = Rata::create([
                 'piano_rate_id'  => $pianoRate->id,
                 'numero_rata'    => $numeroRata,
                 'data_scadenza'  => $dataScadenza,
                 'data_emissione' => $now,
                 'descrizione'    => "Rata n.{$numeroRata} - {$pianoRate->nome}",
-                'importo_totale' => 0, // Lo aggiorneremo alla fine del ciclo
+                'importo_totale' => 0, 
                 'stato'          => 'bozza',
             ]);
 
             $importoTotaleRata = 0;
-            $quotesToInsert = []; // Array per accumulare i dati e inserirli in un colpo solo
+            $quotesToInsert = []; 
 
-            // 2. Calcoliamo le quote per ogni immobile
+            // 2. Calcolo Quote
             foreach ($totaliPerImmobile as $aid => $immobili) {
                 foreach ($immobili as $iid => $totaleImmobile) {
                     if ($totaleImmobile == 0) continue;
 
-                    $amount = $this->calcolaImportoRata(
-                        $totaleImmobile,
+                    // Calcolo Avanzato + Snapshot
+                    $risultatoCalcolo = $this->calcolaImportoRataAvanzato(
+                        $totaleImmobile, 
                         $numeroRate,
                         $numeroRata,
                         $pianoRate->metodo_distribuzione,
                         $saldi[$aid][$iid] ?? 0
                     );
 
+                    $amount = $risultatoCalcolo['importo_finale'];
+                    $snapshot = $risultatoCalcolo['snapshot'];
+
                     $statoQuota = $amount < 0 ? 'credito' : 'da_pagare';
 
-                    // Invece di creare subito su DB, salviamo in array
                     $quotesToInsert[] = [
                         'rata_id'        => $rata->id,
                         'anagrafica_id'  => $aid,
@@ -68,9 +67,11 @@ class GenerateRateQuotesAction
                         'importo'        => $amount,
                         'importo_pagato' => 0,
                         'stato'          => $statoQuota,
+                        // Salvataggio JSON Snapshot
+                        'regole_calcolo' => json_encode($snapshot),
                         'data_scadenza'  => $dataScadenza instanceof Carbon ? $dataScadenza->format('Y-m-d') : $dataScadenza,
-                        'created_at'     => $now, // Necessario per insert massivo
-                        'updated_at'     => $now, // Necessario per insert massivo
+                        'created_at'     => $now, 
+                        'updated_at'     => $now, 
                     ];
 
                     $importoTotaleRata += $amount;
@@ -78,17 +79,14 @@ class GenerateRateQuotesAction
                 }
             }
 
-            // 3. Inserimento Massivo (Bulk Insert) per questa rata
+            // 3. Inserimento Massivo
             if (!empty($quotesToInsert)) {
-                // Inseriamo in blocchi da 500 per sicurezza (se hai condomini enormi)
                 foreach (array_chunk($quotesToInsert, 500) as $chunk) {
                     RataQuote::insert($chunk);
                 }
             }
 
-            // 4. Aggiorniamo il totale della rata header
             $rata->update(['importo_totale' => $importoTotaleRata]);
-
             $importoTotaleGenerato += $importoTotaleRata;
             $rateCreate++;
         }
@@ -100,49 +98,71 @@ class GenerateRateQuotesAction
         ];
     }
 
-    /**
-     * Logica di calcolo matematica
-     */
-    protected function calcolaImportoRata(
+    protected function calcolaImportoRataAvanzato(
         int $totaleImmobile,
         int $numeroRate,
         int $numeroRata,
         string $metodoDistribuzione,
         int $saldo
-    ): int {
+    ): array {
+        // --- 1. Calcolo Quota Pura ---
         $segno = $totaleImmobile < 0 ? -1 : 1;
         $absTot = abs($totaleImmobile);
-
-        // Divisione intera per non perdere centesimi
         $base = intdiv($absTot, $numeroRate);
         $resto = $absTot % $numeroRate;
+        
+        $quotaPuraRata = $base + ($numeroRata <= $resto ? 1 : 0);
+        $quotaPuraRata *= $segno;
 
-        // Distribuzione del resto sulle prime rate
-        $importo = $base + ($numeroRata <= $resto ? 1 : 0);
-        $importo *= $segno;
-
-        // Gestione Saldo Iniziale
+        // --- 2. Calcolo Componente Saldo ---
+        $quotaSaldoApplicata = 0;
         if ($saldo !== 0) {
-            // Caso 1: Tutto sulla prima rata
-            if ($metodoDistribuzione === 'prima_rata' && $numeroRata === 1) {
-                $importo += $saldo; // Corretto: Aggiunge debito (+) o toglie credito (-)
-            }
-
-            // Caso 2: Spalmato su tutte le rate
-            if ($metodoDistribuzione === 'tutte_rate') {
+            if ($metodoDistribuzione === 'prima_rata') {
+                if ($numeroRata === 1) {
+                    $quotaSaldoApplicata = $saldo;
+                }
+            } elseif ($metodoDistribuzione === 'tutte_rate') {
                 $segnoSaldo = $saldo < 0 ? -1 : 1;
                 $absSaldo   = abs($saldo);
-
                 $baseSaldo = intdiv($absSaldo, $numeroRate);
                 $restoSaldo = $absSaldo % $numeroRate;
 
-                $quotaSaldo = $baseSaldo + ($numeroRata <= $restoSaldo ? 1 : 0);
-                $quotaSaldo *= $segnoSaldo;
-
-                $importo += $quotaSaldo;
+                $quotaSaldoApplicata = $baseSaldo + ($numeroRata <= $restoSaldo ? 1 : 0);
+                $quotaSaldoApplicata *= $segnoSaldo;
             }
         }
 
-        return $importo;
+        $importoFinale = $quotaPuraRata + $quotaSaldoApplicata;
+
+        // --- 3. Costruzione Snapshot ---
+        $snapshot = [
+            'origine' => OrigineQuota::CALCOLO_AUTOMATICO->value,
+            
+            // Dati Finanziari (per Tooltip)
+            'importi' => [
+                'quota_pura_gestione' => $quotaPuraRata,
+                'saldo_usato'         => $quotaSaldoApplicata,
+                'totale_calcolato'    => $importoFinale
+            ],
+            
+            // Contesto
+            'parametri' => [
+                'metodo_distribuzione'  => $metodoDistribuzione,
+                'numero_rata'           => $numeroRata,
+                'totale_rate_piano'     => $numeroRate
+            ],
+            
+            // Audit (FIX 2: Uso config e Facade Auth)
+            'audit' => [
+                'versione_calcolo'  => config('app.version'), 
+                'generato_il'       => now()->toIso8601String(),
+                'generato_da'       => Auth::check() ? 'user_'.Auth::id() : 'sistema',
+            ]
+        ];
+
+        return [
+            'importo_finale' => $importoFinale,
+            'snapshot'       => $snapshot
+        ];
     }
 }

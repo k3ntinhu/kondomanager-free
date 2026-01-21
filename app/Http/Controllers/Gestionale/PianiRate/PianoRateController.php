@@ -24,6 +24,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Events\Gestionale\PianoRateStatusUpdated;
+use App\Helpers\MoneyHelper;
+use Illuminate\Support\Facades\Auth; 
 
 class PianoRateController extends Controller
 {
@@ -88,10 +90,6 @@ class PianoRateController extends Controller
 
             DB::beginTransaction();
 
-           /*  $this->pianoRateCreatorService->verificaGestione($validated['gestione_id']);
-
-            $pianoRate = $this->pianoRateCreatorService->creaPianoRate($validated, $condominio); */
-
             $this->pianoRateCreatorService->verificaGestione($validated['gestione_id']);
 
             $pianoRate = $this->pianoRateCreatorService->creaPianoRate($validated, $condominio);
@@ -135,16 +133,27 @@ class PianoRateController extends Controller
             'rate.rateQuote.immobile',
         ]);
 
-        // [AGGIUNTO] Recupero dati emissione per il modale
+        // --- INIZIO LOGICA MIGRAZIONE V1.8 verrà rimosso nella versione 1.9 ---
+        $hasLegacyRates = $pianoRate->rate()
+            ->whereHas('rateQuote', fn($q) => $q->whereNull('regole_calcolo'))
+            ->exists();
+
+        $hasEmittedRates = $pianoRate->rate()
+            ->whereHas('rateQuote', fn($q) => $q->whereNotNull('scrittura_contabile_id'))
+            ->exists();
+
+        $needsMigration = $hasLegacyRates && !$hasEmittedRates;
+        // --- FINE LOGICA MIGRAZIONE ---
+
         $ratePure = $pianoRate->rate()
             ->orderBy('numero_rata')
             ->get()
             ->map(function($rata) {
                 return [
-                    'id' => $rata->id,
-                    'numero_rata' => $rata->numero_rata,
-                    'is_emessa' => $rata->rateQuote()->whereNotNull('scrittura_contabile_id')->exists(),
-                    'totale_rata' => $rata->importo_totale / 100, // Accessor manuale se non hai modificato il model
+                    'id'            => $rata->id,
+                    'numero_rata'   => $rata->numero_rata,
+                    'is_emessa'     => $rata->rateQuote()->whereNotNull('scrittura_contabile_id')->exists(),
+                    'totale_rata'   => MoneyHelper::fromCents($rata->importo_totale), 
                 ];
             });
 
@@ -152,9 +161,10 @@ class PianoRateController extends Controller
             'condominio'         => $condominio,
             'esercizio'          => $esercizio,
             'pianoRate'          => new PianoRateResource($pianoRate),
-            'ratePure'           => $ratePure, // [AGGIUNTO]
+            'ratePure'           => $ratePure, 
             'quotePerAnagrafica' => $this->pianoRateQuoteService->quotePerAnagrafica($pianoRate),
             'quotePerImmobile'   => $this->pianoRateQuoteService->quotePerImmobile($pianoRate),
+            'needsMigration'     => $needsMigration 
         ]);
     }
 
@@ -172,43 +182,22 @@ class PianoRateController extends Controller
 
         $pianoRate->update(['stato' => $nuovoStato]);
 
+        // Ottieni l'utente autenticato con controllo di sicurezza
+        $user = Auth::user() ?? throw new \LogicException('User must be authenticated here');
+
         // LANCIA L'EVENTO
         // Laravel gestirà i Listener (e quindi i Job in coda) automaticamente
         PianoRateStatusUpdated::dispatch(
             $condominio, 
             $esercizio,
             $pianoRate, 
-            auth()->user(), 
+            $user,
             $vecchioStato, 
             $nuovoStato
         );
 
         return back()->with($this->flashSuccess('Stato aggiornato con successo.'));
     }
- /*    public function updateStato(Request $request, Condominio $condominio, Esercizio $esercizio, PianoRate $pianoRate)
-    {
-       
-        $validated = $request->validate([
-            'approvato' => 'required|boolean'
-        ]);
-
-        $nuovoStato = $validated['approvato'] ? StatoPianoRate::APPROVATO : StatoPianoRate::BOZZA;
-
-        if ($nuovoStato === StatoPianoRate::BOZZA) {
-            $haRateEmesse = $pianoRate->rate()
-                ->whereHas('rateQuote', fn($q) => $q->whereNotNull('scrittura_contabile_id'))
-                ->exists();
-
-            if ($haRateEmesse) {
-                // Usiamo il flash message per l'utente e back() per Inertia
-                return back()->with($this->flashError('Impossibile riportare in Bozza: esistono rate già emesse in contabilità. Annulla prima le emissioni.'));
-            }
-        }
-
-        $pianoRate->update(['stato' => $nuovoStato]);
-
-        return back()->with($this->flashSuccess('Stato del piano aggiornato: ' . ($validated['approvato'] ? 'Approvato' : 'Bozza')));
-    } */
 
     public function destroy(Condominio $condominio, Esercizio $esercizio, PianoRate $pianoRate): RedirectResponse
     {

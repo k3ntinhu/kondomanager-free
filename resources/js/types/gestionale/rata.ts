@@ -1,3 +1,15 @@
+
+/**
+ * Interfaccia per il dettaglio quote nel tooltip
+ */
+export interface DettaglioQuotaRata {
+    unita: string;
+    residuo: number;
+    is_credito: boolean;
+    componente_saldo: number;
+    componente_spesa: number;
+}
+
 /**
  * Interfaccia per rappresentare una rata condominiale
  */
@@ -42,6 +54,8 @@ export interface Rata {
     scadenza?: string;
     /** Controlla se la rata è stata emessa oppure no */
     is_emitted?: boolean;
+    // Aggiunto questo campo opzionale per gestire il dettaglio delle quote
+    dettaglio_quote?: DettaglioQuotaRata[];
 }
 
 /**

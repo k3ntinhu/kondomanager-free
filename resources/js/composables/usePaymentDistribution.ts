@@ -225,7 +225,7 @@ export function usePaymentDistribution() {
         loadingRate,
         mode,
         isScaduta,
-        setPriorityRataId, // <--- 4. IMPORTANTE: Esportiamo la funzione!
+        setPriorityRataId, 
         getRateListByGestione,
         getTotalAllocato,
         getTotaleDebito,

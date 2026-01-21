@@ -59,6 +59,7 @@ const props = defineProps<{
   quotePerAnagrafica: any[],
   quotePerImmobile: any[],
   ratePure: any[],
+  needsMigration: boolean; // <--- NUOVA PROP
 }>()
 
 const { generatePath, generateRoute } = usePermission();
@@ -90,6 +91,29 @@ const showFeedback = (title: string, message: string, isError: boolean = false) 
         message,
         isError
     };
+};
+
+// --- LOGICA MIGRAZIONE (AGGIUNTA) ---
+const isMigrationDialogOpen = ref(props.needsMigration);
+
+const executeMigration = () => {
+    router.post(route(generateRoute('gestionale.esercizi.piani-rate.regenerate'), { 
+        condominio: props.condominio.id, 
+        esercizio: props.esercizio.id,
+        pianoRate: props.pianoRate.id 
+    }), {}, { 
+        preserveScroll: true,
+        onSuccess: () => {
+            isMigrationDialogOpen.value = false;
+            showFeedback('Aggiornamento Completato', 'Il piano rate è stato aggiornato alla nuova versione contabile (v1.8).', false);
+        },
+        onError: () => {
+             // Questo caso non dovrebbe capitare grazie al filtro "Soft" nel controller, 
+             // ma lo gestiamo per sicurezza.
+             isMigrationDialogOpen.value = false; // Chiudiamo per non bloccare l'utente in un loop
+             showFeedback('Attenzione', 'Impossibile aggiornare automaticamente il piano rate (probabilmente ci sono rate emesse). Il piano resterà nella versione precedente.', true);
+        }
+    });
 };
 
 const isAlertOpen = ref(false);
@@ -177,10 +201,8 @@ const submitEmissione = () => {
         },
         onError: (errors) => {
             console.error("Errore Emissione:", errors);
-            // Cerchiamo di estrarre il messaggio pulito dal flash error se presente
             const flashError = page.props.flash.message?.type === 'error' ? page.props.flash.message.message : null;
             const msg = flashError || Object.values(errors)[0] || "Si è verificato un errore imprevisto.";
-            
             showFeedback('Errore Emissione', msg, true); 
         },
     });
@@ -215,19 +237,16 @@ const executeAnnullamento = () => {
 
 // --- RICALCOLO ---
 const confirmRecalculate = () => {
-    // 1. Controllo Preventivo Lato Client
     const haRateEmesse = props.ratePure?.some(r => r.is_emessa);
 
     if (haRateEmesse) {
         showFeedback(
             'Impossibile ricalcolare', 
-            'Ci sono rate già emesse in contabilità (anche se non pagate). Per sicurezza, devi prima annullare le emissioni usando il tasto "Annulla" nella tabella.', 
+            'Ci sono rate già emesse in contabilità. Per sicurezza, devi prima annullare le emissioni usando il tasto "Annulla" nella tabella.', 
             true 
         );
         return; 
     }
-
-    // 2. Se tutto ok, apriamo la conferma
     isRecalculateAlertOpen.value = true;
 };
 
@@ -839,6 +858,32 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
             </DialogFooter>
         </DialogContent>
     </Dialog>
+
+    <AlertDialog :open="isMigrationDialogOpen">
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <div class="flex items-center gap-3 mb-2 text-amber-600">
+                    <AlertTriangle class="h-6 w-6" />
+                    <AlertDialogTitle class="text-lg">Aggiornamento Necessario</AlertDialogTitle>
+                </div>
+                <AlertDialogDescription class="text-base text-gray-700">
+                    Abbiamo rilevato che questo Piano Rate è stato generato con una versione precedente del software.
+                    <br><br>
+                    Per garantire la <strong>tracciabilità contabile</strong> e abilitare le nuove funzioni di emissione, è necessario rigenerare i calcoli.
+                    <br><br>
+                    <span class="text-xs text-gray-500 bg-gray-100 p-2 rounded block">
+                        Nessun importo verrà modificato, verranno solo aggiunti i dettagli per la trasparenza.
+                    </span>
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogAction @click="executeMigration" class="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto">
+                    <RotateCw class="w-4 h-4 mr-2" />
+                    Aggiorna Piano Rate Ora
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
 
   </GestionaleLayout>
 </template>
