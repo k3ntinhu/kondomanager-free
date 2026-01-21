@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import { ref, watch, computed, onMounted } from 'vue'; 
 import { useForm, Head } from '@inertiajs/vue3';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
@@ -8,7 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { AlertCircle,CheckCircle2,Calculator,RotateCcw,User,Building,ArrowRight,Euro,FileText,Receipt,ArrowRightLeft,Info } from 'lucide-vue-next';
+import { 
+    AlertCircle, CheckCircle2, Calculator, RotateCcw, 
+    User, Building, ArrowRight, Euro, FileText, Receipt, 
+    ArrowRightLeft, Info, Coins // Aggiunta icona Coins
+} from 'lucide-vue-next';
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter'; 
 import { usePermission } from "@/composables/permissions";
 import { usePaymentDistribution } from '@/composables/usePaymentDistribution';
@@ -25,8 +28,7 @@ const props = defineProps<{
     gestioni: any[];
 }>();
 
-// FIX 3: Configurazione CRITICA. 
-// fromCents: false perché il Backend ci manda già i FLOAT (Euro), non i centesimi.
+// fromCents: false per gestire i float diretti
 const { euro } = useCurrencyFormatter({ fromCents: false }); 
 
 const { generateRoute } = usePermission();
@@ -82,7 +84,6 @@ const fetchDebiti = async (params: { anagrafica_id?: number | null; immobile_id?
             params,
             isScaduta
         );
-        // Cast esplicito per TS
         rawRateList.value = result as Rata[];
         if (form.importo_totale > 0) runDistribution();
     } finally {
@@ -141,6 +142,12 @@ onMounted(async () => {
     if (prefillImporto) form.importo_totale = parseFloat(prefillImporto);
     if (prefillAnagrafica) form.pagante_id = parseInt(prefillAnagrafica);
 });
+
+// Helper per parsare residuo dal dettaglio quote (che potrebbe essere stringa)
+const parseResiduoQuota = (val: any) => {
+    if (typeof val === 'number') return val;
+    return parseFloat(String(val).replace(/[^\d.-]/g, '')) || 0;
+};
 </script>
 
 <template>
@@ -161,7 +168,6 @@ onMounted(async () => {
                 
                 <div class="lg:col-span-4 h-full flex flex-col bg-white rounded-xl border shadow-sm overflow-hidden">
                     <div class="p-5 flex-1 overflow-y-auto space-y-5 custom-scrollbar">
-                        
                         <div class="space-y-3">
                             <Label class="text-[11px] uppercase text-gray-500 font-bold tracking-wider">Cerca debiti per</Label>
                             <div class="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-lg">
@@ -192,11 +198,7 @@ onMounted(async () => {
                                 <div class="absolute left-0 top-0 bottom-0 w-9 flex items-center justify-center bg-gray-50 border-r border-gray-200 rounded-l-md group-focus-within:bg-primary/5 group-focus-within:border-primary/30 transition-colors">
                                     <Euro class="w-4 h-4 text-gray-400 group-focus-within:text-primary"/>
                                 </div>
-                                <Input
-                                    type="number" step="0.01" min="0" v-model="form.importo_totale"
-                                    class="pl-11 h-10 text-lg font-bold font-mono shadow-sm focus:ring-2 focus:ring-primary/20 border-gray-200"
-                                    placeholder="0.00"
-                                />
+                                <Input type="number" step="0.01" min="0" v-model="form.importo_totale" class="pl-11 h-10 text-lg font-bold font-mono shadow-sm focus:ring-2 focus:ring-primary/20 border-gray-200" placeholder="0.00" />
                             </div>
                         </div>
 
@@ -241,11 +243,7 @@ onMounted(async () => {
                             <span class="font-bold text-gray-800">{{ euro(totalAllocato) }}</span>
                         </div>
 
-                        <Button 
-                            @click="submit" 
-                            :disabled="form.processing || form.importo_totale <= 0 || !form.pagante_id"
-                            class="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md shadow-emerald-600/10 transition-all text-sm"
-                        >
+                        <Button @click="submit" :disabled="form.processing || form.importo_totale <= 0 || !form.pagante_id" class="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md shadow-emerald-600/10 transition-all text-sm">
                             <CheckCircle2 class="w-4 h-4 mr-2" /> Conferma incasso
                         </Button>
                     </div>
@@ -264,7 +262,7 @@ onMounted(async () => {
                             </div>
                             
                             <div v-if="rateList.length" class="flex items-center gap-2 text-xs">
-                                <span class="text-gray-500">Debito:</span>
+                                <span class="text-gray-500">Debito Totale:</span>
                                 <span class="font-bold text-gray-900 mr-2">{{ euro(totaleDebito) }}</span>
                                 <ArrowRight class="w-3 h-3 text-gray-300" />
                                 <div class="flex items-center gap-1 px-2 py-0.5 rounded border transition-colors shadow-sm" :class="bilancioFinale.class">
@@ -305,11 +303,9 @@ onMounted(async () => {
                                         <td class="p-3 pl-4 align-top">
                                             <div class="flex flex-col">
                                                 <span class="font-mono text-xs font-medium text-gray-600">{{ r.scadenza_human }}</span>
-                                                
                                                 <span v-if="r.is_emitted === false" class="mt-1 inline-flex items-center text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded w-fit uppercase tracking-tighter" title="Questa rata non è stata ancora emessa contabilmente">
                                                     <AlertCircle class="w-2.5 h-2.5 mr-1" /> No emissione
                                                 </span>
-
                                                 <span v-if="r.scaduta && r.residuo > 0" class="text-[9px] text-red-500 font-bold uppercase mt-1 flex items-center bg-red-50 w-fit px-1 rounded">
                                                     <AlertCircle class="w-2.5 h-2.5 mr-1"/> Scaduta
                                                 </span>
@@ -337,9 +333,14 @@ onMounted(async () => {
                                                             </TooltipTrigger>
                                                             
                                                             <TooltipContent side="bottom" class="bg-slate-900 border-slate-700 text-slate-200 p-4 w-80 shadow-2xl rounded-lg z-[100]">
-                                                                
+    
                                                                 <div class="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-wider border-b border-slate-700 pb-1 text-center">
-                                                                    Analisi contabile
+                                                                    <span v-if="r.coperta_da_credito || r.residuo < 0 || r.parzialmente_coperta">
+                                                                        Utilizzo Credito / Copertura
+                                                                    </span>
+                                                                    <span v-else>
+                                                                        Analisi Debito
+                                                                    </span>
                                                                 </div>
 
                                                                 <ul class="space-y-4">
@@ -348,35 +349,58 @@ onMounted(async () => {
                                                                             <Building class="w-3 h-3 text-slate-500"/> {{ dett.unita }}
                                                                         </div>
                                                                         
-                                                                        <div v-if="Math.abs(dett.componente_saldo) > 0.01" class="flex justify-between items-center pl-2 mb-1">
-                                                                            <span class="text-slate-400">Saldo iniziale:</span>
-                                                                            <span class="font-mono font-medium" :class="dett.componente_saldo < 0 ? 'text-emerald-400' : 'text-red-400'">
-                                                                                {{ euro(dett.componente_saldo) }}
-                                                                            </span>
+                                                                        <div v-if="dett.waterfall_start !== undefined">
+                                                                            <div v-if="Math.abs(dett.waterfall_start) > 0.001" class="flex justify-between items-center pl-2 mb-1 text-slate-400">
+                                                                                <span class="flex items-center gap-1">
+                                                                                    <div class="w-1.5 h-1.5 rounded-full" :class="dett.waterfall_start < 0 ? 'bg-emerald-500' : 'bg-red-500'"></div>
+                                                                                    {{ dett.waterfall_start < 0 ? 'Credito Disp.:' : 'Saldo Progressivo:' }}
+                                                                                </span>
+                                                                                <span class="font-mono">{{ euro(dett.waterfall_start) }}</span>
+                                                                            </div>
+
+                                                                            <div class="flex justify-between items-center pl-2 mb-1 text-white">
+                                                                                <span class="pl-2.5">Quota Rata:</span>
+                                                                                <span class="font-mono font-bold">+ {{ euro(dett.waterfall_cost) }}</span>
+                                                                            </div>
+
+                                                                            <div class="flex justify-between items-center pl-2 pt-1 border-t border-slate-800">
+                                                                                <span class="text-[10px] text-slate-500 font-bold uppercase">Nuovo Saldo:</span>
+                                                                                <span class="font-mono font-bold" :class="dett.waterfall_end < 0 ? 'text-emerald-500' : 'text-white'">
+                                                                                    {{ euro(dett.waterfall_end) }}
+                                                                                </span>
+                                                                            </div>
+                                                                            
+                                                                            <div v-if="dett.waterfall_end < 0" class="text-right text-[9px] text-emerald-500 italic mt-0.5 pr-1">
+                                                                                (Sei ancora a credito)
+                                                                            </div>
                                                                         </div>
 
+                                                                        <div v-else>
                                                                         <div class="flex justify-between items-center pl-2 mb-1">
-                                                                            <span class="text-slate-400">Quota rata:</span>
-                                                                            <span class="font-mono font-medium text-slate-200">
-                                                                                + {{ euro(Math.abs(dett.componente_spesa)) }}
-                                                                            </span>
-                                                                        </div>
-
-                                                                        <div class="flex justify-between items-center pl-2 pt-1 border-t border-slate-800">
-                                                                            <span class="text-[10px] text-slate-500 font-bold uppercase">Totale unità:</span>
-                                                                            <span class="font-mono font-bold" :class="dett.residuo < 0 ? 'text-emerald-500' : 'text-orange-400'">
-                                                                                {{ euro(dett.residuo) }}
-                                                                            </span>
+                                                                                <span class="text-slate-400">Quota rata:</span>
+                                                                                <span class="font-mono font-medium text-slate-200">
+                                                                                    + {{ euro(Math.abs(dett.componente_spesa)) }}
+                                                                                </span>
+                                                                            </div>
+                                                                            <div class="flex justify-between items-center pl-2 pt-1 border-t border-slate-800">
+                                                                                <span class="text-[10px] text-slate-500 font-bold uppercase">Totale:</span>
+                                                                                <span class="font-mono font-bold" :class="parseResiduoQuota(dett.residuo) < 0 ? 'text-emerald-500' : 'text-orange-400'">
+                                                                                    {{ euro(parseResiduoQuota(dett.residuo)) }}
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
                                                                     </li>
                                                                 </ul>
 
                                                                 <div class="border-t-2 border-slate-600 pt-2 mt-3 flex justify-between items-center bg-slate-800/50 p-2 rounded -mx-2">
-                                                                    <span class="text-xs font-bold text-white uppercase tracking-wide">Netto da pagare:</span>
-                                                                    <span class="font-mono font-bold text-sm" :class="r.residuo < 0 ? 'text-emerald-400' : 'text-white'">
-                                                                        {{ r.residuo < 0 ? 'A Credito ' : '' }} 
-                                                                        {{ euro(Math.abs(r.residuo)) }}
-                                                                    </span>
+                                                                    <span class="text-xs font-bold text-white uppercase tracking-wide">Netto Rata:</span>
+                                                                    <div class="text-right">
+                                                                        <span class="font-mono font-bold text-sm" :class="r.residuo < 0 ? 'text-emerald-400' : 'text-white'">
+                                                                            {{ r.residuo < 0 ? 'A Credito ' : '' }} 
+                                                                            {{ euro(Math.abs(r.residuo)) }}
+                                                                        </span>
+                                                                        <div v-if="r.coperta_da_credito" class="text-[9px] text-emerald-400 italic">Interamente coperta</div>
+                                                                    </div>
                                                                 </div>
                                                             </TooltipContent>
                                                         </Tooltip>
@@ -388,32 +412,50 @@ onMounted(async () => {
                                         </td>
 
                                         <td class="p-3 text-right align-top">
-                                            <span class="font-mono text-xs font-medium" :class="r.residuo < 0 ? 'text-blue-600 font-bold' : 'text-gray-500'">
-                                                {{ euro(r.residuo) }}
-                                            </span>
-
-                                            <div v-if="r.residuo > 0 && r.residuo < r.importo_totale" class="flex justify-end mt-1">
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200" 
-                                                    :title="'Importo originale: ' + euro(r.importo_totale)">
-                                                    <RotateCcw class="w-2.5 h-2.5 mr-1" />
-                                                    PARZIALE
+                                            <div v-if="r.coperta_da_credito" class="flex flex-col items-end">
+                                                <span class="font-mono text-xs font-bold text-gray-400 line-through decoration-gray-300">
+                                                    {{ euro(r.residuo_originale) }}
+                                                </span>
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-600 border border-blue-200 mt-0.5" title="Coperta dal credito pregresso">
+                                                    <Coins class="w-3 h-3 mr-1" /> COPERTA
                                                 </span>
                                             </div>
 
-                                            <span v-if="r.residuo < 0" class="block text-[9px] text-blue-400 uppercase font-bold mt-0.5">Credito</span>
+                                            <div v-else-if="r.parzialmente_coperta" class="flex flex-col items-end">
+                                                <span class="font-mono text-xs font-bold text-gray-800">
+                                                    {{ euro(r.residuo) }}
+                                                </span>
+                                                <span class="text-[9px] text-blue-500 font-medium">
+                                                    (Ridotto da {{ euro(r.residuo_originale) }})
+                                                </span>
+                                            </div>
+
+                                            <div v-else-if="r.residuo < 0" class="flex flex-col items-end">
+                                                <span class="font-mono text-xs font-bold text-blue-600">
+                                                    {{ euro(r.residuo) }}
+                                                </span>
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-600 border border-blue-200 mt-0.5">
+                                                    CREDITO
+                                                </span>
+                                            </div>
+
+                                            <div v-else class="flex flex-col items-end">
+                                                <span class="font-mono text-xs font-medium text-gray-500">
+                                                    {{ euro(r.residuo) }}
+                                                </span>
+                                                
+                                                <div v-if="r.residuo > 0 && r.residuo < r.importo_totale && !r.parzialmente_coperta" class="mt-1">
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200" 
+                                                        :title="'Importo originale: ' + euro(r.importo_totale)">
+                                                        <RotateCcw class="w-2.5 h-2.5 mr-1" />
+                                                        PARZIALE
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </td>
 
                                         <td class="p-3 pr-4 text-right align-top">
-                                            <Input 
-                                                v-if="r.residuo > 0"
-                                                type="number" 
-                                                v-model="r.da_pagare" 
-                                                @input="onManualChange(r, $event.target.value)" 
-                                                :disabled="mode==='auto'" 
-                                                class="text-right font-bold h-8 text-xs font-mono transition-all" 
-                                                :class="r.da_pagare > 0 ? 'border-emerald-500 bg-white ring-1 ring-emerald-500/20 text-emerald-700' : 'bg-transparent border-transparent group-hover:border-gray-200'" 
-                                                placeholder="0.00"
-                                            />
+                                            <Input v-if="r.residuo > 0" type="number" v-model="r.da_pagare" @input="onManualChange(r, $event.target.value)" :disabled="mode==='auto'" class="text-right font-bold h-8 text-xs font-mono transition-all" :class="r.da_pagare > 0 ? 'border-emerald-500 bg-white ring-1 ring-emerald-500/20 text-emerald-700' : 'bg-transparent border-transparent group-hover:border-gray-200'" placeholder="0.00" />
                                             <div v-else class="text-xs text-blue-400 italic py-1 opacity-70">
                                                 Non pagabile
                                             </div>
