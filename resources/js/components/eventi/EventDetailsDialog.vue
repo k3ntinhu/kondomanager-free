@@ -20,10 +20,45 @@ const isProcessing = ref(false);
 const isAdmin = computed(() => props.evento?.meta?.type === 'emissione_rata');
 const isCondomino = computed(() => props.evento?.meta?.type === 'scadenza_rata_condomino');
 
+// Determina se mostrare la colonna sinistra con dettagli finanziari
+const hasFinancialDetails = computed(() => {
+    // Mostra se è un evento di rata (admin o condomino)
+    if (isAdmin.value || isCondomino.value) return true;
+    
+    // Mostra se ci sono metadati finanziari (numero_rata, gestione, totale_rata, ecc.)
+    const meta = props.evento?.meta;
+    if (meta?.numero_rata || meta?.totale_rata || meta?.importo_originale || meta?.gestione) {
+        return true;
+    }
+    
+    return false;
+});
+
 // --- FIX TYPESCRIPT: Tipizzazione esplicita <number> ---
 const importoOriginale = computed<number>(() => Number(props.evento?.meta?.totale_rata || props.evento?.meta?.importo_originale || 0));
 const importoRestante = computed<number>(() => props.evento?.meta?.importo_restante !== undefined ? Number(props.evento?.meta?.importo_restante) : importoOriginale.value);
 const importoPagato = computed<number>(() => Number(props.evento?.meta?.importo_pagato || 0));
+const arretratiPregressi = computed<number>(() => Number(props.evento?.meta?.arretrati_pregressi || 0));
+// --- Riferimento Arretrati "Smart" ---
+const rifArretrati = computed<string>(() => {
+    const raw = props.evento?.meta?.rif_arretrati || '';
+    if (!raw) return '';
+
+    // 1. Convertiamo in array e Rimuoviamo duplicati
+    const parts = raw.split(', ').filter(Boolean);
+    const uniqueParts = [...new Set(parts)]; // Rimuove #1 duplicati
+
+    // 2. Se sono poche (max 4), le mostriamo tutte
+    if (uniqueParts.length <= 4) {
+        return uniqueParts.join(', ');
+    }
+
+    // 3. Se sono tante, mostriamo le prime 3 e il conteggio delle altre
+    const firstFew = uniqueParts.slice(0, 2).join(', ');
+    const remaining = uniqueParts.length - 2;
+    
+    return `${firstFew} e altre ${remaining}`;
+});
 
 // Stati
 const isPaid = computed(() => props.evento?.meta?.status === 'paid'); 
@@ -47,7 +82,6 @@ const isPartiallyCoveredByCredit = computed(() =>
 const daysDiff = computed(() => { if (!props.evento?.start_time) return 0; return differenceInDays(new Date(props.evento.start_time), new Date()); });
 const isExpired = computed(() => daysDiff.value < 0 && !isGeneratingCredit.value && !isFullyCoveredByCredit.value && !isPaid.value && !isReported.value && importoRestante.value > 0.01);
 const isEmitted = computed(() => props.evento?.meta?.is_emitted === true);
-const arretratiPregressi = computed<number>(() => Number(props.evento?.meta?.arretrati_pregressi || 0));
 
 const formatDate = (dateStr: string) => { if(!dateStr) return ''; return format(new Date(dateStr), "d MMMM yyyy", { locale: it }); };
 
@@ -108,7 +142,8 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
         <DialogContent class="sm:max-w-5xl p-0 overflow-hidden rounded-xl border-none shadow-2xl bg-white dark:bg-slate-950 block gap-0">
             <div class="flex flex-col md:flex-row h-full min-h-[450px]">
                 
-                <div class="md:w-[45%] bg-slate-50 dark:bg-slate-900/50 p-8 flex flex-col gap-6 border-r border-slate-100 dark:border-slate-800 overflow-y-auto max-h-[80vh]">
+                <!-- Colonna sinistra: mostrata SOLO se ci sono dettagli finanziari -->
+                <div v-if="hasFinancialDetails" class="md:w-[45%] bg-slate-50 dark:bg-slate-900/50 p-8 flex flex-col gap-6 border-r border-slate-100 dark:border-slate-800 overflow-y-auto max-h-[80vh]">
                     
                     <div>
                         <div class="flex flex-row flex-wrap items-center gap-2 mb-6">
@@ -139,7 +174,7 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                         <div v-if="scontrinoData.length > 0" class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 space-y-6">
                             
                             <div class="flex flex-col gap-2 mb-2">
-                                <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Dettaglio copertura / Utilizzo credito</p>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Dettaglio copertura / Utilizzo credito</p>
                             </div>
 
                             <div v-for="(item, idx) in scontrinoData" :key="idx" class="relative group">
@@ -171,13 +206,13 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                             </div>
 
                                             <div class="border-t border-slate-100 dark:border-slate-700 pt-1.5 mt-1 flex justify-between items-center">
-                                                <span class="text-[10px] font-bold uppercase text-slate-400">Nuovo saldo:</span>
+                                                <span class="text-xs font-bold uppercase text-slate-400">Nuovo saldo:</span>
                                                 <span class="font-mono font-bold" :class="item.nuovo_saldo < -0.01 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'">
                                                     {{ euro(item.nuovo_saldo) }}
                                                 </span>
                                             </div>
                                             
-                                            <div v-if="item.is_credito" class="text-right text-[10px] text-emerald-600 dark:text-emerald-500 italic">
+                                            <div v-if="item.is_credito" class="text-right text-xs text-emerald-600 dark:text-emerald-500 italic">
                                                 (Sei ancora a credito)
                                             </div>
                                         </div>
@@ -185,27 +220,76 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                 </div>
                             </div>
                             
-                            <div class="mt-4 flex justify-between items-center pt-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 -mx-2 px-2 py-2 rounded">
-                                <span class="font-bold text-sm text-slate-900 dark:text-white">Netto da pagare</span>
-                                <span class="text-xl font-bold font-mono tracking-tight" 
-                                      :class="isFullyCoveredByCredit ? 'text-emerald-600' : (isGeneratingCredit ? 'text-blue-600' : 'text-slate-900 dark:text-white')"> 
-                                    {{ euro(isFullyCoveredByCredit ? 0 : importoRestante, { forcePlus: false }) }} 
-                                </span>
+                            <div class="mt-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 -mx-2 px-3 py-3 rounded">
+                                
+                                <div v-if="importoPagato > 0.01 && !isGeneratingCredit && !isFullyCoveredByCredit" class="flex flex-col gap-1 mb-2 pb-2 border-b border-slate-200 dark:border-slate-700 text-xs">
+                                    <div class="flex justify-between text-slate-500 dark:text-slate-400">
+                                        <span>Totale rata</span>
+                                        <span>{{ euro(importoOriginale) }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-emerald-600 dark:text-emerald-500 font-medium">
+                                        <span class="flex items-center gap-1"><CheckCircle class="w-3 h-3" /> Già versato</span>
+                                        <span>- {{ euro(importoPagato) }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white">Netto da pagare</span>
+                                    <span class="text-xl font-bold font-mono tracking-tight" 
+                                          :class="isFullyCoveredByCredit ? 'text-emerald-600' : (isGeneratingCredit ? 'text-blue-600' : 'text-slate-900 dark:text-white')"> 
+                                        {{ euro(isFullyCoveredByCredit ? 0 : importoRestante, { forcePlus: false }) }} 
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="md:w-[55%] p-8 flex flex-col relative overflow-y-auto max-h-[80vh]"> 
+                <div :class="hasFinancialDetails ? 'md:w-[55%]' : 'w-full'" class="p-6 flex flex-col relative overflow-y-auto max-h-[80vh]">
                     
-                    <h2 class="text-2xl font-bold pr-10 mb-6 leading-tight flex items-start gap-2" :class="isExpired ? 'text-red-600 dark:text-red-500' : 'text-slate-900 dark:text-white'"> <AlertTriangle v-if="isExpired" class="w-7 h-7 shrink-0" /> {{ evento.title }} </h2>
+                    <!-- Badge e data per eventi generici (quando non c'è la colonna sinistra) -->
+                    <div v-if="!hasFinancialDetails" class="mb-4">
+                        <div class="flex flex-wrap items-center gap-3 mb-4">
+                            <Badge variant="outline" :class="[getEventStyle(evento).color, 'border-current bg-white dark:bg-slate-900 shadow-sm px-2.5 py-1 whitespace-nowrap']">
+                                <component :is="getEventStyle(evento).icon" class="w-3.5 h-3.5 mr-1.5" /> {{ getEventStyle(evento).label }}
+                            </Badge>
+                            
+                            <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                                <CalendarDays class="w-4 h-4" />
+                                <span class="text-sm font-medium capitalize">{{ formatDate(evento.start_time) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h2 class="text-xl font-bold pr-10 leading-tight flex items-start gap-2" :class="[isExpired ? 'text-red-600 dark:text-red-500' : 'text-slate-900 dark:text-white', hasFinancialDetails ? 'mb-6' : 'mb-3']"> <AlertTriangle v-if="isExpired" class="w-6 h-6 shrink-0" /> {{ evento.title }} </h2>
                     
                     <div v-if="isRejected" class="mb-3 p-4 rounded-lg bg-red-50 border border-red-100"><div class="flex items-start gap-3"><XCircle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" /><div><h4 class="font-bold text-red-700 text-sm">Pagamento rifiutato</h4><div class="bg-white p-2.5 rounded text-xs text-red-800 font-medium border border-red-200/50 italic mt-2"> "{{ evento.meta?.rejection_reason }}" </div><p class="text-xs text-red-500 mt-2">Verifica i dati e riprova.</p></div></div></div>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mb-8">
-                        <div v-if="evento.meta?.condominio_nome" class="group"><span class="text-xs text-slate-500 mb-1 flex items-center gap-1.5"><Building2 class="w-3.5 h-3.5" /> Condominio</span><p class="font-medium text-slate-900 truncate">{{ evento.meta.condominio_nome }}</p></div>
-                        <div v-if="evento.meta?.gestione" class="group"><span class="text-xs text-slate-500 mb-1 flex items-center gap-1.5"><Wallet class="w-3.5 h-3.5" /> Gestione</span><p class="font-medium text-slate-900 truncate">{{ evento.meta.gestione }}</p></div>
-                        <div v-if="evento.meta?.numero_rata" class="group"><span class="text-xs text-slate-500 mb-1 flex items-center gap-1.5"><Banknote class="w-3.5 h-3.5" /> Rata</span><p class="font-medium text-slate-900">Numero {{ evento.meta.numero_rata }}</p></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                        <div v-if="evento.meta?.condominio_nome" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-lg min-w-0">
+                            <span class="text-[10px] uppercase font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
+                                <Building2 class="w-3.5 h-3.5" /> Condominio
+                            </span>
+                            <p class="font-medium text-sm text-slate-900 dark:text-white truncate" :title="evento.meta.condominio_nome">
+                                {{ evento.meta.condominio_nome }}
+                            </p>
+                        </div>
+                        <div v-if="evento.meta?.gestione" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-lg min-w-0">
+                            <span class="text-[10px] uppercase font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
+                                <Wallet class="w-3.5 h-3.5" /> Gestione
+                            </span>
+                            <p class="font-medium text-sm text-slate-900 dark:text-white truncate" :title="evento.meta.gestione">
+                                {{ evento.meta.gestione }}
+                            </p>
+                        </div>
+                        <div v-if="evento.meta?.numero_rata" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-lg min-w-0">
+                            <span class="text-[10px] uppercase font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
+                                <Banknote class="w-3.5 h-3.5" /> Rata
+                            </span>
+                            <p class="font-medium text-sm text-slate-900 dark:text-white truncate">
+                                Numero {{ evento.meta.numero_rata }}
+                            </p>
+                        </div>
                     </div>
 
                     <div v-if="isCondomino">
@@ -215,14 +299,15 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                 <AlertTriangle class="w-4 h-4" />
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-orange-800 mb-1">Attenzione: Rate precedenti insolute</h4>
+                                <h4 class="text-sm font-bold text-orange-800 mb-1">Attenzione: rate precedenti insolute</h4>
                                 <p class="text-xs text-orange-700 leading-relaxed mb-2">
                                     Risultano arretrati non saldati per un totale di 
-                                    <span class="font-bold">{{ euro(arretratiPregressi) }}</span>.
+                                    <span class="font-bold">{{ euro(arretratiPregressi) }}</span>
+                                    <span v-if="rifArretrati"> (rif. rate {{ rifArretrati }})</span>.
                                 </p>
-                                <p class="text-[10px] text-orange-600/80">
+                                <p class="text-xs text-orange-600/80">
                                     L'importo qui sotto si riferisce solo alla rata corrente. 
-                                    Per regolarizzare la situazione, verifica le rate scadute precedenti.
+                                    Per regolarizzare la situazione, verifica le rate scadute precedenti, effettua il pagamento e segnalalo.
                                 </p>
                             </div>
                         </div>
@@ -238,12 +323,18 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                 <span class="text-amber-700 flex items-center gap-2 font-semibold text-sm"><AlertCircle class="w-4 h-4" /> Resta da versare</span>
                                 <span class="font-bold text-xl text-amber-700">{{ euro(importoRestante) }}</span>
                             </div>
-                            <div v-if="!isEmitted">
+
+                            <div v-if="isReported">
+                                <Button class="w-full h-12 bg-amber-100 text-amber-700 border border-amber-200 cursor-not-allowed rounded-lg font-medium shadow-none text-xs" disabled>
+                                    Saldo inviato - In attesa di conferma...
+                                </Button>
+                            </div>
+                            <div v-else-if="!isEmitted">
                                 <div class="p-3 rounded-lg bg-slate-100 border border-slate-200 mb-3 flex gap-3 items-start">
                                     <Clock class="w-4 h-4 mt-0.5 text-slate-400" />
                                     <div>
                                         <h4 class="font-bold text-slate-700 text-xs mb-0.5">Rata in attesa di emissione</h4>
-                                        <p class="text-[11px] text-slate-500 leading-snug">
+                                        <p class="text-xs text-slate-500 leading-snug">
                                             L'amministratore non ha ancora abilitato i versamenti per questa scadenza. 
                                             Potrai registrare il pagamento nei prossimi giorni.
                                         </p>
@@ -253,10 +344,10 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                     Pagamento non ancora attivo
                                 </Button>
                             </div>
-                            <div v-else><Button class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-semibold rounded-lg" :disabled="isProcessing" @click="reportPayment">{{ isProcessing ? 'Invio...' : 'Segnala Saldo Rimanente' }}</Button></div>
+                            <div v-else><Button class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-semibold rounded-lg" :disabled="isProcessing" @click="reportPayment">{{ isProcessing ? 'Invio...' : 'Segnala pagamento saldo' }}</Button></div>
                         </div>
 
-                        <div v-else-if="isFullyCoveredByCredit" class="mb-3 flex items-center justify-between p-4 rounded-lg bg-emerald-50 border border-emerald-200"><div class="flex flex-col"><span class="text-emerald-700 flex items-center gap-2 font-semibold text-sm"><CheckCircle class="w-4 h-4" /> Coperta da Credito</span><span class="text-xs text-emerald-600/80 mt-1">Rata saldata col credito pregresso.</span></div><div class="text-right"><span class="text-[10px] uppercase text-emerald-600/70 font-bold block">Da versare</span><span class="font-bold text-xl text-emerald-700">€ 0,00</span></div></div>
+                        <div v-else-if="isFullyCoveredByCredit" class="mb-3 flex items-center justify-between p-4 rounded-lg bg-emerald-50 border border-emerald-200"><div class="flex flex-col"><span class="text-emerald-700 flex items-center gap-2 font-semibold text-sm"><CheckCircle class="w-4 h-4" /> Coperta da Credito</span><span class="text-xs text-emerald-600/80 mt-1">Rata saldata col credito pregresso.</span></div><div class="text-right"><span class="text-xs uppercase text-emerald-600/70 font-bold block">Da versare</span><span class="font-bold text-xl text-emerald-700">€ 0,00</span></div></div>
                         
                         <div v-else-if="isGeneratingCredit" class="mb-3 flex items-center justify-between p-4 rounded-lg bg-blue-50 border border-blue-200">
                             <div class="flex flex-col">
@@ -264,6 +355,23 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                 <span class="text-xs text-blue-600/80 mt-1">Eccedenza dal saldo precedente.</span>
                             </div>
                             <span class="font-bold text-xl text-blue-700">{{ euro(importoRestante) }}</span>
+                        </div>
+
+                        <div v-else-if="isReported" class="mb-6">
+                            <div class="p-4 rounded-lg bg-amber-50 border border-amber-200 mb-4 flex gap-3 items-start">
+                                <div class="p-1.5 bg-amber-100 rounded-full text-amber-600 shrink-0 mt-0.5">
+                                   <Clock class="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-amber-800 mb-1">Pagamento in verifica</h4>
+                                    <p class="text-xs text-amber-700 leading-relaxed">
+                                        Hai segnalato di aver effettuato il pagamento. L'amministratore sta verificando l'incasso. Riceverai una notifica a conferma avvenuta.
+                                    </p>
+                                </div>
+                            </div>
+                            <Button class="w-full h-12 bg-amber-100 text-amber-700 border border-amber-200 cursor-not-allowed rounded-lg font-medium shadow-none text-xs" disabled>
+                                In attesa di conferma...
+                            </Button>
                         </div>
 
                         <div v-else-if="!isPaid && !isReported && !isRejected" class="mb-6 space-y-4">
@@ -277,7 +385,7 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                     <Clock class="w-4 h-4 mt-0.5 text-slate-500" />
                                     <div>
                                         <h4 class="font-bold text-slate-700 text-xs mb-0.5">Rata in attesa di emissione</h4>
-                                        <p class="text-[11px] text-slate-500 leading-snug">
+                                        <p class="text-xs text-slate-500 leading-snug">
                                             L'amministratore non ha ancora abilitato i versamenti per questa scadenza. 
                                             Potrai registrare il pagamento nei prossimi giorni.
                                         </p>
@@ -298,10 +406,10 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                     </div>
 
                     <div v-if="isAdmin && evento.meta?.action_url" class="mb-6">
-                        <Button as-child class="w-full h-12 text-white font-semibold shadow-lg rounded-lg" :class="isExpired ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'"><a :href="evento.meta.action_url" class="flex items-center justify-center gap-2">{{ isExpired ? 'Emetti Subito' : "Vai all'Emissione" }}<ArrowRight class="w-4 h-4" /></a></Button>
+                        <Button as-child class="w-full h-12 text-white font-semibold shadow-lg rounded-lg" :class="isExpired ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'"><a :href="evento.meta.action_url" class="flex items-center justify-center gap-2">{{ isExpired ? 'Emetti subito' : "Vai all'emissione" }}<ArrowRight class="w-4 h-4" /></a></Button>
                     </div>
 
-                    <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div v-if="evento.description" :class="hasFinancialDetails ? 'mt-3 pt-3 border-t border-slate-100 dark:border-slate-800' : ''">
                         <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">{{ evento.description }}</p>
                     </div>
                 </div>

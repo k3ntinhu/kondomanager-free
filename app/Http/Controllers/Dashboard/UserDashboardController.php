@@ -75,7 +75,7 @@ class UserDashboardController extends Controller
                 $anagrafica->id
             );
             
-            $eventiLimited = $eventiProcessati->take(3);
+            $eventiLimited = $eventiProcessati->take(50);
 
         } catch (\Exception $e) {
             Log::error('Error getting dashboard widgets: ' . $e->getMessage());
