@@ -64,14 +64,13 @@ const form = useForm({
     sito_web: props.fornitore?.sito_web,
 });
 
-
 const moneyOptions = ref({
   prefix: '',              
   suffix: '',              
   thousands: '.',          
   decimal: ',',          
   precision: 2, 
-  allowNegative: true,           
+  disableNegative: false,       
   allowBlank: false,
   masked: true 
 })
