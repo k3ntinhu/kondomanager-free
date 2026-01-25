@@ -16,9 +16,13 @@ class SystemUpgradeController extends Controller
      */
     public function confirm(GeneralSettings $settings)
     {
+        $current = $settings->version ?? '0.0.0';
+        $new = config('app.version');
+
         return Inertia::render('system/upgrade/Confirm', [
             'currentVersion' => $settings->version ?? 'Inizializzazione',
             'newVersion'     => config('app.version'),
+            'needsUpgrade'   => version_compare($new, $current, '>'),
         ]);
     }
 
@@ -89,13 +93,12 @@ class SystemUpgradeController extends Controller
             $path = resource_path("data/changelogs/it/{$version}.json");
         }
 
-        // Se non esiste neanche il file in italiano, restituiamo un array di default
+        // Se il file non esiste proprio (nemmeno it), restituiamo dati minimi
         if (!file_exists($path)) {
             return [
-                'date'    => date('d/m/Y'), 
-                'version' => $version,   
-                'title'   => 'Aggiornamento di sistema',
-                'features' => ['Novità non disponibili per questa versione.'],
+                'date'     => date('d/m/Y'), 
+                'version'  => $version,   
+                'features' => ['Miglioramenti generali della stabilità e delle performance.'],
             ];
         }
 
@@ -104,7 +107,6 @@ class SystemUpgradeController extends Controller
         return [
             'date'     => date('d/m/Y'), 
             'version'  => $version,   
-            'title'    => $content['title'] ?? 'Aggiornamento di sistema',
             'features' => $content['features'] ?? [],
         ];
     }

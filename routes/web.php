@@ -133,22 +133,6 @@ Route::middleware(['auth', 'verified', 'role:amministratore'])
             ->name('changelog');
     });
 
-/* Route::middleware(['auth', 'verified', 'role:amministratore'])->group(function () {
-    
-    // 1. Punto di ingresso (dall'installer o dal login) -> Mostra la CARD di conferma
-    Route::get('/system/upgrade/finalize', [SystemUpgradeController::class, 'confirm'])
-        ->name('system.upgrade.confirm');
-
-    // 2. Azione -> Esegue i comandi Artisan
-    Route::post('/system/upgrade/run', [SystemUpgradeController::class, 'run'])
-        ->name('system.upgrade.run');
-
-    // 3. Risultato -> Mostra il Changelog
-    Route::get('/system/upgrade/whats-new', [SystemUpgradeController::class, 'showChangelog'])
-        ->name('system.upgrade.changelog');
-
-}); */
-
 /*
 |--------------------------------------------------------------------------
 | Settings nd Auth Routes
