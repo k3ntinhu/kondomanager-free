@@ -29,18 +29,18 @@ class PasswordController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
-    
         $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', Password::defaults(), 'confirmed'],
+            'password' => [
+                'required', 
+                Password::defaults(), 
+                'confirmed', 
+                'different:current_password' // Validazione nativa
+            ],
+        ], [
+            // Messaggio personalizzato per migliorare la UX
+            'password.different' => 'La nuova password deve essere diversa dalla password attuale.',
         ]);
-
-             //  Controllo password identica
-    if (Hash::check($validated['password'], $request->user()->password)) {
-        return back()->withErrors([
-            'password' => 'La nuova password deve essere diversa dalla password attuale.',
-        ]);
-    }
 
         $request->user()->update([
             'password' => Hash::make($validated['password']),
