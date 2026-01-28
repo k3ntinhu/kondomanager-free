@@ -15,7 +15,7 @@ Schedule::command('model:prune')->daily();
 // 2. WORKER PER HOSTING CONDIVISI (Logica "Svuota e Spegni")
 // Si attiva solo se configurato in config/app.php o .env
 if (config('app.scheduler_queue_worker')) {
-    Schedule::command('queue:work --stop-when-empty --time-limit=55')
+    Schedule::command('queue:work --stop-when-empty --max-time=55')
         ->everyMinute()
         ->withoutOverlapping();
 }
