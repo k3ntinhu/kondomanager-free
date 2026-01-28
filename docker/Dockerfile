@@ -1,6 +1,6 @@
 FROM php:8.2-fpm-bookworm
 
-# Dependências base + Node.js 20 LTS
+# Dependências base + Node.js 20 LTS + Extensões PHP
 RUN apt-get update && apt-get install -y \
     git \
     curl \
