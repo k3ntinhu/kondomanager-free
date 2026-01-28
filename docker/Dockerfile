@@ -1,4 +1,4 @@
-FROM php:8.2-fpm-bookworm
+FROM php:8.4-fpm
 
 # Dependências base + Node.js 20 LTS + Extensões PHP
 RUN apt-get update && apt-get install -y \
