@@ -11,6 +11,8 @@ services:
       DB_DATABASE: kondomanager_dev
       DB_USERNAME: kondomanager
       DB_PASSWORD: kondomanager
+      AUTO_KEYGEN: "true"
+      AUTO_MIGRATE: "true"
       AUTO_SEED: "true"
     env_file:
       - ../.env
