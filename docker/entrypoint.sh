@@ -4,9 +4,9 @@ set -e
 # --------------------------------------------------
 # Defaults seguros (CRÍTICO com -u)
 # --------------------------------------------------
-AUTO_KEYGEN="${AUTO_KEYGEN:-false}"
-AUTO_MIGRATE="${AUTO_MIGRATE:-false}"
-AUTO_SEED="${AUTO_SEED:-false}"
+AUTO_KEYGEN="${AUTO_KEYGEN:-true}"
+AUTO_MIGRATE="${AUTO_MIGRATE:-true}"
+AUTO_SEED="${AUTO_SEED:-true}"
 DB_PORT="${DB_PORT:-3306}"
 
 echo "⏳ Waiting for database connection at ${DB_HOST}:${DB_PORT}..."
@@ -20,16 +20,18 @@ try {
         getenv('DB_USERNAME'),
         getenv('DB_PASSWORD'),
         [
-            PDO::ATTR_TIMEOUT => 2,
+            PDO::ATTR_TIMEOUT => 5,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]
     );
     \$pdo->query('SELECT 1');
 } catch (Throwable \$e) {
+    fwrite(STDERR, \$e->getMessage() . PHP_EOL);
     exit(1);
 }
 "; do
-  sleep 2
+  echo "⏳ MySQL not ready yet..."
+  sleep 3
 done
 
 echo "✅ Database is available"
@@ -83,19 +85,28 @@ fi
 # --------------------------------------------------
 if [ "${AUTO_MIGRATE}" = "true" ]; then
   echo "🗄️  Running migrations"
-  php artisan migrate --force
+  php artisan migrate --force || {
+    echo "❌ Migration failed"
+    exit 1
+  }
 fi
 
 # --------------------------------------------------
 # 6. Seed (README: php artisan db:seed)
 # --------------------------------------------------
-if [ "$AUTO_SEED" = "true" ] && [ ! -f storage/.seeded ]; then
-  echo "🌱 First-time seeding database"
-  php artisan db:seed --force
-  touch storage/.seeded
-else
-  echo "🌱 Database already seeded — skipping"
+if [ "$AUTO_SEED" = "true" ]; then
+  echo "🌱 Checking if database needs seeding"
+
+  USERS_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();")
+
+  if [ "$USERS_COUNT" -eq 0 ]; then
+    echo "🌱 Seeding database"
+    php artisan db:seed --force
+  else
+    echo "🌱 Database already seeded — skipping"
+  fi
 fi
+
 
 
 

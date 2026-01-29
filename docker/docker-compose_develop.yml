@@ -1,8 +1,10 @@
 services:
   app:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: /usr/local/bin/entrypoint.sh
+    command: php-fpm -F
     container_name: kondomanager_dev_app
     working_dir: /var/www
     environment:
