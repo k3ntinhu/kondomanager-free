@@ -28,6 +28,15 @@ return [
         'contacts_new_title' => 'Associar registo do fornecedor',
     ],
 
+    'guides' => [
+        'registry_title' => 'Cadastro centralizado',
+        'registry_desc' => 'Consulte e organize todos os fornecedores num único local com dados comerciais e fiscais atualizados.',
+        'contacts_title' => 'Gestão de contactos',
+        'contacts_desc' => 'Associe contactos aos fornecedores para facilitar o acompanhamento operacional e administrativo.',
+        'documents_title' => 'Documentação',
+        'documents_desc' => 'Aceda rapidamente a documentos do fornecedor, com controlo de publicação e histórico de gestão.',
+    ],
+
     'sections' => [
         'main_info' => 'Informações principais',
         'main_info_desc' => 'Pode indicar abaixo as informações principais do fornecedor.',
