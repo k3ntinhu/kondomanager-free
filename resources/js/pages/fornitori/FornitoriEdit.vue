@@ -109,7 +109,7 @@ const submit = () => {
           <Link
             as="button"
             @click="router.visit(backUrl)"
-            class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90"
+            class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             <ArrowLeft class="w-4 h-4" />
             <span>Indietro</span>

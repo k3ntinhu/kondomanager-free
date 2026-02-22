@@ -226,7 +226,7 @@ const submit = () => {
                   condominio: condominio.id,
                   esercizio: esercizio.id
                 })"
-                class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-white shadow-sm"
+                class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm"
               >
                 <List class="w-4 h-4" />
                 Elenco piani

@@ -275,8 +275,8 @@ const parseResiduoQuota = (val: any) => {
                         <div class="px-3 py-2 border-b bg-gray-50/50 flex justify-between items-center shrink-0">
                             <div class="flex items-center gap-2">
                                 <div class="flex items-center bg-white border rounded-md px-1 py-0.5 h-7 shadow-sm cursor-pointer select-none" @click="toggleMode">
-                                    <div class="px-2 py-0.5 rounded text-[10px] font-bold transition-all uppercase" :class="mode === 'auto' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'">Auto</div>
-                                    <div class="px-2 py-0.5 rounded text-[10px] font-bold transition-all uppercase" :class="mode === 'manual' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'">Manual</div>
+                                    <div class="px-2 py-0.5 rounded text-[10px] font-bold transition-all uppercase" :class="mode === 'auto' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-gray-400 hover:text-gray-600'">Auto</div>
+                                    <div class="px-2 py-0.5 rounded text-[10px] font-bold transition-all uppercase" :class="mode === 'manual' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-gray-400 hover:text-gray-600'">Manual</div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2" v-if="rateList.length">
