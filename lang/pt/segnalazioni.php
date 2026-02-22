@@ -37,6 +37,15 @@ return [
         'widget_tickets_description'    => 'Lista das últimas sinalizações de avaria enviadas',
     ],
 
+    'guides' => [
+        'reports_title'  => 'Registo centralizado',
+        'reports_desc'   => 'Visualize todas as sinalizações de avaria num único local, com estado e prioridade sempre atualizados.',
+        'workflow_title' => 'Fluxo operacional',
+        'workflow_desc'  => 'Acompanhe o ciclo completo da avaria, desde a abertura até à resolução e encerramento.',
+        'control_title'  => 'Controlo e prioridade',
+        'control_desc'   => 'Priorize ocorrências críticas e mantenha a gestão técnica com critérios claros e rastreáveis.',
+    ],
+
     'dialogs' => [
         'delete_ticket_title'       => 'Tem a certeza de que pretende eliminar esta sinalização?',
         'delete_ticket_description' => 'Esta ação é irreversível. Eliminará a sinalização e todos os dados a ela associados.',
