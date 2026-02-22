@@ -21,6 +21,7 @@ import '@vuepic/vue-datepicker/dist/main.css';
 import type { BreadcrumbItem } from '@/types';
 import type { Anagrafica } from '@/types/anagrafiche';
 import type { Categoria } from '@/types/categorie';
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   anagrafiche: Anagrafica[];
@@ -29,7 +30,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
-      title: 'Elenco fornitori',
+      title: trans('fornitori.header.list_title'),
       href: '/fornitori',
   }
 ];
@@ -86,16 +87,13 @@ const submit = () => {
 
 <template>
 
-  <Head title="Crea nuovo fornitore" />
+  <Head :title="trans('fornitori.header.new_title')" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
 
     <div class="px-4 py-6">
       
-      <Heading 
-        title="Crea fornitore" 
-        description="Compila il seguente modulo per la creazione di un nuovo fornitore" 
-      />
+      <Heading :title="trans('fornitori.header.new_title')" :description="trans('fornitori.header.new_description')" />
 
       <form class="space-y-2" @submit.prevent="submit">
 
@@ -104,7 +102,7 @@ const submit = () => {
           <Button :disabled="form.processing" class="h-8 w-full lg:w-auto">
             <Plus class="w-4 h-4" v-if="!form.processing" />
             <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-            Salva
+            {{ trans('fornitori.actions.save') }}
           </Button>
 
           <Link
@@ -113,29 +111,29 @@ const submit = () => {
             class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             <List class="w-4 h-4" />
-            <span>Elenco</span>
+            <span>{{ trans('fornitori.actions.list') }}</span>
           </Link>
         </div>
 
         <div class="bg-white dark:bg-muted rounded shadow-sm p-3 space-y-4 border mt-3" >
 
           <div class="pt-3">
-            <h3 class="text-lg font-medium leading-6 text-gray-900">Informazioni principali</h3>
-            <p class="mt-1 text-sm text-gray-500">Di seguito è possibile specificare le informazioni principali del fornitore</p>
+            <h3 class="text-lg font-medium leading-6 text-foreground">{{ trans('fornitori.sections.main_info') }}</h3>
+            <p class="mt-1 text-sm text-muted-foreground">{{ trans('fornitori.sections.main_info_desc') }}</p>
           </div>
 
           <Separator class="my-4" />
 
-          <!--  Ragione sociale field -->
+          <!--  Razão social field -->
           <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             <div class="sm:col-span-3">
-              <Label for="ragione_sociale">Ragione sociale</Label>
+              <Label for="ragione_sociale">{{ trans('fornitori.label.name') }}</Label>
               <Input 
                 id="ragione_sociale" 
                 class="mt-1 block w-full"
                 v-model="form.ragione_sociale" 
                 v-on:focus="form.clearErrors('ragione_sociale')"
-                placeholder="Ragione sociale del fornitore" 
+                :placeholder="trans('fornitori.placeholder.name')"
               />
               
               <InputError :message="form.errors.ragione_sociale" />
@@ -144,7 +142,7 @@ const submit = () => {
 
             <div class="sm:col-span-3 pt-1">
               <div class="flex items-center text-sm font-medium gap-x-2 pb-2">
-                  <Label for="referente">Referente</Label>
+                  <Label for="referente">{{ trans('fornitori.label.contact') }}</Label>
 
                   <HoverCard>
                       <HoverCardTrigger as-child>
@@ -156,12 +154,10 @@ const submit = () => {
                       <div class="flex justify-between space-x-4">
                           <div class="space-y-1">
                           <h4 class="text-sm font-semibold">
-                              Referente
+                              {{ trans('fornitori.label.contact') }}
                           </h4>
                           <p class="text-sm">
-                              Puoi associare l'anagrafica del referente al fornitore, 
-                              se l'anagrafica è associata ad un utente allora potrà accedere al portale online per visualizzare i dati associati a questo fornitore.
-                              Qualora volessi associare ulteriori referenti, potrai farlo nella pagina dei dettagli del fornitore.
+                              {{ trans('fornitori.sections.contact_assoc_desc') }}
                           </p>
                           </div>
                       </div>
@@ -175,13 +171,13 @@ const submit = () => {
                 v-model="form.anagrafica_id"
                 :reduce="(d: Anagrafica) => d.id"
                 label="nome"
-                placeholder="Seleziona referente"
+                :placeholder="trans('fornitori.placeholder.contact')"
               >
                 <!-- Dropdown options: stacked layout -->
                 <template #option="{ nome, indirizzo }">
                   <div class="flex flex-col">
                     <span class="font-medium">{{ nome }}</span>
-                    <span class="text-sm text-gray-500">{{ indirizzo }}</span>
+                    <span class="text-sm text-muted-foreground">{{ indirizzo }}</span>
                   </div>
                 </template>
 
@@ -189,7 +185,7 @@ const submit = () => {
                 <template #selected-option="{ nome, indirizzo }">
                   <div class="flex items-center gap-2">
                     <span class="font-medium">{{ nome }}</span>
-                    <span class="text-gray-500 text-sm">– {{ indirizzo }}</span>
+                    <span class="text-muted-foreground text-sm">– {{ indirizzo }}</span>
                   </div>
                 </template>
               </v-select>
@@ -199,29 +195,29 @@ const submit = () => {
           </div> 
 
           <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-            <!-- Codice fiscale -->
+            <!-- Número fiscal -->
             <div class="sm:col-span-3">
-              <Label for="codice_fiscale">Codice fiscale</Label>
+              <Label for="codice_fiscale">{{ trans('fornitori.label.fiscal_code') }}</Label>
               <Input 
                 id="codice_fiscale" 
                 class="mt-1 block w-full"
                   v-model="form.codice_fiscale" 
                   v-on:focus="form.clearErrors('codice_fiscale')"
-                  placeholder="Codice fiscale" 
+                  :placeholder="trans('fornitori.placeholder.fiscal_code')"
               />
               
               <InputError :message="form.errors.codice_fiscale" />
     
             </div>
-            <!-- Partita IVA -->
+            <!-- NIF IVA -->
             <div class="sm:col-span-3">
-              <Label for="partita_iva">Partita IVA</Label>
+              <Label for="partita_iva">{{ trans('fornitori.label.vat') }}</Label>
               <Input 
                 id="partita_iva" 
                 class="mt-1 block w-full"
                   v-model="form.partita_iva" 
                   v-on:focus="form.clearErrors('partita_iva')"
-                  placeholder="Partita IVA" 
+                  :placeholder="trans('fornitori.placeholder.vat')"
               />
               
               <InputError :message="form.errors.partita_iva" />
@@ -230,11 +226,11 @@ const submit = () => {
 
           <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             <div class="sm:col-span-6">
-              <Label for="note">Note aggiuntive</Label>
+              <Label for="note">{{ trans('fornitori.label.extra_notes') }}</Label>
               <Textarea 
                 id="note" 
                 class="w-full" 
-                placeholder="Inserisci una nota qui" 
+                :placeholder="trans('fornitori.placeholder.note')"
                 v-model="form.note" 
                 @focus="form.clearErrors('note')" 
               />
@@ -244,22 +240,22 @@ const submit = () => {
           </div>
 
           <div class="pt-5">
-            <h3 class="text-lg font-medium leading-6 text-gray-900">Indirizzo e contatti</h3>
-            <p class="mt-1 text-sm text-gray-500">Di seguito è possibile specificare l'indirizzo e le informazioni di contatto del fornitore</p>
+            <h3 class="text-lg font-medium leading-6 text-foreground">{{ trans('fornitori.sections.address_contacts') }}</h3>
+            <p class="mt-1 text-sm text-muted-foreground">{{ trans('fornitori.sections.address_contacts_desc') }}</p>
           </div>
 
           <Separator class="my-4" />
 
-          <!-- Nazione -->
+          <!-- País -->
           <div class="mt-2 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             <div class="sm:col-span-2">
-              <Label for="nazione">Nazione</Label>
+              <Label for="nazione">{{ trans('fornitori.label.country') }}</Label>
               <Input 
                 id="nazione" 
                 class="mt-1 block w-full"
                 v-model="form.nazione" 
                 v-on:focus="form.clearErrors('nazione')"
-                placeholder="Nazione" 
+                :placeholder="trans('fornitori.placeholder.country')"
               />
               
               <InputError :message="form.errors.nazione" />
@@ -267,16 +263,16 @@ const submit = () => {
             </div>
           </div> 
 
-          <!-- Indirizzo -->
+          <!-- Morada -->
           <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             <div class="sm:col-span-4">
-              <Label for="indirizzo">Indirizzo</Label>
+              <Label for="indirizzo">{{ trans('fornitori.label.address') }}</Label>
               <Input 
                 id="indirizzo" 
                 class="mt-1 block w-full"
                 v-model="form.indirizzo" 
                 v-on:focus="form.clearErrors('indirizzo')"
-                placeholder="Indirizzo" 
+                :placeholder="trans('fornitori.placeholder.address')"
               />
               
               <InputError :message="form.errors.indirizzo" />
@@ -285,42 +281,42 @@ const submit = () => {
           </div> 
 
           <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-            <!-- Comune -->
+            <!-- Município -->
             <div class="sm:col-span-2">
-              <Label for="comune">Comune</Label>
+              <Label for="comune">{{ trans('fornitori.label.municipality') }}</Label>
               <Input 
                 id="comune" 
                 class="mt-1 block w-full"
                   v-model="form.comune" 
                   v-on:focus="form.clearErrors('comune')"
-                  placeholder="Comune" 
+                  :placeholder="trans('fornitori.placeholder.municipality')"
               />
               
               <InputError :message="form.errors.comune" />
     
             </div>
-            <!-- Provincia -->
+            <!-- Distrito -->
            <div class="sm:col-span-2">
-              <Label for="provincia">Provincia</Label>
+              <Label for="provincia">{{ trans('fornitori.label.province') }}</Label>
               <Input 
                 id="provincia" 
                 class="mt-1 block w-full"
                   v-model="form.provincia" 
                   v-on:focus="form.clearErrors('provincia')"
-                  placeholder="Provincia" 
+                  :placeholder="trans('fornitori.placeholder.province')"
               />
               
               <InputError :message="form.errors.provincia" />
             </div>
             <!-- CAP -->
             <div class="sm:col-span-2">
-              <Label for="codice_postale">Codice postale</Label>
+              <Label for="codice_postale">{{ trans('fornitori.label.postal_code') }}</Label>
               <Input 
                 id="codice_postale" 
                 class="mt-1 block w-full"
                   v-model="form.cap" 
                   v-on:focus="form.clearErrors('cap')"
-                  placeholder="Codice postale" 
+                  :placeholder="trans('fornitori.placeholder.postal_code')"
               />
               
               <InputError :message="form.errors.cap" />
@@ -328,42 +324,42 @@ const submit = () => {
           </div>
 
           <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-            <!-- Telefono -->
+            <!-- Telefone -->
             <div class="sm:col-span-2">
-              <Label for="telefono">Telefono</Label>
+              <Label for="telefono">{{ trans('fornitori.label.phone') }}</Label>
               <Input 
                 id="telefono" 
                 class="mt-1 block w-full"
                   v-model="form.telefono" 
                   v-on:focus="form.clearErrors('telefono')"
-                  placeholder="Telefono" 
+                  :placeholder="trans('fornitori.placeholder.phone')"
               />
               
               <InputError :message="form.errors.telefono" />
     
             </div>
-            <!-- Cellulare -->
+            <!-- Telemóvel -->
            <div class="sm:col-span-2">
-              <Label for="cellulare">Cellulare</Label>
+              <Label for="cellulare">{{ trans('fornitori.label.mobile') }}</Label>
               <Input 
                 id="cellulare" 
                 class="mt-1 block w-full"
                   v-model="form.cellulare" 
                   v-on:focus="form.clearErrors('cellulare')"
-                  placeholder="Cellulare" 
+                  :placeholder="trans('fornitori.placeholder.mobile')"
               />
               
               <InputError :message="form.errors.cellulare" />
             </div>
             <!-- CAP -->
             <div class="sm:col-span-2">
-              <Label for="fax">Fax</Label>
+              <Label for="fax">{{ trans('fornitori.label.fax') }}</Label>
               <Input 
                 id="fax" 
                 class="mt-1 block w-full"
                   v-model="form.fax" 
                   v-on:focus="form.clearErrors('fax')"
-                  placeholder="Fax" 
+                  :placeholder="trans('fornitori.placeholder.fax')"
               />
               
               <InputError :message="form.errors.fax" />
@@ -373,13 +369,13 @@ const submit = () => {
           <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             <!-- Email -->
             <div class="sm:col-span-2">
-              <Label for="email">Indirizzo email</Label>
+              <Label for="email">{{ trans('fornitori.label.email') }}</Label>
               <Input 
                 id="email" 
                 class="mt-1 block w-full"
                   v-model="form.email" 
                   v-on:focus="form.clearErrors('email')"
-                  placeholder="Indizio email" 
+                  :placeholder="trans('fornitori.placeholder.email')"
               />
               
               <InputError :message="form.errors.email" />
@@ -387,26 +383,26 @@ const submit = () => {
             </div>
             <!-- Pec -->
            <div class="sm:col-span-2">
-              <Label for="pec">Indirizzo PEC</Label>
+              <Label for="pec">{{ trans('fornitori.label.pec') }}</Label>
               <Input 
                 id="pec" 
                 class="mt-1 block w-full"
                   v-model="form.pec" 
                   v-on:focus="form.clearErrors('pec')"
-                  placeholder="Indirizzo PEC" 
+                  :placeholder="trans('fornitori.placeholder.pec')"
               />
               
               <InputError :message="form.errors.pec" />
             </div>
             <!-- CAP -->
             <div class="sm:col-span-2">
-              <Label for="sito_web">Sito internet</Label>
+              <Label for="sito_web">{{ trans('fornitori.label.website') }}</Label>
               <Input 
                 id="sito_web" 
                 class="mt-1 block w-full"
                   v-model="form.sito_web" 
                   v-on:focus="form.clearErrors('sito_web')"
-                  placeholder="Sito internet" 
+                  :placeholder="trans('fornitori.placeholder.website')"
               />
               
               <InputError :message="form.errors.fax" />
@@ -414,30 +410,30 @@ const submit = () => {
           </div>
 
           <div class="pt-5">
-            <h3 class="text-lg font-medium leading-6 text-gray-900">Dati societari</h3>
-            <p class="mt-1 text-sm text-gray-500">Di seguito è possibile specificare i dati societari del fornitore</p>
+            <h3 class="text-lg font-medium leading-6 text-foreground">{{ trans('fornitori.sections.company_data') }}</h3>
+            <p class="mt-1 text-sm text-muted-foreground">{{ trans('fornitori.sections.company_data_form_desc') }}</p>
           </div>
 
           <Separator class="my-4" />
 
           <div class="mt-2 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-            <!-- Iscrizione CCIAA -->
+            <!-- Inscrição CCIAA -->
             <div class="sm:col-span-3">
-              <Label for="iscrizione_cciaa">Iscrizione CCIAA</Label>
+              <Label for="iscrizione_cciaa">{{ trans('fornitori.label.cciaa') }}</Label>
               <Input 
                 id="iscrizione_cciaa" 
                 class="mt-1 block w-full"
                 v-model="form.iscrizione_cciaa" 
                 v-on:focus="form.clearErrors('iscrizione_cciaa')"
-                placeholder="Iscrizione CCIAA" 
+                :placeholder="trans('fornitori.placeholder.cciaa')"
               />
               
               <InputError :message="form.errors.iscrizione_cciaa" />
     
             </div>
-            <!-- Data iscrizione CCIAA -->
+            <!-- Data de inscrição CCIAA -->
             <div class="sm:col-span-3">
-              <Label for="data_iscrizione_cciaa">Data iscrizione CCIAA</Label>
+              <Label for="data_iscrizione_cciaa">{{ trans('fornitori.label.cciaa_enrollment_date') }}</Label>
               <VueDatePicker
                 v-model="form.data_iscrizione_cciaa"
                 class="w-full py-1"
@@ -446,16 +442,16 @@ const submit = () => {
                 locale="it"
                 :enable-time-picker="false"
                 auto-apply
-                placeholder="Data iscrizione CCIAA"
+                :placeholder="trans('fornitori.placeholder.cciaa_date')"
               />
               <InputError :message="form.errors.data_iscrizione_cciaa" />
             </div>
           </div>
 
-          <!-- Capitale sociale -->
+          <!-- Capital social -->
           <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             <div class="sm:col-span-3">
-              <Label for="capitale_sociale">Capitale sociale</Label>
+              <Label for="capitale_sociale">{{ trans('fornitori.label.social_capital') }}</Label>
 
               <MoneyInput
                 id="capitale_sociale"
@@ -467,34 +463,34 @@ const submit = () => {
               />
 
               <InputError :message="form.errors.capitale_sociale" />
-              <p class="text-xs text-gray-500 mt-1">
-                Inserisci l'importo nel formato italiano (es. 1.234,56)
-                <strong>Per saldo negativo, usa il segno -</strong>
+              <p class="text-xs text-muted-foreground mt-1">
+                {{ trans('fornitori.messages.money_format_hint') }}
+                <strong>{{ trans('fornitori.messages.negative_balance_hint') }}</strong>
               </p>
     
             </div>
           </div> 
 
-          <!-- Codice ATECO -->
+          <!-- Código ATECO -->
           <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             <div class="sm:col-span-3">
-              <Label for="codice_ateco">Codice ATECO</Label>
+              <Label for="codice_ateco">{{ trans('fornitori.label.ateco') }}</Label>
               <Input 
                 id="codice_ateco" 
                 class="mt-1 block w-full"
                 v-model="form.codice_ateco" 
                 v-on:focus="form.clearErrors('codice_ateco')"
-                placeholder="Codice ATECO" 
+                :placeholder="trans('fornitori.placeholder.ateco')"
               />
               
               <InputError :message="form.errors.codice_ateco" />
     
             </div>
             <div class="sm:col-span-3">
-              <Label for="codice_ateco">Certificazione ISO</Label>
+              <Label for="codice_ateco">{{ trans('fornitori.label.iso_cert') }}</Label>
               <div class="mt-1 flex items-center space-x-2 h-9 px-3 py-1 border-input rounded-md border bg-transparent shadow-xs">
                 
-                <!-- Certificazione ISO -->
+                <!-- Certificação ISO -->
                 <Checkbox 
                   class="size-4" 
                   v-model="form.certificazione_iso"
@@ -506,7 +502,7 @@ const submit = () => {
                   for="is_featured"
                   class="text-sm text-slate-600 "
                 >
-                  Certificazione del sistema di qualità conforme alle norme Europee
+                  {{ trans('fornitori.messages.iso_compliance') }}
                 </Label>
                   
               </div>
@@ -515,17 +511,17 @@ const submit = () => {
             </div>
           </div> 
 
-          <!-- Categoria fornitore -->
+          <!-- Categoria do fornecedor -->
           <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             <div class="sm:col-span-3">
-              <Label for="tipologia_ordine">Categoria fornitore</Label>
+              <Label for="tipologia_ordine">{{ trans('fornitori.label.supplier_category') }}</Label>
                <v-select
                 class="w-full py-1"
                 :options="categorie"
                 v-model="form.categoria_id"
                 :reduce="(d: Categoria) => d.id"
                 label="name"
-                placeholder="Seleziona categoria"
+                :placeholder="trans('fornitori.placeholder.category')"
               />
               
               <InputError :message="form.errors.categoria_id" />
@@ -533,13 +529,13 @@ const submit = () => {
             </div>
 
             <div class="sm:col-span-3">
-              <Label for="numero_iscrizione_ordine">Numero iscrizione ordine</Label>
+              <Label for="numero_iscrizione_ordine">{{ trans('fornitori.label.order_enrollment_number') }}</Label>
               <Input 
                 id="numero_iscrizione_ordine" 
                 class="mt-1 block w-full"
                 v-model="form.numero_iscrizione_ordine" 
                 v-on:focus="form.clearErrors('numero_iscrizione_ordine')"
-                placeholder="Numero iscrizione ordine" 
+                :placeholder="trans('fornitori.placeholder.order_number')"
               />
               
               <InputError :message="form.errors.numero_iscrizione_ordine" />
