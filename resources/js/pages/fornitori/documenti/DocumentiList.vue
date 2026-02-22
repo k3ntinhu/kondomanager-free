@@ -12,6 +12,7 @@ import type { Flash } from '@/types/flash';
 import type { Fornitore } from '@/types/fornitori';
 import type { Documento } from '@/types/documenti';
 import type { PaginationMeta } from '@/types/pagination';
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   fornitore: Fornitore;
@@ -37,7 +38,7 @@ const flashMessage = computed(() => page.props.flash.message);
 <template>
 
   <AppLayout>
-    <Head title="Elenco documenti immobile" />
+    <Head :title="trans('fornitori.header.documents_title')" />
 
     <FornitoreLayout>
 

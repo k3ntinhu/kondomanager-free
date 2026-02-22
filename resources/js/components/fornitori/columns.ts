@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import DropdownAction from '@/components/fornitori/DataTableRowActions.vue';
 import DataTableColumnHeader from '@/components/fornitori/DataTableColumnHeader.vue';
 import { usePermission } from "@/composables/permissions";
+import { trans } from 'laravel-vue-i18n';
 import type { ColumnDef } from '@tanstack/vue-table'
 import type { Fornitore } from '@/types/fornitori';
 
@@ -11,7 +12,7 @@ const { generateRoute } = usePermission();
 export const columns: ColumnDef<Fornitore>[] = [
   {
     accessorKey: 'ragione_sociale',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Ragione sociale' }), 
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('fornitori.table.name') }),
 
     cell: ({ row }) => {
 
@@ -28,7 +29,7 @@ export const columns: ColumnDef<Fornitore>[] = [
   {
     accessorKey: 'indirizzo',
     header: ({ column }) =>
-      h(DataTableColumnHeader, { column, title: 'Indirizzo' }),
+      h(DataTableColumnHeader, { column, title: trans('fornitori.table.address') }),
 
     cell: ({ row }) => {
       const f = row.original as Fornitore
@@ -57,17 +58,17 @@ export const columns: ColumnDef<Fornitore>[] = [
   },
   {
     accessorKey: 'partita_iva',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Partita IVA' }), 
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('fornitori.table.vat') }),
     cell: ({ row }) => h('div', { class: 'uppercase' }, row.getValue('partita_iva')),
   },
   {
     accessorKey: 'codice_fiscale',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Codice fiscale' }), 
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('fornitori.table.fiscal_code') }),
     cell: ({ row }) => h('div', { class: 'uppercase' }, row.getValue('codice_fiscale')),
   },
   {
     accessorKey: 'referenti',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Referenti' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('fornitori.table.contacts') }),
   
     cell: ({ row }) => {
 
@@ -110,7 +111,7 @@ export const columns: ColumnDef<Fornitore>[] = [
         avatars.push(
           h('div', {
             key: 'more-anagrafiche',
-            title: `+${remainingCount} altre persone`,
+            title: `+${remainingCount} ${trans('fornitori.table.selected')}`,
             class: `
               absolute w-8 h-8 rounded-full bg-gray-300 text-gray-800 text-xs font-bold
               flex items-center justify-center border border-white shadow

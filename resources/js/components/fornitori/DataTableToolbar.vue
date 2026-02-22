@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-vue-next';
 import { usePermission } from "@/composables/permissions";
 import { Permission }  from "@/enums/Permission";
+import { trans } from 'laravel-vue-i18n';
 import type { Table } from '@tanstack/vue-table';
 import type { Fornitore } from '@/types/fornitori';
 
@@ -43,7 +44,7 @@ watchDebounced(
     <!-- Left Section: Input -->
     <div class="flex items-center space-x-2">
         <Input
-          placeholder="Filtra per ragione sociale..."
+          :placeholder="trans('fornitori.placeholder.filter_name')"
           v-model="ragioneSocialeFilter"
           class="h-8 w-[150px] lg:w-[250px]"
         />
@@ -57,7 +58,7 @@ watchDebounced(
       class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 order-last lg:order-none lg:ml-auto"
     >
       <Plus class="w-4 h-4" />
-      <span>Crea</span>
+      <span>{{ trans('fornitori.actions.new') }}</span>
     </Link>
 
   </div>

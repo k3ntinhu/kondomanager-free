@@ -5,6 +5,7 @@ import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/comp
 import {FlexRender,getCoreRowModel,useVueTable } from '@tanstack/vue-table'
 import DataTableToolbar from '@/components/fornitori/anagrafiche/DataTableToolbar.vue'
 import type { Anagrafica } from '@/types/anagrafiche'
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   columns: ColumnDef<Anagrafica, any>[],
@@ -50,7 +51,7 @@ const table = useVueTable({
         <template v-else>
           <TableRow>
             <TableCell :colspan="columns.length" class="h-24 text-center">
-              Nessun risultato trovato
+              {{ trans('fornitori.table.no_results') }}
             </TableCell>
           </TableRow>
         </template>

@@ -9,6 +9,7 @@ import { createColumns } from '@/components/fornitori/anagrafiche/columns'
 import Alert from "@/components/Alert.vue";
 import type { Flash } from '@/types/flash';
 import type { Fornitore } from '@/types/fornitori';
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   fornitore: Fornitore;
@@ -21,7 +22,7 @@ const flashMessage = computed(() => page.props.flash.message);
 
 <template>
   <AppLayout>
-    <Head title="Elenco rappresentanti fornitore" />
+    <Head :title="trans('fornitori.header.contacts_title')" />
 
     <FornitoreLayout>
 

@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Check, PlusCircle } from 'lucide-vue-next';
 import type { Component } from 'vue';
 import type { Column } from '@tanstack/vue-table';
+import { trans } from 'laravel-vue-i18n';
 
 interface Option {
   label: string
@@ -96,7 +97,7 @@ function clearFilters() {
               variant="secondary"
               class="rounded-sm px-1 font-normal"
             >
-              {{ selectedValues.size }} selezionati
+              {{ selectedValues.size }} {{ trans('fornitori.table.selected') }}
             </Badge>
             <template v-else>
               <Badge
@@ -116,11 +117,11 @@ function clearFilters() {
       <Command>
         <CommandInput :placeholder="title" />
         <CommandList v-if="props.isLoading">
-          <div class="p-4 text-sm text-muted-foreground">Caricamento...</div>
+          <div class="p-4 text-sm text-muted-foreground">{{ trans('fornitori.table.loading') }}</div>
         </CommandList>
 
         <CommandList>
-          <CommandEmpty>Nessun risultato trovato</CommandEmpty>
+          <CommandEmpty>{{ trans('fornitori.table.no_results') }}</CommandEmpty>
           <CommandGroup>
             <CommandItem
               v-for="option in options"
@@ -157,11 +158,11 @@ function clearFilters() {
             <CommandSeparator />
             <CommandGroup>
               <CommandItem
-                :value="{ label: 'Resetta filtri' }"
+                :value="{ label: trans('fornitori.table.clear_filters') }"
                 class="justify-center text-center"
                 @select="clearFilters"
               >
-                Resetta filtri
+                {{ trans('fornitori.table.clear_filters') }}
               </CommandItem>
             </CommandGroup>
           </template>

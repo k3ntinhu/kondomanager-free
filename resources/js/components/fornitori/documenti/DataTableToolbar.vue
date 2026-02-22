@@ -10,6 +10,7 @@ import { Permission } from '@/enums/Permission';
 import type { Table } from '@tanstack/vue-table';
 import type { Documento } from '@/types/documenti';
 import type { Fornitore } from '@/types/fornitori';
+import { trans } from 'laravel-vue-i18n';
 
 const { generateRoute, hasPermission, generatePath } = usePermission();
 
@@ -56,7 +57,7 @@ watchDebounced(
   <div class="flex items-center space-x-2">
     <!-- Subject Filter -->
     <Input
-      placeholder="Filtra per titolo..."
+      :placeholder="trans('fornitori.placeholder.filter_title')"
       v-model="nameFilter"
       class="h-8 w-[150px] lg:w-[250px]"
     />
@@ -72,7 +73,7 @@ watchDebounced(
       class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
     >
       <Plus class="w-4 h-4" />
-      <span>Crea</span>
+      <span>{{ trans('fornitori.actions.new') }}</span>
     </Link>
 
     <Link
@@ -81,7 +82,7 @@ watchDebounced(
       class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
     >
       <List class="w-4 h-4" />
-      <span>Fornitori</span>
+      <span>{{ trans('fornitori.actions.suppliers') }}</span>
     </Link>
 
   </div>

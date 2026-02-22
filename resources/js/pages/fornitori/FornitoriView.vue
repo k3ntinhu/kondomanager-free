@@ -6,6 +6,7 @@ import FornitoreLayout from '@/layouts/fornitori/FornitoreLayout.vue';
 import Alert from "@/components/Alert.vue";
 import { usePermission } from "@/composables/permissions";
 import { List, Pencil, ShieldCheck, ShieldOff } from 'lucide-vue-next';
+import { trans } from 'laravel-vue-i18n';
 import type { BreadcrumbItem } from '@/types';
 import type { Flash } from '@/types/flash';
 import type { Fornitore } from '@/types/fornitori';
@@ -27,14 +28,14 @@ const indirizzoCompleto = computed(() => {
   if (props.fornitore.provincia) parts.push(`(${props.fornitore.provincia})`);
   if (props.fornitore.cap) parts.push(props.fornitore.cap);
   
-  return parts.length > 0 ? parts.join(' ') : 'Nessun indirizzo registrato per questo fornitore';
+  return parts.length > 0 ? parts.join(' ') : trans('fornitori.label.address_empty');
 });
 
 </script>
 
 <template>
   <AppLayout>
-    <Head title="Dettagli fornitore" />
+    <Head :title="trans('fornitori.header.view_title')" />
 
     <FornitoreLayout>
 
@@ -50,7 +51,7 @@ const indirizzoCompleto = computed(() => {
           class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           <Pencil class="w-4 h-4" />
-          <span>Modifica</span>
+          <span>{{ trans('fornitori.actions.edit') }}</span>
         </Link>
 
         <Link
@@ -59,7 +60,7 @@ const indirizzoCompleto = computed(() => {
           class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           <List class="w-4 h-4" />
-          <span>Fornitori</span>
+          <span>{{ trans('fornitori.actions.suppliers') }}</span>
         </Link>
       </div>
 
@@ -79,19 +80,19 @@ const indirizzoCompleto = computed(() => {
               <!-- Column 1 -->
               <div class="space-y-3">
                 <div class="flex items-center gap-2">
-                  <span class="font-semibold w-24">Categoria:</span>
+                  <span class="font-semibold w-24">{{ trans('fornitori.label.category') }}:</span>
                   <div class="inline-flex items-center rounded-md border px-2.5 py-0.5 font-medium text-xs">
-                    {{ fornitore.categoria?.name ?? 'Nessuna categoria' }}
+                    {{ fornitore.categoria?.name ?? trans('fornitori.label.no_category') }}
                   </div>
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <span class="font-semibold w-24">Partita IVA:</span>
+                  <span class="font-semibold w-24">{{ trans('fornitori.label.vat') }}:</span>
                   <div>{{ fornitore.partita_iva ?? '-' }}</div> 
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <span class="font-semibold w-24">Codice fiscale:</span>
+                  <span class="font-semibold w-24">{{ trans('fornitori.label.fiscal_code') }}:</span>
                   <div>{{ fornitore.codice_fiscale ?? '-'}}</div> 
                 </div>
               </div>
@@ -99,17 +100,17 @@ const indirizzoCompleto = computed(() => {
               <!-- Column 2 -->
               <div class="space-y-3">
                 <div class="flex items-center">
-                  <span class="font-semibold w-24">Telefono:</span>
+                  <span class="font-semibold w-24">{{ trans('fornitori.label.phone') }}:</span>
                   <div>{{ fornitore.telefono }} - {{ fornitore.cellulare }}</div>
                 </div>
 
                 <div class="flex items-center">
-                  <span class="font-semibold w-24">Email:</span>
+                  <span class="font-semibold w-24">{{ trans('fornitori.label.email') }}:</span>
                   <div>{{ fornitore.email ?? '-' }}</div> 
                 </div>
 
                 <div class="flex items-center">
-                  <span class="font-semibold w-24">Sito web:</span>
+                  <span class="font-semibold w-24">{{ trans('fornitori.label.website') }}:</span>
                   <div>{{ fornitore.sito_web ?? '-' }}</div> 
                 </div>
               </div>
@@ -119,9 +120,9 @@ const indirizzoCompleto = computed(() => {
           <!-- Right block -->
           <div class="space-y-6">
             <div class="border-b pb-2 mb-8">
-              <h3 class="text-lg font-bold">Dati societari</h3>
+              <h3 class="text-lg font-bold">{{ trans('fornitori.sections.company_data') }}</h3>
               <p class="text-muted-foreground text-sm ">
-                Di seguito i dati societari registrati per questo fornitore.
+                {{ trans('fornitori.sections.company_data_desc') }}
               </p>
             </div>
             
@@ -129,17 +130,17 @@ const indirizzoCompleto = computed(() => {
               <!-- Column 3 -->
               <div class="space-y-3">
                 <div class="flex items-center gap-2">
-                  <span class="font-semibold w-30">Numero CCIAA:</span>
+                  <span class="font-semibold w-30">{{ trans('fornitori.label.cciaa_number') }}:</span>
                   <div>{{ fornitore.iscrizione_cciaa ?? '-' }}</div> 
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <span class="font-semibold w-30">Codice ATECO:</span>
+                  <span class="font-semibold w-30">{{ trans('fornitori.label.ateco') }}:</span>
                   <div>{{ fornitore.codice_ateco ?? '-'}}</div>
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <span class="font-semibold w-30">Numero ordine:</span>
+                  <span class="font-semibold w-30">{{ trans('fornitori.label.order_number') }}:</span>
                   <div>{{fornitore.numero_ordine ?? '-' }}</div>
                 </div>
               </div>
@@ -148,25 +149,25 @@ const indirizzoCompleto = computed(() => {
               <div class="space-y-3">
 
                 <div class="flex items-center">
-                  <span class="font-semibold w-40">Data iscrizione CCIAA:</span>
+                  <span class="font-semibold w-40">{{ trans('fornitori.label.cciaa_date') }}:</span>
                   <div>{{fornitore.data_iscrizione_cciaa }}</div>
                 </div>
 
                 <!-- Certificazione ISO con icona e colori -->
                 <div class="flex items-center">
-                  <span class="font-semibold w-35">Certificazione ISO:</span>
+                  <span class="font-semibold w-35">{{ trans('fornitori.label.iso') }}:</span>
                   <div v-if="fornitore.certificazione_iso" class="inline-flex items-center gap-2 rounded-md border border-green-100 bg-green-50/50 px-2.5 py-0.5 text-xs font-medium text-green-800">
                     <ShieldCheck class="w-3.5 h-3.5" />
-                    <span>Certificato</span>
+                    <span>{{ trans('fornitori.label.certified') }}</span>
                   </div>
                   <div v-else class="inline-flex items-center gap-2 rounded-md border border-red-100 bg-red-50/50 px-2.5 py-0.5 text-xs font-medium text-red-800">
                     <ShieldOff class="w-3.5 h-3.5" />
-                    <span>Non certificato</span>
+                    <span>{{ trans('fornitori.label.not_certified') }}</span>
                   </div>
                 </div>
 
                 <div class="flex items-center">
-                  <span class="font-semibold w-35">Capitale sociale:</span>
+                  <span class="font-semibold w-35">{{ trans('fornitori.label.capital') }}:</span>
                   <div>{{fornitore.capitale_sociale }}</div>
                 </div>
 
@@ -181,11 +182,11 @@ const indirizzoCompleto = computed(() => {
       <div class="bg-card mb-2 rounded-lg border p-6 text-sm">
         <!-- Notes Section -->
         <div class="border-b pb-2 mb-4">
-          <span class="text-lg font-bold">Note registrate</span>
+          <span class="text-lg font-bold">{{ trans('fornitori.sections.notes') }}</span>
         </div>
 
         <div class="text-sm text-gray-700"> 
-          {{ fornitore.note ? fornitore.note : 'Nessuna nota inserita per questo fornitore.' }}
+          {{ fornitore.note ? fornitore.note : trans('fornitori.label.notes_empty') }}
         </div>
       </div>
 

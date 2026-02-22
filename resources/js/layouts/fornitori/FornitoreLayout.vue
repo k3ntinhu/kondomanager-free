@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { usePermission } from "@/composables/permissions";
+import { trans } from 'laravel-vue-i18n';
 import { UsersRound, Folders, TextSearch } from 'lucide-vue-next';
 import type { LinkItem } from '@/types';
 import type { Fornitore } from '@/types/fornitori';
@@ -19,19 +20,19 @@ const topbarNavItems: LinkItem[] = [
   {
     type: 'link',
     icon: TextSearch,
-    title: 'Dettagli',
+    title: trans('fornitori.header.view_title'),
     href:  generatePath('fornitori/:fornitore', { fornitore: fornitore.value.id }),
   },
   {
     type: 'link',
     icon: UsersRound,
-    title: 'Referenti',
+    title: trans('fornitori.table.contacts'),
     href:  generatePath('fornitori/:fornitore/anagrafiche', { fornitore: fornitore.value.id }),
   },
   {   
     type: 'link',
     icon: Folders,
-    title: 'Documenti',
+    title: trans('fornitori.header.documents_title'),
     href:  generatePath('fornitori/:fornitore/documenti', { fornitore: fornitore.value.id }),
   }, 
 ];
@@ -74,4 +75,3 @@ const currentPath = window.location.pathname;
     </div>
   </div>
 </template>
-
