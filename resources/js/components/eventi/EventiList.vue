@@ -4,6 +4,7 @@ import type { Evento } from '@/types/eventi';
 import { useEventStyling } from '@/composables/useEventStyling';
 import EventDetailsDialog from '@/components/eventi/EventDetailsDialog.vue'; 
 import { Building2, Tag, CalendarDays } from 'lucide-vue-next';
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   eventi: Evento[];
@@ -49,7 +50,7 @@ const getCondominioName = (evento: Evento) => {
         class="p-4 mt-7 text-sm text-gray-800 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300"
         role="alert"
       >
-        <span class="font-medium">Nessuna scadenza in agenda ancora creata!</span>
+        <span class="font-medium">{{ trans('dashboard.widgets.no_events_created') }}</span>
       </div>
 
       <li v-for="evento in eventi" :key="evento.id" class="py-3 sm:py-4">
@@ -86,7 +87,7 @@ const getCondominioName = (evento: Evento) => {
               </span>
               
               <span v-if="evento.start_time" class="flex items-center gap-1 whitespace-nowrap ml-1 shrink-0"> 
-                • <CalendarDays class="w-3 h-3" /> inizia il {{ new Date(evento.start_time).toLocaleDateString() }}
+                • <CalendarDays class="w-3 h-3" /> {{ trans('dashboard.widgets.starts_on') }} {{ new Date(evento.start_time).toLocaleDateString() }}
               </span>
             </div>
 
@@ -100,7 +101,7 @@ const getCondominioName = (evento: Evento) => {
                 class="text-xs font-semibold text-gray-500 hover:text-gray-800 dark:hover:text-white mt-1"
                 @click="(e) => toggleExpanded(Number(evento.id), e)"
               >
-                {{ isExpanded(Number(evento.id)) ? 'Mostra meno' : 'Mostra tutto' }}
+                {{ isExpanded(Number(evento.id)) ? trans('documenti.actions.show_less') : trans('documenti.actions.show_more') }}
               </button>
             </div>
 

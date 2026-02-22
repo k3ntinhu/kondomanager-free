@@ -55,7 +55,7 @@ const truncate = (text: string, length: number = 120) => {
             <EmptyMedia variant="icon" class="bg-slate-50/50">
               <Tags />
             </EmptyMedia>
-            <EmptyTitle>Cloud Storage Empty</EmptyTitle>
+            <EmptyTitle>{{ trans('segnalazioni.dialogs.no_tickets') }}</EmptyTitle>
             <EmptyDescription>
               {{ trans('segnalazioni.dialogs.no_tickets_created') }}
             </EmptyDescription>
