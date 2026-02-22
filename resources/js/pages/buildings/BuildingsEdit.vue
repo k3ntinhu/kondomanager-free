@@ -76,7 +76,7 @@ const submit = () => {
                               <Link 
                                 as="button"
                                 :href="route('condomini.index')" 
-                                class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90 w-full lg:w-auto"
+                                class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 w-full lg:w-auto"
                               >
                                 <List class="w-4 h-4" />
                                 <span>
