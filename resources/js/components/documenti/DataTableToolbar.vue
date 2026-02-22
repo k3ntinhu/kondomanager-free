@@ -89,7 +89,7 @@ watchDebounced(
       as="button"
       v-if="hasPermission([Permission.CREATE_ARCHIVE_DOCUMENTS])"
       :href="route(generateRoute('documenti.create'))" 
-      class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90"
+      class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
     >
       <Plus class="w-4 h-4" />
       <span>{{ trans('documenti.actions.new_document') }}</span>
@@ -98,7 +98,7 @@ watchDebounced(
     <Link 
       as="button"
       :href="route(generateRoute('categorie.index'))" 
-      class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90"
+      class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
     >
       <List class="w-4 h-4" />
       <span>{{ trans('documenti.actions.list_categories') }}</span>

@@ -45,7 +45,7 @@ const { generateRoute, generatePath } = usePermission();
       
       <Link
         :href="route(generateRoute('gestionale.immobili.anagrafiche.create'), { condominio: page.props.condominio.id, immobile: page.props.immobile.id })"
-        class="inline-flex h-9 items-center justify-center gap-2 rounded-md shadow px-4 bg-primary text-sm font-medium text-white hover:bg-primary/90 transition focus:outline-none focus:ring-2 focus:ring-primary/20"
+        class="inline-flex h-9 items-center justify-center gap-2 rounded-md shadow px-4 bg-primary text-sm font-medium text-primary-foreground hover:bg-primary/90 transition focus:outline-none focus:ring-2 focus:ring-primary/20"
         prefetch
       >
         <Plus class="w-4 h-4" />
