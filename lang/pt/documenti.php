@@ -49,6 +49,15 @@ return [
         ],
     ],
 
+    'guides' => [
+        'archive_title'    => 'Arquivo centralizado',
+        'archive_desc'     => 'Consulte todos os documentos do condomínio num único local com pesquisa e filtros rápidos.',
+        'categories_title' => 'Organização por categorias',
+        'categories_desc'  => 'Estruture o arquivo por categorias para manter a documentação clara e fácil de gerir.',
+        'access_title'     => 'Controlo de acesso',
+        'access_desc'      => 'Defina visibilidade e aprovação dos documentos para garantir segurança e conformidade.',
+    ],
+
     /* ------------------------------------------------------------------
      | Table
      | ------------------------------------------------------------------ */
