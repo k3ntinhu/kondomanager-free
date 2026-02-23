@@ -2,6 +2,7 @@
 
 import { AlertTriangle, ClockAlert, ClockArrowUp, Clock } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { trans } from 'laravel-vue-i18n';
 
 const emit = defineEmits<{
   (e: 'setFilter', payload: { date_from: string; date_to: string }): void;
@@ -21,7 +22,7 @@ const formatDate = (d: Date) => d.toISOString().slice(0, 10);
 
 const displayStats = {
   expired_last_seven_days: {
-    title: 'Scaduti ultimi 7 giorni',
+    title: trans('eventi.stats.expired_last_seven_days'),
     icon: AlertTriangle,
     range: {
       date_from: formatDate(new Date(now.getTime() - 7 * 86400000)),
@@ -29,7 +30,7 @@ const displayStats = {
     },
   },
   next_seven_days: {
-    title: 'Scadenza prossimi 7 giorni',
+    title: trans('eventi.stats.next_seven_days'),
     icon: ClockAlert,
     range: {
       date_from: formatDate(now),
@@ -37,7 +38,7 @@ const displayStats = {
     },
   },
   next_fourteen_days: {
-    title: 'Scadenza prossimi 14 giorni',
+    title: trans('eventi.stats.next_fourteen_days'),
     icon: ClockArrowUp,
     range: {
       date_from: formatDate(now),
@@ -45,7 +46,7 @@ const displayStats = {
     },
   },
   next_twentyeight_days: {
-    title: 'Scadenza prossimi 30 giorni',
+    title: trans('eventi.stats.next_twentyeight_days'),
     icon: Clock,
     range: {
       date_from: formatDate(now),
