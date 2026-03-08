@@ -2,17 +2,9 @@
 
 import { ref } from "vue";
 import { Link } from '@inertiajs/vue3';
-import { CircleArrowDown, CircleArrowRight, CircleArrowUp, CircleAlert, Tags } from 'lucide-vue-next';
+import { CircleArrowDown, CircleArrowRight, CircleArrowUp, CircleAlert } from 'lucide-vue-next';
 import { usePermission } from "@/composables/permissions";
 import { trans } from 'laravel-vue-i18n';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty'
 import type { Segnalazione } from '@/types/segnalazioni';
 
 const props = defineProps<{
@@ -50,17 +42,12 @@ const truncate = (text: string, length: number = 120) => {
 <template>
     <div class="flow-root">
       <ul role="list" class="divide-y divide-gray-200">
-        <Empty v-if="!segnalazioni.length" class="border border-dashed">
-          <EmptyHeader>
-            <EmptyMedia variant="icon" class="bg-slate-50/50">
-              <Tags />
-            </EmptyMedia>
-            <EmptyTitle>{{ trans('segnalazioni.dialogs.no_tickets') }}</EmptyTitle>
-            <EmptyDescription>
-              {{ trans('segnalazioni.dialogs.no_tickets_created') }}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <div
+          v-if="!segnalazioni.length"
+          class="flex items-center justify-center py-8 text-xs font-medium text-slate-400 uppercase tracking-widest"
+        >
+          {{ trans('segnalazioni.dialogs.no_tickets_created') }}
+        </div>
  
         <li v-for="segnalazione in segnalazioni" :key="segnalazione.id" class="py-3 sm:py-4">
           <div class="flex items-center space-x-4">

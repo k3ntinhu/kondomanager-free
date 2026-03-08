@@ -37,8 +37,11 @@ const truncatedName = (name: string, length: number = 80) => {
 <template>
     <div class="flow-root">
       <ul role="list" class="divide-y divide-gray-200">
-        <div v-if="!documenti.length" class="p-4 mt-7 text-sm text-gray-800 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300" role="alert">
-          <span class="font-medium">{{ trans('documenti.dialogs.no_documents_created') }}</span>
+        <div
+          v-if="!documenti.length"
+          class="flex items-center justify-center py-8 text-xs font-medium text-slate-400 uppercase tracking-widest"
+        >
+          {{ trans('documenti.dialogs.no_documents_created') }}
         </div>
         <li v-for="documento in documenti" :key="documento.id" class="py-3 sm:py-4">
           <div class="flex items-center space-x-4">

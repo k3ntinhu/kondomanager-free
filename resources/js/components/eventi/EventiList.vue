@@ -82,10 +82,9 @@ const getLocalizedCategory = (evento: Evento) => {
     <ul role="list" class="divide-y divide-gray-200">
       <div
         v-if="!eventi.length"
-        class="p-4 mt-7 text-sm text-gray-800 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300"
-        role="alert"
+        class="flex items-center justify-center py-8 text-xs font-medium text-slate-400 uppercase tracking-widest"
       >
-        <span class="font-medium">{{ trans('dashboard.widgets.no_events_created') }}</span>
+        {{ trans('dashboard.widgets.no_events_created') }}
       </div>
 
       <li v-for="evento in eventi" :key="evento.id" class="py-3 sm:py-4">
@@ -122,7 +121,7 @@ const getLocalizedCategory = (evento: Evento) => {
               </span>
               
               <span v-if="evento.start_time" class="flex items-center gap-1 whitespace-nowrap ml-1 shrink-0"> 
-                • <CalendarDays class="w-3 h-3" /> {{ trans('dashboard.widgets.starts_on') }} {{ new Date(evento.start_time).toLocaleDateString() }}
+                • <CalendarDays class="w-3 h-3" /> {{ new Date(evento.start_time).toLocaleDateString() }}
               </span>
             </div>
 
