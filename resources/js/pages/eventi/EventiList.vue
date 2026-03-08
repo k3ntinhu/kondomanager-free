@@ -26,7 +26,7 @@ const { generateRoute } = usePermission();
 const page = usePage<{ flash: { message?: Flash } }>();
 const flashMessage = computed(() => page.props.flash.message);
 const breadcrumbs: never[] = [];
-const pageGuides = [
+const pageGuides = computed(() => [
   {
     title: trans('eventi.guides.centralized_title'),
     description: trans('eventi.guides.centralized_desc'),
@@ -45,7 +45,7 @@ const pageGuides = [
     icon: BellRing,
     colorVariant: 'amber' as const,
   },
-];
+]);
 
 const filters = reactive({ ...props.filters });
 

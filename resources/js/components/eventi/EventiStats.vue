@@ -3,6 +3,7 @@
 import { AlertTriangle, ClockAlert, ClockArrowUp, Clock } from 'lucide-vue-next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { trans } from 'laravel-vue-i18n';
+import { computed } from 'vue';
 
 const emit = defineEmits<{
   (e: 'setFilter', payload: { date_from: string; date_to: string }): void;
@@ -20,7 +21,7 @@ defineProps<{
 const now = new Date();
 const formatDate = (d: Date) => d.toISOString().slice(0, 10);
 
-const displayStats = {
+const displayStats = computed(() => ({
   expired_last_seven_days: {
     title: trans('eventi.stats.expired_last_seven_days'),
     icon: AlertTriangle,
@@ -52,9 +53,8 @@ const displayStats = {
       date_from: formatDate(now),
       date_to: formatDate(new Date(now.getTime() + 28 * 86400000)),
     },
-  }
-
-};
+  },
+}));
 </script>
 
 <template>
