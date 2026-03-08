@@ -26,9 +26,9 @@ const props = defineProps<{
 const { generatePath, generateRoute } = usePermission();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.scale.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, component: "condominio-dropdown" } as any,
-  { title: 'crea scala', href: '#' },
+  { title: trans('gestionale.list_pages.scale.create.breadcrumb'), href: '#' },
 ]);
 
 const form = useForm({
@@ -51,7 +51,7 @@ const submit = () => {
 
 <template>
 
-    <Head title="Crea nuova scala" />
+    <Head :title="trans('gestionale.list_pages.scale.create.head_title')" />
 
     <GestionaleLayout :breadcrumbs="breadcrumbs">
 
@@ -89,7 +89,7 @@ const submit = () => {
                       class="mt-1 block w-full"
                       v-model="form.name" 
                       v-on:focus="form.clearErrors('name')"
-                      placeholder="Nome scala" 
+                      :placeholder="trans('gestionale.list_pages.scale.create.placeholders.name')" 
                     />
                     
                     <InputError :message="form.errors.name" />
@@ -97,14 +97,14 @@ const submit = () => {
                   </div>
 
                   <div class="sm:col-span-3">
-                      <Label for="palazzine">Palazzina</Label>
+                      <Label for="palazzine">{{ trans('gestionale.list_pages.scale.create.labels.building') }}</Label>
 
                       <v-select 
                           :options="condominio.palazzine" 
                           label="name" 
                           class="mt-1 block w-full"
                           v-model="form.palazzina_id"
-                          placeholder="Associa ad una palazzina"
+                          :placeholder="trans('gestionale.list_pages.scale.create.placeholders.select_building')"
                           @update:modelValue="form.clearErrors('palazzina_id')" 
                           :reduce="(palazzina: Palazzina) => palazzina.id"
                       />
@@ -122,7 +122,7 @@ const submit = () => {
                       class="mt-1 block w-full"
                       v-model="form.description" 
                       v-on:focus="form.clearErrors('description')"
-                      placeholder="Descrizione scala" 
+                      :placeholder="trans('gestionale.list_pages.scale.create.placeholders.description')" 
                     />
                     
                     <InputError class="mt-2" :message="form.errors.description" />
