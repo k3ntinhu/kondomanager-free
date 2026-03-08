@@ -49,6 +49,7 @@ return [
         'reset_filters' => 'Reset filters',
         'more_buildings' => '+:count other buildings',
         'more_people' => '+:count other people',
+        'datetime_at' => 'at',
     ],
 
     'actions' => [

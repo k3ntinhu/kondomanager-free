@@ -49,6 +49,7 @@ return [
         'reset_filters' => 'Repor filtros',
         'more_buildings' => '+:count outros condomínios',
         'more_people' => '+:count outras pessoas',
+        'datetime_at' => 'às',
     ],
 
     'actions' => [
