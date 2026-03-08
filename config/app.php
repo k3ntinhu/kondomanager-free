@@ -23,9 +23,10 @@ return [
     | This value is the version of your application. This value is used when
     | the framework needs to place the application's version in a notification
     | or any other location as required by the application or its packages.
+    |
     */
 
-    'version' => env('APP_VERSION', '1.8.0beta'),
+    'version' => env('APP_VERSION', '1.8.0'),
 
     /*
     |--------------------------------------------------------------------------
@@ -134,5 +135,17 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Impostazioni Specifiche Gestionale
+    |--------------------------------------------------------------------------
+    |
+    | scheduler_queue_worker:
+    | - TRUE: Per Shared Hosting (cPanel/SiteGround). Lancia un worker "usa e getta" ogni minuto.
+    | - FALSE: Per VPS (con Supervisor). Non fa nulla (ci pensa Supervisor).
+    |
+    */
+    'scheduler_queue_worker' => env('SCHEDULE_QUEUE_WORKER', false),
 
 ];

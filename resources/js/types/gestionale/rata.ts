@@ -1,8 +1,22 @@
 /**
+ * Interfaccia per il dettaglio quote nel tooltip
+ */
+export interface DettaglioQuotaRata {
+    unita: string;
+    residuo: number;
+    is_credito: boolean;
+    componente_saldo: number;
+    componente_spesa: number;
+    waterfall_start?: number;
+    waterfall_cost?: number;
+    waterfall_end?: number;
+}
+
+/**
  * Interfaccia per rappresentare una rata condominiale
  */
 export interface Rata {
-    /** ID univoco della rata */
+    /** ID univoco della rata (o della quota rata) */
     id: number;
     /** Descrizione della rata */
     descrizione: string;
@@ -30,123 +44,79 @@ export interface Rata {
     unita: string;
     /** Importo totale originale della rata */
     importo_totale: number;
+    /** ID della rata padre (fondamentale per collegare le quote alla rata originale) */
+    rata_padre_id?: number;
+    /** ID alternativo della rata (fallback) */
+    rata_id?: number;
+    /** Alias per data_scadenza usato per l'ordinamento */
+    scadenza?: string;
+    /** Controlla se la rata è stata emessa oppure no */
+    is_emitted?: boolean;
+    // Aggiunto questo campo opzionale per gestire il dettaglio delle quote
+    dettaglio_quote?: DettaglioQuotaRata[];
+    // Indica se la rata è parzialmente
+    coperta_da_credito?: boolean;
+    parzialmente_coperta?: boolean;
+    residuo_originale?: number;
 }
 
-/**
- * Interfaccia per il dettaglio di un pagamento
- */
 export interface DettaglioPagamento {
-    /** ID della rata pagata */
     rata_id: number;
-    /** Importo pagato per questa rata */
     importo: number;
 }
 
-/**
- * Interfaccia per l'anteprima contabile
- */
 export interface RigaPreview {
-    /** ID della rata */
     id: number;
-    /** Descrizione della rata */
     descrizione: string;
-    /** Importo pagato */
     pagato: number;
-    /** Status del pagamento: 'SALDATA' o 'PARZIALE' */
     status: 'SALDATA' | 'PARZIALE';
-    /** Residuo futuro dopo il pagamento */
     residuo_futuro: number;
 }
 
-/**
- * Interfaccia per l'anteprima completa della registrazione
- */
 export interface PreviewContabile {
-    /** Indica se ci sono dati da mostrare */
     hasData: boolean;
-    /** Totale versato */
     totale_versato: number;
-    /** Totale allocato sulle rate */
     allocato_rate: number;
-    /** Anticipo/Eccedenza */
     anticipo: number;
-    /** Righe di dettaglio */
     righe: RigaPreview[];
 }
 
-/**
- * Interfaccia per il bilancio finale
- */
 export interface BilancioFinale {
-    /** Label del bilancio (Residuo, Credito, Saldo) */
     label: string;
-    /** Valore del bilancio */
     value: number;
-
-    /** Classi CSS per lo stile */
     class: string;
 }
 
 // ============================================================================
-// INCASSI - Interfacce per la gestione degli incassi registrati
+// INCASSI
 // ============================================================================
 
-/**
- * Dettaglio di una rata nell'incasso
- */
 export interface DettaglioRataIncasso {
-    /** Numero della rata */
     numero: number;
-    /** Data di scadenza */
     scadenza: string;
-    /** Importo formattato (es. "€ 100,00") */
     importo_formatted: string;
 }
 
-/**
- * Informazioni sul pagante dell'incasso
- */
 export interface PaganteIncasso {
-    /** Nome principale del pagante */
     principale: string;
-    /** Numero di altri paganti */
     altri_count: number;
-    /** Lista completa dei paganti */
     lista_completa: string;
-    /** Ruolo del pagante */
     ruolo: string;
 }
 
-/**
- * Interfaccia per un incasso registrato
- */
 export interface Incasso {
-    /** ID univoco dell'incasso */
     id: number;
-    /** Numero di protocollo */
     numero_protocollo: string;
-    /** Data di competenza (YYYY-MM-DD) */
     data_competenza: string;
-    /** Data di registrazione (YYYY-MM-DD) */
     data_registrazione: string;
-    /** Causale dell'incasso */
     causale: string;
-    /** Nome della gestione */
     gestione_nome: string;
-    /** Nome della cassa */
     cassa_nome: string;
-    /** Stato dell'incasso */
     stato: 'registrata' | 'annullata' | 'bozza';
-    /** Importo totale raw per calcoli/colori */
     importo_totale_raw: number;
-    /** Importo totale formattato (es. "€ 100,00") */
     importo_totale_formatted: string;
-    /** Informazioni sul pagante */
     pagante: PaganteIncasso;
-    /** Label del tipo di cassa */
     cassa_tipo_label: string;
-    /** Dettagli delle rate associate */
     dettagli_rate: DettaglioRataIncasso[];
-    /** ID anagrafica principale del pagante */
     anagrafica_id_principale: number | null;
 }

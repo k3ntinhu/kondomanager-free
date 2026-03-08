@@ -40,7 +40,7 @@ const moneyOptions = ref({
   thousands: '.',          
   decimal: ',',          
   precision: 2, 
-  allowNegative: true,           
+  disableNegative: false,         
   allowBlank: false,
   masked: true 
 })

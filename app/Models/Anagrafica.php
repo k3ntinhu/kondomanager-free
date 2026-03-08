@@ -32,7 +32,7 @@ class Anagrafica extends Model
         'note'
     ];
 
-        /**
+    /**
      * Get the buildings associated with the anagrafica.
      */
     public function condomini()

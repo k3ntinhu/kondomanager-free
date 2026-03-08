@@ -72,14 +72,26 @@ class ImmobileAnagraficaController extends Controller
      */
     public function create(Condominio $condominio, Immobile $immobile): Response
     {
-        // Get the current active and open esercizio this is important to navigate gestioni menu
         $esercizio = $this->getEsercizioCorrente($condominio);
+
+        // Recupera gli ID delle anagrafiche GIA' associate a questo immobile
+        // per escluderle dalla lista (evita duplicati)
+        $idsGiaAssociati = $immobile->anagrafiche()->pluck('anagrafiche.id');
+
+        // Filtra le anagrafiche:
+        // 1. Devono appartenere al Condominio (contesto)
+        // 2. NON devono essere già nell'Immobile (evita doppi inserimenti)
+        $anagraficheDisponibili = $condominio->anagrafiche()
+            ->whereNotIn('anagrafiche.id', $idsGiaAssociati)
+            ->orderBy('nome') // Opzionale: per averle in ordine alfabetico
+            ->get();
 
         return Inertia::render('gestionale/immobili/anagrafiche/AnagraficheNew', [
             'condominio'  => $condominio,
             'esercizio'   => $esercizio,
             'immobile'    => $immobile,
-            'anagrafiche' => AnagraficaResource::collection(Anagrafica::all())
+            // Passiamo solo quelle filtrate
+            'anagrafiche' => AnagraficaResource::collection($anagraficheDisponibili)
         ]);
     }
 

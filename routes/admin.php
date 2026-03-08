@@ -4,6 +4,7 @@ use App\Http\Controllers\Anagrafiche\AnagraficaController;
 use App\Http\Controllers\Anagrafiche\FetchAnagraficheController;
 use App\Http\Controllers\Comunicazioni\ComunicazioneApprovalController;
 use App\Http\Controllers\Comunicazioni\ComunicazioneController;
+use App\Http\Controllers\Dashboard\ActionInboxController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Documenti\CategoriaDocumentoController;
 use App\Http\Controllers\Documenti\DocumentoApprovalController;
@@ -18,36 +19,38 @@ use App\Http\Controllers\Fornitori\FornitoreController;
 use App\Http\Controllers\Notifications\NotificationPreferenceController;
 use App\Http\Controllers\Segnalazioni\SegnalazioneApprovalController;
 use App\Http\Controllers\Segnalazioni\SegnalazioneController;
+use App\Http\Middleware\CheckForPendingUpdates;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'role_or_permission:amministratore|collaboratore|Accesso pannello amministratore'])->group(function () {
+Route::prefix('admin')->as('admin.')
+->middleware(['auth', 'verified', 'role_or_permission:amministratore|collaboratore|Accesso pannello amministratore', CheckForPendingUpdates::class])
+->group(function () {
 
     Route::get('/dashboard', DashboardController::class)
         ->name('dashboard');
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Inbox console routes
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/inbox', ActionInboxController::class)->name('inbox');
 
+    Route::post('/admin/inbox/{task}/reject', [ActionInboxController::class, 'reject'])
+        ->name('inbox.reject');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Anagrafiche e fornitori routes
+    |--------------------------------------------------------------------------
+    */
     Route::get('/fetch-anagrafiche', [FetchAnagraficheController::class, 'fetchAnagrafiche']);
 
-    Route::resource('categorie', CategoriaDocumentoController::class)
-        ->parameters([
-            'categorie' => 'categoria'
-        ]);
-
-    Route::resource('eventi', EventoController::class)
-        ->parameters([
-            'eventi' => 'evento'
-        ]);
-
-    Route::get('/fetch-categorie-documenti', FetchCategorieController::class)
-        ->name('categorie.documenti');
-
-    Route::get('/fetch-categorie-eventi', EventiFetchCategorieController::class)
-        ->name('categorie.eventi');
-    
     Route::resource('anagrafiche', AnagraficaController::class)
         ->parameters([
             'anagrafiche' => 'anagrafica'
         ]);
-
+    
     Route::resource('fornitori', FornitoreController::class)
         ->parameters([
             'fornitori' => 'fornitore'
@@ -65,7 +68,23 @@ Route::prefix('admin')->as('admin.')->middleware(['auth', 'verified', 'role_or_p
             'documenti' => 'documento'
             
         ]);
-   
+
+    Route::resource('categorie', CategoriaDocumentoController::class)
+        ->parameters([
+            'categorie' => 'categoria'
+        ]);
+
+    Route::resource('eventi', EventoController::class)
+        ->parameters([
+            'eventi' => 'evento'
+        ]);
+
+    Route::get('/fetch-categorie-documenti', FetchCategorieController::class)
+        ->name('categorie.documenti');
+
+    Route::get('/fetch-categorie-eventi', EventiFetchCategorieController::class)
+        ->name('categorie.eventi');
+    
     Route::resource('segnalazioni', SegnalazioneController::class)
         ->parameters([
             'segnalazioni' => 'segnalazione'

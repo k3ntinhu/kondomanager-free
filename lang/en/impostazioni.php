@@ -8,7 +8,6 @@ return [
     'error_update_notification_preferences'   => 'An error occurred while updating your notification preferences',
     'success_save_general_settings'           => 'General settings are successfully saved.',
     'error_save_general_settings'             => 'An error occurred while saving general settings.',
-
     /* ------------------------------------------------------------------
      | Front‑end strings (headings, titles, descriptions)
      | ------------------------------------------------------------------ */
@@ -19,15 +18,14 @@ return [
         'general_settings_title'       => 'General settings',
         'general_settings_description' => 'On this page you can manage the general settings of the application',
     ],
-
     /* ------------------------------------------------------------------
      | Labels
      | ------------------------------------------------------------------ */
     'label' => [
-        'manage'    => 'Manage',
-        'settings'  => 'Settings',
+        'manage'     => 'Manage',
+        'settings'   => 'Settings',
+        'update_now' => 'Update now',
     ],
-
     /* ------------------------------------------------------------------
      | Empty‑state / dialog messages
      | ------------------------------------------------------------------ */
@@ -38,6 +36,9 @@ return [
         'users_settings_description'    => 'Settings for managing users, roles, and permissions',
         'backups_settings_title'        => 'Backup management',
         'backups_settings_description'  => 'Settings related to database and file backups',
+        'updates_title'                 => 'System updates',
+        'updates_desc_available'        => 'New version available: :version',
+        'updates_desc_latest'           => 'System is up to date with the latest version',
         'language_settings_title'       => 'Application language',
         'language_settings_description' => 'Select the primary language for the entire application',
         'default_building_title'        => 'Open building on login',
@@ -47,7 +48,6 @@ return [
         'user_registration_title'       => 'Enable user registration',
         'user_registration_description' => 'If enabled, visitors can create a new account from the home page',
     ],
-
     /* ------------------------------------------------------------------
      | Placeholders for inputs
      | ------------------------------------------------------------------ */
@@ -61,11 +61,19 @@ return [
             'pt' => 'Portuguese',
         ],
     ],
-
     /* ------------------------------------------------------------------
      | Action buttons (toolbar, card actions, etc.)
      | ------------------------------------------------------------------ */
     'actions' => [
         'save_settings' => 'Save settings',
+    ],
+    /* ------------------------------------------------------------------
+    | Sidebar navigation
+    | ------------------------------------------------------------------ */
+    'sidebar' => [
+        'users'         => 'Users',
+        'roles'         => 'Roles',
+        'permissions'   => 'Permissions',
+        'invites'       => 'Invites',
     ],
 ];

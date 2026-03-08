@@ -8,7 +8,6 @@ return [
     'error_update_notification_preferences'   => 'Si è verificato un errore nel tentativo di aggiornare le tue preferenze di notifica',
     'success_save_general_settings'           => 'Le impostazioni generali sono state salvate con successo',
     'error_save_general_settings'             => 'Si è verificato un errore durante il salvataggio delle impostazioni generali',
-
     /* ------------------------------------------------------------------
      | Front‑end strings (headings, titles, descriptions)
      | ------------------------------------------------------------------ */
@@ -19,15 +18,14 @@ return [
         'general_settings_title'       => 'Impostazioni generali',
         'general_settings_description' => 'On this page you can manage the general settings of the application',
     ],
-
     /* ------------------------------------------------------------------
      | Labels
      | ------------------------------------------------------------------ */
     'label' => [
-        'manage'    => 'Gestisci',
-        'settings'  => 'Impostazioni',
+        'manage'     => 'Gestisci',
+        'settings'   => 'Impostazioni',
+        'update_now' => 'Aggiorna ora',  
     ],
-
     /* ------------------------------------------------------------------
      | Empty‑state / dialog messages
      | ------------------------------------------------------------------ */
@@ -38,6 +36,9 @@ return [
         'users_settings_description'    => 'Impostazioni di gestione degli utenti, ruoli e permessi',
         'backups_settings_title'        => 'Gestione backups',
         'backups_settings_description'  => 'Impostazioni di gestione dei backups',
+        'updates_title'                 => 'Aggiornamenti sistema',
+        'updates_desc_available'        => 'Nuova versione disponibile: :version',
+        'updates_desc_latest'           => 'Il sistema è aggiornato all\'ultima versione',
         'language_settings_title'       => 'Lingua applicazione',
         'language_settings_description' => 'Seleziona la lingua principale per l\'applicazione',
         'default_building_title'        => 'Apri condominio al login',
@@ -47,25 +48,32 @@ return [
         'user_registration_title'       => 'Abilita registrazione utenti',
         'user_registration_description' => 'Se attivato, gli utenti possono registrarsi dalla home page',
     ],
-
     /* ------------------------------------------------------------------
      | Placeholders for inputs
      | ------------------------------------------------------------------ */
     'placeholder' => [
         'select_building' => 'Seleziona condominio',
         'select_language' => 'Seleziona lingua',
-        'search_settings' => 'Filtrar configurações...',
+        'search_settings' => 'Filtra impostazioni...',
         'language' => [
             'it' => 'Italiano',
             'en' => 'Inglese',
             'pt' => 'Portoghese',
         ],
     ],
-
     /* ------------------------------------------------------------------
      | Action buttons (toolbar, card actions, etc.)
      | ------------------------------------------------------------------ */
     'actions' => [
         'save_settings' => 'Salva impostazioni',
+    ],
+    /* ------------------------------------------------------------------
+    | Sidebar navigation
+    | ------------------------------------------------------------------ */
+    'sidebar' => [
+        'users'         => 'Utenti',
+        'roles'         => 'Ruoli',
+        'permissions'   => 'Permessi',
+        'invites'       => 'Inviti',
     ],
 ];
