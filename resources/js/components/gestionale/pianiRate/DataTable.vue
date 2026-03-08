@@ -8,6 +8,7 @@ import { valueUpdater } from '@/lib/utils';
 import DataTablePagination from '@/components/DataTablePagination.vue';
 import DataTableToolbar from '@/components/gestionale/pianiRate/DataTableToolbar.vue';
 import { usePermission } from "@/composables/permissions";
+import { trans } from 'laravel-vue-i18n';
 import type { ColumnDef, SortingState } from '@tanstack/vue-table';
 import type { PianoRate } from '@/types/gestionale/piani-rate';
 import type { Building } from '@/types/buildings';
@@ -110,7 +111,7 @@ const table = useVueTable({
         <template v-else>
           <TableRow>
             <TableCell :colspan="columns.length" class="h-24 text-center">
-              Nessun risultato trovato
+              {{ trans('gestionale.piani_rate.table.no_results') }}
             </TableCell>
           </TableRow>
         </template>

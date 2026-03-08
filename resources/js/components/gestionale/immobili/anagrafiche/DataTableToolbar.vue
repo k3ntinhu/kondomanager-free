@@ -2,6 +2,7 @@
 
 import { usePage, Link } from '@inertiajs/vue3';
 import { Plus, List } from 'lucide-vue-next';
+import { trans } from 'laravel-vue-i18n';
 import { usePermission } from '@/composables/permissions';
 import type { Table } from '@tanstack/vue-table';
 import type { Immobile } from '@/types/gestionale/immobili';

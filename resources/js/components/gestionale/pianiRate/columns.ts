@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/vue3';
 import DropdownAction from '@/components/gestionale/pianiRate/DataTableRowActions.vue'
 import DataTableColumnHeader from '@/components/gestionale/pianiRate/DataTableColumnHeader.vue'
 import { usePermission } from "@/composables/permissions";
+import { trans } from 'laravel-vue-i18n';
 import type { ColumnDef } from '@tanstack/vue-table'
 import type { PianoRate } from '@/types/gestionale/piani-rate'
 import type { Building } from '@/types/buildings'
@@ -14,7 +15,7 @@ const { generateRoute } = usePermission();
 export const createColumns = (condominio: Building, esercizio: Esercizio): ColumnDef<PianoRate>[] => [
   {
     accessorKey: 'nome',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Denominazione' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.piani_rate.table.name') }),
     cell: ({ row }) => {
 
       const pianoRate = row.original
@@ -30,7 +31,7 @@ export const createColumns = (condominio: Building, esercizio: Esercizio): Colum
   },
   {
     accessorKey: 'descrizione',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Descrizione' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.piani_rate.table.description') }),
     cell: ({ row }) => h('div', row.getValue('descrizione')),
 
   },
@@ -83,4 +84,3 @@ export const createColumns = (condominio: Building, esercizio: Esercizio): Colum
     },
    }
 ]
-
