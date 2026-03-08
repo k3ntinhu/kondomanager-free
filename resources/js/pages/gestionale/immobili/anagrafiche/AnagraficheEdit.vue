@@ -2,6 +2,7 @@
 
 import { computed, ref } from 'vue';
 import { Link, Head, useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import ImmobileLayout from '@/layouts/gestionale/ImmobileLayout.vue';
 import { usePermission } from "@/composables/permissions";
@@ -119,7 +120,7 @@ const submit = () => {
                 class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 <List class="w-4 h-4" />
-                <span>Elenco</span>
+                <span>{{ trans('gestionale.form_common.actions.list') }}</span>
               </Link>
             </div>
 
@@ -130,7 +131,7 @@ const submit = () => {
               <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
   
                 <div class="sm:col-span-2">
-                  <Label for="tipologia">Tipologia</Label>
+                  <Label for="tipologia">{{ trans('gestionale.form_common.labels.type') }}</Label>
                   <v-select
                     class="w-full"
                     :options="tipologiaList"
@@ -238,7 +239,7 @@ const submit = () => {
 
               <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div class="sm:col-span-3">
-                  <Label for="data_inizio">Data inizio</Label>
+                  <Label for="data_inizio">{{ trans('gestionale.form_common.labels.start_date') }}</Label>
                   <VueDatePicker
                     v-model="form.data_inizio"
                     class="w-full"
@@ -246,13 +247,13 @@ const submit = () => {
                     locale="it"
                     :enable-time-picker="false"
                     auto-apply
-                    placeholder="Data inizio"
+                    :placeholder="trans('gestionale.form_common.labels.start_date')"
                   />
                   <InputError :message="form.errors.data_inizio" />
                 </div>
 
                 <div class="sm:col-span-3">
-                  <Label for="data_fine">Data fine</Label>
+                  <Label for="data_fine">{{ trans('gestionale.form_common.labels.end_date') }}</Label>
                   <VueDatePicker
                     v-model="form.data_fine"
                     class="w-full"
@@ -260,7 +261,7 @@ const submit = () => {
                     locale="it"
                     :enable-time-picker="false"
                     auto-apply
-                    placeholder="Data fine"
+                    :placeholder="trans('gestionale.form_common.labels.end_date')"
                   />
                   <InputError :message="form.errors.data_fine" />
                 </div>
@@ -269,10 +270,10 @@ const submit = () => {
 
               <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                   <div class="sm:col-span-6">
-                    <Label for="note">Note</Label>
+                    <Label for="note">{{ trans('gestionale.form_common.labels.notes') }}</Label>
                     <Textarea 
                         id="note" 
-                        placeholder="Inserisci una nota qui" 
+                        :placeholder="trans('gestionale.form_common.placeholders.insert_note')" 
                         v-model="form.note" 
                         v-on:focus="form.clearErrors('note')"
                     />

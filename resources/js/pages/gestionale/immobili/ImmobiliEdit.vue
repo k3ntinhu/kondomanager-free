@@ -2,6 +2,7 @@
 
 import { computed } from 'vue';
 import { Link, Head, useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import { usePermission } from "@/composables/permissions";
 import { Button } from '@/components/ui/button';
@@ -69,7 +70,7 @@ const submit = () => {
 
 <template>
 
-    <Head title="Modifica immobile" />
+    <Head :title="trans('gestionale.form_common.actions.edit')" />
 
     <GestionaleLayout :breadcrumbs="breadcrumbs">
 
@@ -83,9 +84,7 @@ const submit = () => {
               <div class="flex flex-col lg:flex-row lg:justify-end gap-2 w-full">
                 <Button :disabled="form.processing" class="h-8 w-full lg:w-auto">
                   <Plus class="w-4 h-4" v-if="!form.processing" />
-                  <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                  Salva
-                </Button>
+                  <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />{{ trans('gestionale.form_common.actions.save') }}</Button>
 
                 <Link
                   as="button"
@@ -103,13 +102,13 @@ const submit = () => {
 
                 <div class="mt-2 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     <div class="sm:col-span-3">
-                      <Label for="nome">Nome</Label>
+                      <Label for="nome">{{ trans('gestionale.form_common.labels.name') }}</Label>
                       <Input 
                         id="nome" 
                         class="mt-1 block w-full"
                           v-model="form.nome" 
                           v-on:focus="form.clearErrors('nome')"
-                          placeholder="Nome" 
+                          :placeholder="trans('gestionale.form_common.labels.name')" 
                       />
                       
                       <InputError :message="form.errors.nome" />
@@ -119,13 +118,13 @@ const submit = () => {
 
                 <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                   <div class="sm:col-span-6">
-                    <Label for="indirizzo">Descrizione</Label>
+                    <Label for="indirizzo">{{ trans('gestionale.form_common.labels.description') }}</Label>
                     <Input 
                       id="descrizione" 
                       class="mt-1 block w-full"
                         v-model="form.descrizione" 
                         v-on:focus="form.clearErrors('descrizione')"
-                        placeholder="Descrizione" 
+                        :placeholder="trans('gestionale.form_common.labels.description')" 
                     />
                     
                     <InputError class="mt-2" :message="form.errors.descrizione" />
@@ -136,7 +135,7 @@ const submit = () => {
                 <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
 
                   <div class="sm:col-span-2">
-                    <Label for="tipologia">Tipologia</Label>
+                    <Label for="tipologia">{{ trans('gestionale.form_common.labels.type') }}</Label>
                     <v-select 
                         :options="tipologie" 
                         label="nome" 
@@ -188,19 +187,19 @@ const submit = () => {
                       class="mt-1 block w-full"
                       v-model="form.interno" 
                       v-on:focus="form.clearErrors('interno')"
-                      placeholder="Interno" 
+                      :placeholder="trans('gestionale.form_common.labels.unit')" 
                     />
                     <InputError :message="form.errors.interno" />
                   </div>
 
                   <div class="sm:col-span-2">
-                    <Label for="piano">Piano</Label>
+                    <Label for="piano">{{ trans('gestionale.form_common.labels.floor') }}</Label>
                     <Input 
                       id="foglio_catasto" 
                       class="mt-1 block w-full"
                       v-model="form.piano" 
                       v-on:focus="form.clearErrors('piano')"
-                      placeholder="Piano" 
+                      :placeholder="trans('gestionale.form_common.labels.floor')" 
                     />
                     <InputError :message="form.errors.piano" />
                   </div>
@@ -212,7 +211,7 @@ const submit = () => {
                       class="mt-1 block w-full"
                       v-model="form.superficie" 
                       v-on:focus="form.clearErrors('superficie')"
-                      placeholder="Superficie" 
+                      :placeholder="trans('gestionale.form_common.labels.surface')" 
                     />
                     <InputError :message="form.errors.superficie" />
                   </div>
@@ -224,7 +223,7 @@ const submit = () => {
                       class="mt-1 block w-full"
                       v-model="form.numero_vani" 
                       v-on:focus="form.clearErrors('numero_vani')"
-                      placeholder="Numero vani" 
+                      :placeholder="trans('gestionale.form_common.labels.rooms')" 
                     />
                     <InputError :message="form.errors.numero_vani" />
                   </div>
@@ -232,10 +231,10 @@ const submit = () => {
 
                 <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     <div class="sm:col-span-6">
-                        <Label for="note">Note</Label>
+                        <Label for="note">{{ trans('gestionale.form_common.labels.notes') }}</Label>
                         <Textarea 
                             id="note" 
-                            placeholder="Inserisci una nota qui" 
+                            :placeholder="trans('gestionale.form_common.placeholders.insert_note')" 
                             v-model="form.note" 
                             v-on:focus="form.clearErrors('note')"
                         />
@@ -255,7 +254,7 @@ const submit = () => {
                 <div class="pt-3 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-4">
                   <!-- Comune catasto (3/4) -->
                   <div class="sm:col-span-3">
-                    <Label for="comune_catasto">Comune</Label>
+                    <Label for="comune_catasto">{{ trans('gestionale.form_common.labels.city') }}</Label>
                     <Input 
                       id="comune_catasto" 
                       class="mt-1 block w-full"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
 import { Link, Head, useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
@@ -170,7 +171,7 @@ const submit = (): void => {
 
 
 <template>
-  <Head title="Modifica documento immobile" />
+  <Head :title="trans('gestionale.form_common.actions.edit')" />
 
   <AppLayout>
     <div class="px-4 py-6">
@@ -184,9 +185,7 @@ const submit = (): void => {
         <div class="flex flex-col lg:flex-row lg:justify-end gap-2 w-full">
           <Button :disabled="form.processing" class="h-8 w-full lg:w-auto">
             <Plus class="w-4 h-4" v-if="!form.processing" />
-            <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-            Salva modifiche
-          </Button>
+            <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />{{ trans('gestionale.form_common.actions.save') }}</Button>
 
           <Link
             as="button"
@@ -194,7 +193,7 @@ const submit = (): void => {
             class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             <List class="w-4 h-4" />
-            <span>Elenco</span>
+            <span>{{ trans('gestionale.form_common.actions.list') }}</span>
           </Link>
         </div>
 
@@ -205,7 +204,7 @@ const submit = (): void => {
             <div class="bg-white dark:bg-muted rounded shadow-sm p-3 space-y-4 border">
               <div class="mt-2 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div class="sm:col-span-3">
-                  <Label for="nome" class="font-medium">Nome documento</Label>
+                  <Label for="nome" class="font-medium">{{ trans('gestionale.form_common.labels.name') }}</Label>
                   <Input 
                     id="name" 
                     class="mt-1 block w-full"
@@ -219,7 +218,7 @@ const submit = (): void => {
 
               <div class="mt-2 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div class="sm:col-span-6">
-                  <Label for="nome" class="font-medium">Descrizione documento</Label>
+                  <Label for="nome" class="font-medium">{{ trans('gestionale.form_common.labels.description') }}</Label>
                   <Textarea 
                     id="description" 
                     class="mt-1 block w-full min-h-[200px]"
@@ -306,9 +305,7 @@ const submit = (): void => {
                         @click="cancelFileUpload"
                         class="gap-2"
                       >
-                        <X class="w-3 h-3" />
-                        Annulla
-                      </Button>
+                        <X class="w-3 h-3" />{{ trans('gestionale.form_common.actions.cancel') }}</Button>
                     </div>
                   </div>
 
@@ -354,7 +351,7 @@ const submit = (): void => {
               <div class="grid grid-cols-1 sm:grid-cols-6">
                 <div class="sm:col-span-6">
                   <div class="flex items-center text-sm font-medium mb-1 gap-x-2">
-                    <Label for="stato">Stato pubblicazione</Label>
+                    <Label for="stato">{{ trans('gestionale.form_common.labels.status') }}</Label>
                     <HoverCard>
                       <HoverCardTrigger as-child>
                         <button type="button" class="cursor-pointer">
@@ -364,9 +361,7 @@ const submit = (): void => {
                       <HoverCardContent class="w-80">
                         <div class="flex justify-between space-x-4">
                           <div class="space-y-1">
-                            <h4 class="text-sm font-semibold">
-                              Stato pubblicazione
-                            </h4>
+                            <h4 class="text-sm font-semibold">{{ trans('gestionale.form_common.labels.status') }}</h4>
                             <p class="text-sm">
                               Scegli se rendere visibile il documento o mantenerlo nascosto.
                             </p>
@@ -380,7 +375,7 @@ const submit = (): void => {
                     :options="publishedConstants" 
                     label="label" 
                     v-model="form.is_published"
-                    placeholder="Stato pubblicazione"
+                    :placeholder="trans('gestionale.form_common.labels.status')"
                     @update:modelValue="form.clearErrors('is_published')" 
                     :reduce="(is_published: PublishedType) => is_published.value"
                     class="mt-1"

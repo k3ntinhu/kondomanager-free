@@ -2,6 +2,7 @@
 
 import { computed, ref } from 'vue';
 import { Link, Head, useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import ImmobileLayout from '@/layouts/gestionale/ImmobileLayout.vue';
 import { usePermission } from "@/composables/permissions";
@@ -129,9 +130,7 @@ const submit = () => {
             <div class="flex flex-col lg:flex-row lg:justify-end gap-2 w-full">
               <Button :disabled="form.processing" class="h-8 w-full lg:w-auto">
                 <Plus class="w-4 h-4" v-if="!form.processing" />
-                <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                Salva
-              </Button>
+                <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />{{ trans('gestionale.form_common.actions.save') }}</Button>
 
               <Link
                 as="button"
@@ -139,7 +138,7 @@ const submit = () => {
                 class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 <List class="w-4 h-4" />
-                <span>Elenco</span>
+                <span>{{ trans('gestionale.form_common.actions.list') }}</span>
               </Link>
             </div>
 
@@ -150,7 +149,7 @@ const submit = () => {
               <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
   
                 <div class="sm:col-span-3">
-                  <Label for="tipologia">Tipologia</Label>
+                  <Label for="tipologia">{{ trans('gestionale.form_common.labels.type') }}</Label>
                   <v-select
                     class="w-full"
                     :options="tipologia"
@@ -212,7 +211,7 @@ const submit = () => {
                     v-model="form.anagrafica_id"
                     :reduce="(d: Anagrafica) => d.id"
                     label="nome"
-                    placeholder="Cerca o seleziona anagrafica"
+                    :placeholder="trans('gestionale.form_common.placeholders.search_or_select')"
                   >
                     <template #option="{ nome, indirizzo }">
                       <div class="flex flex-col py-1">
@@ -326,7 +325,7 @@ const submit = () => {
                     locale="it"
                     :enable-time-picker="false"
                     auto-apply
-                    placeholder="Data inizio"
+                    :placeholder="trans('gestionale.form_common.labels.start_date')"
                   />
                   <InputError :message="form.errors.data_inizio" />
                 </div>
@@ -340,7 +339,7 @@ const submit = () => {
                     locale="it"
                     :enable-time-picker="false"
                     auto-apply
-                    placeholder="Data fine"
+                    :placeholder="trans('gestionale.form_common.labels.end_date')"
                   />
                   <InputError :message="form.errors.data_fine" />
                 </div>
@@ -349,10 +348,10 @@ const submit = () => {
 
               <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                   <div class="sm:col-span-6">
-                    <Label for="note">Note</Label>
+                    <Label for="note">{{ trans('gestionale.form_common.labels.notes') }}</Label>
                     <Textarea 
                         id="note" 
-                        placeholder="Inserisci una nota qui" 
+                        :placeholder="trans('gestionale.form_common.placeholders.insert_note')" 
                         v-model="form.note" 
                         v-on:focus="form.clearErrors('note')"
                     />

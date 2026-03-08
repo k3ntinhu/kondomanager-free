@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3'
+import { trans } from 'laravel-vue-i18n';
 import { ref, watch, computed } from 'vue'
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import { Button } from '@/components/ui/button'
