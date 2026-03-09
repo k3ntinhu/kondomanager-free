@@ -3,13 +3,26 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    entrypoint: /usr/local/bin/entrypoint.sh
+    command: php-fpm -F
     container_name: kondomanager_dev_app
     working_dir: /var/www
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: kondomanager_dev
+      DB_USERNAME: kondomanager
+      DB_PASSWORD: kondomanager
+      AUTO_KEYGEN: "true"
+      AUTO_MIGRATE: "true"
+      AUTO_SEED: "true"
+    env_file:
+      - ../.env
     volumes:
       - ../:/var/www
     depends_on:
       - db
- 
+
   nginx:
     image: nginx:alpine
     container_name: kondomanager_dev_nginx
@@ -51,8 +64,7 @@ services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     container_name: kondomanager_dev_phpmyadmin
-    depends_on:
-      - db
+
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
@@ -62,6 +74,19 @@ services:
     ports:
       - "8990:80"
 
+    depends_on:
+      - db
+
+  # node:
+  #   image: node:20
+  #   container_name: kondomanager_dev_node
+  #   working_dir: /var/www
+  #   volumes:
+  #     - ..:/var/www
+  #   command: npm run dev
+  #   ports:
+  #     - "5173:5173"
+
+
 volumes:
   dbdata:
- 
