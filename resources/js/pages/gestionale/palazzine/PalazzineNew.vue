@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import InputError from '@/components/InputError.vue';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { trans } from 'laravel-vue-i18n';
 import type { Building } from '@/types/buildings'
 import type { BreadcrumbItem } from '@/types';
 

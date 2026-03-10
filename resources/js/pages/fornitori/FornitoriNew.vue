@@ -22,7 +22,6 @@ import '@vuepic/vue-datepicker/dist/main.css';
 import type { BreadcrumbItem } from '@/types';
 import type { Anagrafica } from '@/types/anagrafiche';
 import type { Categoria } from '@/types/categorie';
-import { trans } from 'laravel-vue-i18n';
 
 defineProps<{
   anagrafiche: Anagrafica[];

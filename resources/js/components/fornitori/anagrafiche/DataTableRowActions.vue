@@ -10,7 +10,6 @@ import { usePermission } from "@/composables/permissions"
 import { trans } from 'laravel-vue-i18n';
 import type { Anagrafica } from '@/types/anagrafiche';
 import type { Fornitore } from '@/types/fornitori';
-import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   fornitore: Fornitore

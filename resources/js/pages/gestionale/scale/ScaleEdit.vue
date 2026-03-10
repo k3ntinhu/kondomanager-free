@@ -14,7 +14,6 @@ import InputError from '@/components/InputError.vue';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import vSelect from "vue-select";
-import { trans } from 'laravel-vue-i18n';
 import type { Building } from '@/types/buildings'
 import type { Scala } from '@/types/gestionale/scale';
 import type { Palazzina } from '@/types/gestionale/palazzine';

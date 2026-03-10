@@ -19,7 +19,6 @@ import type { BreadcrumbItem } from '@/types';
 import type { Palazzina } from '@/types/gestionale/palazzine';
 import type { Scala } from '@/types/gestionale/scale';
 import type { TipologiaImmobile } from '@/types/gestionale/tipologie-immobili';
-import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   condominio: Building;

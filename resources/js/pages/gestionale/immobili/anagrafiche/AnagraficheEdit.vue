@@ -19,7 +19,6 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 import vSelect from "vue-select";
-import { trans } from 'laravel-vue-i18n';
 import type { Building } from '@/types/buildings';
 import type { BreadcrumbItem } from '@/types';
 import type { Immobile } from '@/types/gestionale/immobili';

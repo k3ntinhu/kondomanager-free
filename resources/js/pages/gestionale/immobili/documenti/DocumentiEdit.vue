@@ -15,7 +15,6 @@ import InputError from '@/components/InputError.vue';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import vSelect from "vue-select";
-import { trans } from 'laravel-vue-i18n';
 import { publishedConstants } from '@/lib/documenti/constants';
 import type { BreadcrumbItem } from '@/types';
 import type { PublishedType } from '@/types/documenti';

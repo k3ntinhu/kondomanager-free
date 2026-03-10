@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { usePermission } from "@/composables/permissions";
 import { trans } from 'laravel-vue-i18n';
 import { UsersRound, Folders, TextSearch } from 'lucide-vue-next';
-import { trans } from 'laravel-vue-i18n';
 import type { LinkItem } from '@/types';
 import type { Fornitore } from '@/types/fornitori';
 
