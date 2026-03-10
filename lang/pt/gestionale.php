@@ -526,6 +526,38 @@ return [
             ],
         ],
     ],
+    'immobili_form' => [
+        'create' => [
+            'head_title' => 'Criar imóvel',
+            'breadcrumb_create' => 'Criar imóvel',
+            'heading_title' => 'Criar novo imóvel para o condomínio',
+            'heading_description' => 'Preencha o formulário seguinte para criar um novo imóvel para o condomínio - :condominio',
+            'labels' => [
+                'building' => 'Bloco',
+                'stair' => 'Escada',
+                'cadastral_code' => 'Código',
+                'cadastral_section' => 'Secção',
+                'cadastral_sheet' => 'Folha',
+                'cadastral_parcel' => 'Parcela',
+                'cadastral_sub' => 'Subalterno',
+            ],
+            'placeholders' => [
+                'type' => 'Tipologia do imóvel',
+                'building' => 'Associar a um bloco',
+                'stair' => 'Associar a uma escada',
+                'cadastral_city' => 'Município do cadastro',
+                'cadastral_code' => 'Código de cadastro',
+                'cadastral_section' => 'Secção do cadastro',
+                'cadastral_sheet' => 'Folha do cadastro',
+                'cadastral_parcel' => 'Parcela do cadastro',
+                'cadastral_sub' => 'Subalterno do cadastro',
+            ],
+            'cadastral' => [
+                'title' => 'Dados cadastrais',
+                'description' => 'A seguir, pode indicar os dados cadastrais do imóvel',
+            ],
+        ],
+    ],
     'common' => [
         'loading' => 'A carregar...',
         'no_results' => 'Nenhum resultado encontrado',

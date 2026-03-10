@@ -526,6 +526,38 @@ return [
             ],
         ],
     ],
+    'immobili_form' => [
+        'create' => [
+            'head_title' => 'Create unit',
+            'breadcrumb_create' => 'Create unit',
+            'heading_title' => 'Create new unit for the condominium',
+            'heading_description' => 'Fill in the following form to create a new unit for condominium - :condominio',
+            'labels' => [
+                'building' => 'Building',
+                'stair' => 'Stairwell',
+                'cadastral_code' => 'Code',
+                'cadastral_section' => 'Section',
+                'cadastral_sheet' => 'Sheet',
+                'cadastral_parcel' => 'Parcel',
+                'cadastral_sub' => 'Sub-unit',
+            ],
+            'placeholders' => [
+                'type' => 'Unit type',
+                'building' => 'Associate with a building',
+                'stair' => 'Associate with a stairwell',
+                'cadastral_city' => 'Land registry city',
+                'cadastral_code' => 'Land registry code',
+                'cadastral_section' => 'Land registry section',
+                'cadastral_sheet' => 'Land registry sheet',
+                'cadastral_parcel' => 'Land registry parcel',
+                'cadastral_sub' => 'Land registry sub-unit',
+            ],
+            'cadastral' => [
+                'title' => 'Land registry data',
+                'description' => 'Below you can specify the unit land registry data',
+            ],
+        ],
+    ],
     'common' => [
         'loading' => 'Loading...',
         'no_results' => 'No results found',

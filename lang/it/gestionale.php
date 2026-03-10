@@ -526,6 +526,38 @@ return [
             ],
         ],
     ],
+    'immobili_form' => [
+        'create' => [
+            'head_title' => 'Crea immobile',
+            'breadcrumb_create' => 'Crea immobile',
+            'heading_title' => 'Crea nuovo immobile per il condominio',
+            'heading_description' => 'Compila il seguente modulo per la creazione di un nuovo immobile per il condominio - :condominio',
+            'labels' => [
+                'building' => 'Palazzina',
+                'stair' => 'Scala',
+                'cadastral_code' => 'Codice',
+                'cadastral_section' => 'Sezione',
+                'cadastral_sheet' => 'Foglio',
+                'cadastral_parcel' => 'Particella',
+                'cadastral_sub' => 'Subalterno',
+            ],
+            'placeholders' => [
+                'type' => 'Tipologia immobile',
+                'building' => 'Associa ad una palazzina',
+                'stair' => 'Associa ad una scala',
+                'cadastral_city' => 'Comune catasto',
+                'cadastral_code' => 'Codice catasto',
+                'cadastral_section' => 'Sezione catasto',
+                'cadastral_sheet' => 'Foglio catasto',
+                'cadastral_parcel' => 'Particella catasto',
+                'cadastral_sub' => 'Subalterno catasto',
+            ],
+            'cadastral' => [
+                'title' => 'Dati catastali',
+                'description' => 'Di seguito è possibile specificare i dati catastali dell\'immobile',
+            ],
+        ],
+    ],
     'common' => [
         'loading' => 'Caricamento...',
         'no_results' => 'Nessun risultato trovato',

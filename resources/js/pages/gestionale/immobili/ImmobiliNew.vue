@@ -32,10 +32,10 @@ const props = defineProps<{
 const { generatePath, generateRoute } = usePermission();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.immobili.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, component: "condominio-dropdown" } as any,
-  { title: 'immobili', href: generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id }) },
-  { title: 'crea immobile', href: '#' },
+  { title: trans('gestionale.list_pages.immobili.breadcrumbs.list'), href: generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.immobili_form.create.breadcrumb_create'), href: '#' },
 ]);
 
 const form = useForm({
@@ -70,7 +70,7 @@ const submit = () => {
 
 <template>
 
-    <Head :title="trans('gestionale.form_common.actions.create')" />
+    <Head :title="trans('gestionale.immobili_form.create.head_title')" />
 
     <GestionaleLayout :breadcrumbs="breadcrumbs">
 
@@ -80,9 +80,9 @@ const submit = () => {
 
       <div class="px-4 py-6">
 
-          <Heading 
-            title="Crea nuovo immobile per il condominio" 
-            :description="`Compila il seguente modulo per la creazione di un nuovo immobile per il condominio - ${props.condominio.nome.toLowerCase()}`"
+          <Heading
+            :title="trans('gestionale.immobili_form.create.heading_title')"
+            :description="trans('gestionale.immobili_form.create.heading_description', { condominio: props.condominio.nome.toLowerCase() })"
           />
 
         <div class="w-full shadow ring-1 ring-black/5 md:rounded-lg p-4">
@@ -102,7 +102,7 @@ const submit = () => {
                   class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                 >
                   <List class="w-4 h-4" />
-                  <span>Immobili</span>
+                  <span>{{ trans('gestionale.list_pages.immobili.page_title') }}</span>
                 </Link>
               </div>
 
@@ -151,7 +151,7 @@ const submit = () => {
                         label="nome" 
                         class="mt-1 block w-full"
                         v-model="form.tipologia_id"
-                        placeholder="Tipologia immobile"
+                        :placeholder="trans('gestionale.immobili_form.create.placeholders.type')"
                         @update:modelValue="form.clearErrors('tipologia_id')" 
                         :reduce="(tipologia: TipologiaImmobile) => tipologia.id"
                     />
@@ -159,13 +159,13 @@ const submit = () => {
                   </div>
 
                   <div class="sm:col-span-2">
-                    <Label for="palazzina">Palazzina</Label>
+                    <Label for="palazzina">{{ trans('gestionale.immobili_form.create.labels.building') }}</Label>
                       <v-select 
                         :options="palazzine" 
                         label="name" 
                         class="mt-1 block w-full"
                         v-model="form.palazzina_id"
-                        placeholder="Associa ad una palazzina"
+                        :placeholder="trans('gestionale.immobili_form.create.placeholders.building')"
                         @update:modelValue="form.clearErrors('palazzina_id')" 
                         :reduce="(palazzina: Palazzina) => palazzina.id"
                       />
@@ -173,13 +173,13 @@ const submit = () => {
                   </div>
 
                   <div class="sm:col-span-2">
-                    <Label for="scala">Scala</Label>
+                    <Label for="scala">{{ trans('gestionale.immobili_form.create.labels.stair') }}</Label>
                     <v-select 
                       :options="scale" 
                       label="name" 
                       class="mt-1 block w-full"
                       v-model="form.scala_id"
-                      placeholder="Associa ad una scala"
+                      :placeholder="trans('gestionale.immobili_form.create.placeholders.stair')"
                       @update:modelValue="form.clearErrors('scala_id')" 
                       :reduce="(scala: Scala) => scala.id"
                     />
@@ -191,7 +191,7 @@ const submit = () => {
                 <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-8">
     
                   <div class="sm:col-span-2">
-                    <Label for="interno">Interno</Label>
+                    <Label for="interno">{{ trans('gestionale.form_common.labels.unit') }}</Label>
                     <Input 
                       id="interno" 
                       class="mt-1 block w-full"
@@ -215,7 +215,7 @@ const submit = () => {
                   </div>
 
                   <div class="sm:col-span-2">
-                    <Label for="superficie">Superficie</Label>
+                    <Label for="superficie">{{ trans('gestionale.form_common.labels.surface') }}</Label>
                     <Input 
                       id="superficie" 
                       class="mt-1 block w-full"
@@ -227,7 +227,7 @@ const submit = () => {
                   </div>
 
                   <div class="sm:col-span-2">
-                    <Label for="numero_vani">Numero vani</Label>
+                    <Label for="numero_vani">{{ trans('gestionale.form_common.labels.rooms') }}</Label>
                     <Input 
                       id="numero_vani" 
                       class="mt-1 block w-full"
@@ -255,8 +255,8 @@ const submit = () => {
                 </div>
 
                 <div>
-                  <h3 class="text-lg font-medium leading-6 text-gray-900">Dati catastali</h3>
-                  <p class="mt-1 text-sm text-gray-500">Di seguito è possibile specificare i dati catastali dell'immobile</p>
+                  <h3 class="text-lg font-medium leading-6 text-gray-900">{{ trans('gestionale.immobili_form.create.cadastral.title') }}</h3>
+                  <p class="mt-1 text-sm text-gray-500">{{ trans('gestionale.immobili_form.create.cadastral.description') }}</p>
                 </div>
                 
                 <Separator class="my-4" />
@@ -270,20 +270,20 @@ const submit = () => {
                       class="mt-1 block w-full"
                       v-model="form.comune_catasto" 
                       v-on:focus="form.clearErrors('comune_catasto')"
-                      placeholder="Comune catasto" 
+                      :placeholder="trans('gestionale.immobili_form.create.placeholders.cadastral_city')" 
                     />
                     <InputError :message="form.errors.comune_catasto" />
                   </div>
 
                   <!-- Codice catasto (1/4) -->
                   <div class="sm:col-span-1">
-                    <Label for="codice_catasto">Codice</Label>
+                    <Label for="codice_catasto">{{ trans('gestionale.immobili_form.create.labels.cadastral_code') }}</Label>
                     <Input 
                       id="codice_catasto" 
                       class="mt-1 block w-full"
                       v-model="form.codice_catasto" 
                       v-on:focus="form.clearErrors('codice_catasto')"
-                      placeholder="Codice catasto" 
+                      :placeholder="trans('gestionale.immobili_form.create.placeholders.cadastral_code')" 
                     />
                     <InputError :message="form.errors.codice_catasto" />
                   </div>
@@ -292,49 +292,49 @@ const submit = () => {
                 <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-8">
 
                   <div class="sm:col-span-2">
-                    <Label for="sezione_catasto">Sezione</Label>
+                    <Label for="sezione_catasto">{{ trans('gestionale.immobili_form.create.labels.cadastral_section') }}</Label>
                     <Input 
                       id="sezione_catasto" 
                       class="mt-1 block w-full"
                       v-model="form.sezione_catasto" 
                       v-on:focus="form.clearErrors('sezione_catasto')"
-                      placeholder="Sezione catasto" 
+                      :placeholder="trans('gestionale.immobili_form.create.placeholders.cadastral_section')" 
                     />
                     <InputError :message="form.errors.sezione_catasto" />
                   </div>
                   
                   <div class="sm:col-span-2">
-                    <Label for="foglio_catasto">Foglio</Label>
+                    <Label for="foglio_catasto">{{ trans('gestionale.immobili_form.create.labels.cadastral_sheet') }}</Label>
                     <Input 
                       id="foglio_catasto" 
                       class="mt-1 block w-full"
                       v-model="form.foglio_catasto" 
                       v-on:focus="form.clearErrors('foglio_catasto')"
-                      placeholder="Foglio catasto" 
+                      :placeholder="trans('gestionale.immobili_form.create.placeholders.cadastral_sheet')" 
                     />
                     <InputError :message="form.errors.foglio_catasto" />
                   </div>
 
                   <div class="sm:col-span-2">
-                    <Label for="particella_catasto">Particella</Label>
+                    <Label for="particella_catasto">{{ trans('gestionale.immobili_form.create.labels.cadastral_parcel') }}</Label>
                     <Input 
                       id="particella_catasto" 
                       class="mt-1 block w-full"
                       v-model="form.particella_catasto" 
                       v-on:focus="form.clearErrors('particella_catasto')"
-                      placeholder="Particella catasto" 
+                      :placeholder="trans('gestionale.immobili_form.create.placeholders.cadastral_parcel')" 
                     />
                     <InputError :message="form.errors.particella_catasto" />
                   </div>
 
                   <div class="sm:col-span-2">
-                    <Label for="subalterno_catasto">Subalterno</Label>
+                    <Label for="subalterno_catasto">{{ trans('gestionale.immobili_form.create.labels.cadastral_sub') }}</Label>
                     <Input 
                       id="subalterno_catasto" 
                       class="mt-1 block w-full"
                       v-model="form.subalterno_catasto" 
                       v-on:focus="form.clearErrors('subalterno_catasto')"
-                      placeholder="Subalterno catasto" 
+                      :placeholder="trans('gestionale.immobili_form.create.placeholders.cadastral_sub')" 
                     />
                     <InputError :message="form.errors.subalterno_catasto" />
                   </div>
