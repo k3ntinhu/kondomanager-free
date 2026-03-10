@@ -2,6 +2,7 @@
 
 import { computed, ref } from 'vue';
 import { Head, Link, InfiniteScroll } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import PageHeaderGuide from '@/components/PageHeaderGuide.vue';
 import { usePermission } from "@/composables/permissions";
