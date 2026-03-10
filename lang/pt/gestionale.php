@@ -584,6 +584,52 @@ return [
             ],
         ],
     ],
+    'immobile_layout' => [
+        'tabs' => [
+            'details' => 'Detalhes',
+            'registry' => 'Fichas',
+            'documents' => 'Documentos',
+        ],
+    ],
+    'immobili_view' => [
+        'head_title' => 'Detalhes do imóvel',
+        'cadastral_description' => 'Abaixo estão os dados cadastrais registados para este imóvel.',
+        'notes_title' => 'Notas registadas',
+        'no_notes' => 'Não existem notas registadas para este imóvel.',
+    ],
+    'immobili_anagrafiche' => [
+        'head_title' => 'Lista de fichas do imóvel',
+        'table' => [
+            'name' => 'Nome',
+            'type' => 'Tipologia',
+            'opening_balance' => 'Saldo inicial',
+            'share' => 'Quota',
+        ],
+        'legend' => [
+            'title' => 'Legenda',
+            'debt' => 'Débito',
+            'credit' => 'Crédito',
+            'settled' => 'Liquidado',
+        ],
+        'actions' => [
+            'associate' => 'Associar',
+            'detach' => 'Dissociar',
+        ],
+        'confirm_detach_title' => 'Tem a certeza de que pretende dissociar esta ficha?',
+        'confirm_detach_description' => 'Esta ação é irreversível e vai dissociar a ficha do imóvel.',
+    ],
+    'immobili_documenti' => [
+        'head_title' => 'Lista de documentos do imóvel',
+        'table' => [
+            'title' => 'Título',
+            'status' => 'Estado',
+        ],
+        'approval' => [
+            'approved_tooltip' => 'Aprovado - clique para remover aprovação',
+            'unapproved_tooltip' => 'Não aprovado - clique para aprovar',
+        ],
+        'confirm_delete_title' => 'Tem a certeza de que pretende eliminar este documento?',
+    ],
     'common' => [
         'loading' => 'A carregar...',
         'no_results' => 'Nenhum resultado encontrado',

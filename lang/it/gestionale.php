@@ -584,6 +584,52 @@ return [
             ],
         ],
     ],
+    'immobile_layout' => [
+        'tabs' => [
+            'details' => 'Dettagli',
+            'registry' => 'Anagrafiche',
+            'documents' => 'Documenti',
+        ],
+    ],
+    'immobili_view' => [
+        'head_title' => 'Dettagli immobile',
+        'cadastral_description' => 'Di seguito i dati catastali registrati per questo immobile.',
+        'notes_title' => 'Note registrate',
+        'no_notes' => 'Nessuna nota inserita per questo immobile.',
+    ],
+    'immobili_anagrafiche' => [
+        'head_title' => 'Elenco anagrafiche immobile',
+        'table' => [
+            'name' => 'Nome',
+            'type' => 'Tipologia',
+            'opening_balance' => 'Saldo iniziale',
+            'share' => 'Quota',
+        ],
+        'legend' => [
+            'title' => 'Legenda',
+            'debt' => 'Debito',
+            'credit' => 'Credito',
+            'settled' => 'Saldato',
+        ],
+        'actions' => [
+            'associate' => 'Associa',
+            'detach' => 'Dissocia',
+        ],
+        'confirm_detach_title' => 'Sei sicuro di voler dissociare questa anagrafica?',
+        'confirm_detach_description' => 'Questa azione non è reversibile e dissocierà l\'anagrafica dall\'immobile.',
+    ],
+    'immobili_documenti' => [
+        'head_title' => 'Elenco documenti immobile',
+        'table' => [
+            'title' => 'Titolo',
+            'status' => 'Stato',
+        ],
+        'approval' => [
+            'approved_tooltip' => 'Approvato - clicca per rimuovere approvazione',
+            'unapproved_tooltip' => 'Non approvato - clicca per approvare',
+        ],
+        'confirm_delete_title' => 'Sei sicuro di voler eliminare questo documento?',
+    ],
     'common' => [
         'loading' => 'Caricamento...',
         'no_results' => 'Nessun risultato trovato',

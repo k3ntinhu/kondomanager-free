@@ -584,6 +584,52 @@ return [
             ],
         ],
     ],
+    'immobile_layout' => [
+        'tabs' => [
+            'details' => 'Details',
+            'registry' => 'Registry',
+            'documents' => 'Documents',
+        ],
+    ],
+    'immobili_view' => [
+        'head_title' => 'Unit details',
+        'cadastral_description' => 'Below are the cadastral details recorded for this unit.',
+        'notes_title' => 'Recorded notes',
+        'no_notes' => 'No notes recorded for this unit.',
+    ],
+    'immobili_anagrafiche' => [
+        'head_title' => 'Unit registry list',
+        'table' => [
+            'name' => 'Name',
+            'type' => 'Type',
+            'opening_balance' => 'Opening balance',
+            'share' => 'Share',
+        ],
+        'legend' => [
+            'title' => 'Legend',
+            'debt' => 'Debt',
+            'credit' => 'Credit',
+            'settled' => 'Settled',
+        ],
+        'actions' => [
+            'associate' => 'Associate',
+            'detach' => 'Detach',
+        ],
+        'confirm_detach_title' => 'Are you sure you want to detach this registry record?',
+        'confirm_detach_description' => 'This action is irreversible and will detach the registry record from the unit.',
+    ],
+    'immobili_documenti' => [
+        'head_title' => 'Unit documents list',
+        'table' => [
+            'title' => 'Title',
+            'status' => 'Status',
+        ],
+        'approval' => [
+            'approved_tooltip' => 'Approved - click to remove approval',
+            'unapproved_tooltip' => 'Not approved - click to approve',
+        ],
+        'confirm_delete_title' => 'Are you sure you want to delete this document?',
+    ],
     'common' => [
         'loading' => 'Loading...',
         'no_results' => 'No results found',

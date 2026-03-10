@@ -2,6 +2,7 @@
 
 import { computed } from "vue";
 import { Head, usePage } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import ImmobileLayout from '@/layouts/gestionale/ImmobileLayout.vue';
 import DataTable from '@/components/gestionale/immobili/anagrafiche/DataTable.vue';
@@ -24,18 +25,18 @@ const page = usePage<{ flash: { message?: Flash } }>();
 const flashMessage = computed(() => page.props.flash.message);
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.immobili.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, href: '#' },
-  { title: 'immobili', href: generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.immobili.breadcrumbs.list'), href: generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id }) },
   { title: props.immobile.nome, href: generatePath('gestionale/:condominio/immobili/:immobile', { condominio: props.condominio.id, immobile: props.immobile.id }) },
-  { title: 'anagrafiche', href: '#' },
+  { title: trans('gestionale.immobile_layout.tabs.registry'), href: '#' },
 ]);
 
 </script>
 
 <template>
   <GestionaleLayout :breadcrumbs="breadcrumbs">
-    <Head title="Elenco anagrafiche immobile" />
+    <Head :title="trans('gestionale.immobili_anagrafiche.head_title')" />
 
     <ImmobileLayout>
 
