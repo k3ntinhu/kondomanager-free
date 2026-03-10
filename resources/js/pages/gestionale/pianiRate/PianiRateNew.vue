@@ -59,21 +59,36 @@ const capitoliDisponibili = ref<Capitolo[]>([]);
 const isLoadingCapitoli = ref(false);
 const capitoliDettaglio = ref<CapitoloDettaglio[]>([]);
 
-const frequencies = [
-  { label: 'Mensile', value: 'MONTHLY' },
-  { label: 'Settimanale', value: 'WEEKLY' },
-  { label: 'Annuale', value: 'YEARLY' }
-]
+const frequencies = computed(() => [
+  { label: trans('gestionale.piani_rate.new.recurrence.frequencies.monthly'), value: 'MONTHLY' },
+  { label: trans('gestionale.piani_rate.new.recurrence.frequencies.weekly'), value: 'WEEKLY' },
+  { label: trans('gestionale.piani_rate.new.recurrence.frequencies.yearly'), value: 'YEARLY' }
+])
 
-const weekdays = [
-  { label: 'Lunedì', value: 'MO' },
-  { label: 'Martedì', value: 'TU' },
-  { label: 'Mercoledì', value: 'WE' },
-  { label: 'Giovedì', value: 'TH' },
-  { label: 'Venerdì', value: 'FR' },
-  { label: 'Sabato', value: 'SA' },
-  { label: 'Domenica', value: 'SU' }
-]
+const weekdays = computed(() => [
+  { label: trans('gestionale.piani_rate.new.recurrence.weekdays.monday'), value: 'MO' },
+  { label: trans('gestionale.piani_rate.new.recurrence.weekdays.tuesday'), value: 'TU' },
+  { label: trans('gestionale.piani_rate.new.recurrence.weekdays.wednesday'), value: 'WE' },
+  { label: trans('gestionale.piani_rate.new.recurrence.weekdays.thursday'), value: 'TH' },
+  { label: trans('gestionale.piani_rate.new.recurrence.weekdays.friday'), value: 'FR' },
+  { label: trans('gestionale.piani_rate.new.recurrence.weekdays.saturday'), value: 'SA' },
+  { label: trans('gestionale.piani_rate.new.recurrence.weekdays.sunday'), value: 'SU' }
+])
+
+const distribuzioneSaldoOptions = computed(() => [
+  {
+    label: trans('gestionale.piani_rate.new.balance_distribution.options.separate_installment'),
+    value: 'rata_zero',
+  },
+  {
+    label: trans('gestionale.piani_rate.new.balance_distribution.options.first_installment'),
+    value: 'prima_rata',
+  },
+  {
+    label: trans('gestionale.piani_rate.new.balance_distribution.options.spread_all'),
+    value: 'tutte_rate',
+  },
+])
 
 const form = useForm({
   gestione_id: '',
@@ -202,7 +217,7 @@ const submit = () => {
 </script>
 
 <template>
-  <Head title="Crea nuovo piano rate" />
+  <Head :title="trans('gestionale.piani_rate.new.head_title')" />
 
   <GestionaleLayout>
     <div class="px-4 py-6 w-full">
@@ -212,14 +227,14 @@ const submit = () => {
           
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b pb-4">
             <div>
-              <h1 class="text-xl font-bold">Nuovo piano rate</h1>
-              <p class="text-sm text-gray-500">Nuovo piano rate per {{ esercizio.nome }}</p>
+              <h1 class="text-xl font-bold">{{ trans('gestionale.piani_rate.new.title') }}</h1>
+              <p class="text-sm text-gray-500">{{ trans('gestionale.piani_rate.new.subtitle', { esercizio: esercizio.nome }) }}</p>
             </div>
             <div class="flex gap-2">
               <Button :disabled="form.processing" class="h-9">
                 <Plus class="w-4 h-4" v-if="!form.processing" />
                 <LoaderCircle v-else class="h-4 w-4 animate-spin" />
-                Salva piano rate
+                {{ trans('gestionale.piani_rate.new.actions.save_plan') }}
               </Button>
               <Link
                 as="button"
@@ -230,7 +245,7 @@ const submit = () => {
                 class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm"
               >
                 <List class="w-4 h-4" />
-                Elenco piani
+                {{ trans('gestionale.piani_rate.new.actions.plans_list') }}
               </Link>
             </div>
           </div>
@@ -241,10 +256,10 @@ const submit = () => {
               <div class="flex items-start gap-3">
                 <CheckCircle class="w-5 h-5 text-blue-600 shrink-0" />
                 <div>
-                  <h4 class="font-bold text-blue-900 dark:text-blue-100 text-sm">Saldi anagrafiche iniziali disponibili</h4>
+                  <h4 class="font-bold text-blue-900 dark:text-blue-100 text-sm">{{ trans('gestionale.piani_rate.new.balances.available_title') }}</h4>
                   <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
                     <span v-if="saldoInfo.saldo === 0">
-                      Rilevati saldi a debito/credito nelle anagrafiche che verranno applicati.
+                      {{ trans('gestionale.piani_rate.new.balances.available_zero_note') }}
                     </span>
                     <span v-else>
                       {{ saldoInfo.motivo }}
@@ -259,7 +274,7 @@ const submit = () => {
               <div class="flex items-start gap-3">
                 <AlertTriangle class="w-5 h-5 text-amber-600 shrink-0" />
                 <div>
-                  <h4 class="font-bold text-amber-900 dark:text-amber-100 text-sm">Saldi anagrafiche non disponibili</h4>
+                  <h4 class="font-bold text-amber-900 dark:text-amber-100 text-sm">{{ trans('gestionale.piani_rate.new.balances.unavailable_title') }}</h4>
                   <p class="text-xs text-amber-700 dark:text-amber-300 mt-1">{{ saldoInfo.motivo }}</p>
                 </div>
               </div>
@@ -269,13 +284,13 @@ const submit = () => {
           <div class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="space-y-2">
-                <Label for="nome" class="text-sm font-semibold">Nome piano rate</Label>
-                <Input id="nome" class="w-full" v-model="form.nome" placeholder="Es. Ordinario 2026" />
+                <Label for="nome" class="text-sm font-semibold">{{ trans('gestionale.piani_rate.new.form.plan_name_label') }}</Label>
+                <Input id="nome" class="w-full" v-model="form.nome" :placeholder="trans('gestionale.piani_rate.new.form.plan_name_placeholder')" />
                 <InputError :message="form.errors.nome" />
               </div>
 
               <div class="space-y-2">
-                <Label for="gestione_id" class="text-sm font-semibold">Gestione</Label>
+                <Label for="gestione_id" class="text-sm font-semibold">{{ trans('gestionale.piani_rate.new.form.management_label') }}</Label>
                 <v-select
                   class="w-full v-select-custom"
                   id="gestione_id"
@@ -283,7 +298,7 @@ const submit = () => {
                   label="nome"
                   v-model="form.gestione_id"
                   :reduce="g => g.id"
-                  placeholder="Seleziona gestione"
+                  :placeholder="trans('gestionale.piani_rate.new.form.management_placeholder')"
                 />
                 <InputError :message="form.errors.gestione_id" />
               </div>
@@ -291,22 +306,22 @@ const submit = () => {
 
             <div class="space-y-2">
               <Label for="descrizione" class="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                Descrizione / Note interne
+                {{ trans('gestionale.piani_rate.new.form.description_label') }}
               </Label>
               <Textarea 
                 id="descrizione" 
                 class="w-full min-h-[80px] resize-none" 
                 v-model="form.descrizione" 
-                placeholder="Aggiungi dettagli sul criterio di riparto o note per l'ufficio..."
+                :placeholder="trans('gestionale.piani_rate.new.form.description_placeholder')"
               />
             </div>
           </div>
 
           <div class="bg-gray-50 dark:bg-slate-800/50 p-4 rounded-lg border relative transition-all duration-300">
             <div class="flex justify-between items-center mb-2">
-                <Label :class="{ 'opacity-50': !form.gestione_id }">Filtra per capitoli di spesa (Opzionale)</Label>
+                <Label :class="{ 'opacity-50': !form.gestione_id }">{{ trans('gestionale.piani_rate.new.chapters.filter_label') }}</Label>
                 <span v-if="capitoliDettaglio.length > 0" class="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-medium">
-                    {{ capitoliDettaglio.length }} voci selezionate
+                    {{ trans('gestionale.piani_rate.new.chapters.selected_count', { count: capitoliDettaglio.length }) }}
                 </span>
             </div>
             
@@ -319,7 +334,7 @@ const submit = () => {
                   :reduce="c => c.id"
                   :disabled="!form.gestione_id || isLoadingCapitoli"
                   :selectable="(option: Capitolo) => !option.disabled" 
-                  :placeholder="!form.gestione_id ? 'Seleziona prima una gestione...' : 'Includi tutto il bilancio'"
+                  :placeholder="!form.gestione_id ? trans('gestionale.piani_rate.new.chapters.placeholder_select_management_first') : trans('gestionale.piani_rate.new.chapters.placeholder_include_all_budget')"
                   class="w-full v-select-custom"
               >
                   <template #spinner>
@@ -333,16 +348,16 @@ const submit = () => {
                                   {{ option.nome }}
                               </span>
                               <span class="text-[10px] text-gray-500">
-                                  Totale: € {{ formatMoney(option.importo_totale || 0) }}
+                                  {{ trans('gestionale.piani_rate.new.chapters.total_prefix') }}: € {{ formatMoney(option.importo_totale || 0) }}
                               </span>
                           </div>
                           
                           <div class="flex items-center">
                               <span v-if="option.disabled" class="flex items-center gap-1 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase ml-2 border border-red-200">
-                                  <Ban class="w-3 h-3"/> Esaurito
+                                  <Ban class="w-3 h-3"/> {{ trans('gestionale.piani_rate.new.chapters.depleted') }}
                               </span>
                               <span v-else class="flex items-center gap-1 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold ml-2 border border-green-200">
-                                  <Wallet class="w-3 h-3"/> Disp: € {{ formatMoney(option.residuo || 0) }}
+                                  <Wallet class="w-3 h-3"/> {{ trans('gestionale.piani_rate.new.chapters.available_short') }}: € {{ formatMoney(option.residuo || 0) }}
                               </span>
                           </div>
                       </div>
@@ -359,18 +374,18 @@ const submit = () => {
 
             </div>
             <p class="text-[11px] text-gray-500 mt-2 italic flex items-center gap-1">
-                <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span> Voci esaurite
-                <span class="w-2 h-2 rounded-full bg-green-500 inline-block ml-2"></span> Voci disponibili
+                <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span> {{ trans('gestionale.piani_rate.new.chapters.legend_depleted') }}
+                <span class="w-2 h-2 rounded-full bg-green-500 inline-block ml-2"></span> {{ trans('gestionale.piani_rate.new.chapters.legend_available') }}
             </p>
           </div>
 
           <div v-if="capitoliDettaglio.length > 0" class="mt-4 border border-gray-200 rounded-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300 shadow-sm">
             <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
               <span class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                  <List class="w-4 h-4"/> Ripartizione Budget
+                  <List class="w-4 h-4"/> {{ trans('gestionale.piani_rate.new.budget_split.title') }}
               </span>
               <span class="text-sm font-mono font-bold text-primary bg-white px-3 py-1 rounded border shadow-sm">
-                  Totale: € {{ totaleSelezionatoFormatted }}
+                  {{ trans('gestionale.piani_rate.new.budget_split.total') }}: € {{ totaleSelezionatoFormatted }}
               </span>
             </div>
             
@@ -381,10 +396,10 @@ const submit = () => {
                   <div class="flex-1 min-w-0">
                     <div class="font-medium text-sm text-gray-900 truncate" :title="cap.nome">{{ cap.nome }}</div>
                     <div class="text-xs text-gray-500 mt-1 flex flex-wrap gap-2 items-center">
-                      <span class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">Tot: € {{ formatMoney(cap.importo_totale) }}</span>
+                      <span class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{{ trans('gestionale.piani_rate.new.budget_split.total_short') }}: € {{ formatMoney(cap.importo_totale) }}</span>
                       <span class="text-gray-300">|</span>
                       <span :class="{'text-green-700 bg-green-50': cap.residuo > 0, 'text-red-600 bg-red-50': cap.residuo <= 0}" class="px-1.5 py-0.5 rounded font-medium">
-                        Residuo: € {{ formatMoney(cap.residuo) }}
+                        {{ trans('gestionale.piani_rate.new.budget_split.residual') }}: € {{ formatMoney(cap.residuo) }}
                       </span>
                     </div>
                   </div>
@@ -392,7 +407,7 @@ const submit = () => {
                   <div class="flex items-center gap-2 shrink-0">
                     
                     <div class="w-32">
-                      <Label class="sr-only">Importo</Label>
+                      <Label class="sr-only">{{ trans('gestionale.piani_rate.new.budget_split.amount_label') }}</Label>
                       <div class="relative">
                         <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">€</span>
                         <Input 
@@ -410,16 +425,16 @@ const submit = () => {
                     </div>
 
                     <div class="w-40 sm:w-56">
-                      <Label class="sr-only">Note</Label>
+                      <Label class="sr-only">{{ trans('gestionale.piani_rate.new.budget_split.notes_label') }}</Label>
                       <Input 
                         v-model="cap.note" 
-                        placeholder="Es. Quota fissa..." 
+                        :placeholder="trans('gestionale.piani_rate.new.budget_split.note_placeholder')" 
                         class="h-9 text-xs"
                       />
                     </div>
                     
                     <button @click="rimuoviCapitolo(cap.id)" type="button" class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-all">
-                      <span class="sr-only">Rimuovi</span>
+                      <span class="sr-only">{{ trans('gestionale.piani_rate.new.budget_split.remove') }}</span>
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                       </svg>
@@ -428,7 +443,7 @@ const submit = () => {
                 </div>
                 
                 <div v-if="(cap.importo_da_usare || 0) > cap.residuo" class="text-[11px] text-red-600 mt-2 flex items-center gap-1 font-medium bg-red-50 p-1.5 rounded animate-pulse">
-                  <AlertTriangle class="w-3 h-3"/> Attenzione: L'importo supera il residuo disponibile (€ {{ formatMoney(cap.residuo) }}).
+                  <AlertTriangle class="w-3 h-3"/> {{ trans('gestionale.piani_rate.new.budget_split.amount_exceeds_residual', { amount: `€ ${formatMoney(cap.residuo)}` }) }}
                 </div>
               </div>
             </div>
@@ -437,20 +452,20 @@ const submit = () => {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end mb-4">
             
             <div class="relative">
-              <Label>Numero rate</Label>
+              <Label>{{ trans('gestionale.piani_rate.new.form.installments_number') }}</Label>
               <Input v-model.number="form.numero_rate" class="mt-1 w-full" />
               <InputError :message="form.errors.numero_rate" class="absolute -bottom-6 left-0 text-[11px]" />
             </div>
             
             <div v-if="!usingByDay" class="relative">
-              <Label>Giorno scadenza</Label>
+              <Label>{{ trans('gestionale.piani_rate.new.form.due_day') }}</Label>
               <Input v-model.number="form.giorno_scadenza" class="mt-1 w-full" />
             </div>
    
             <div v-if="mostraDistribuzioneSaldo" class="relative">
               <div class="flex items-center gap-2">
                 <Label>
-                  Distribuzione saldo iniziale
+                  {{ trans('gestionale.piani_rate.new.balance_distribution.label') }}
                 </Label>
 
                 <HoverCard>
@@ -462,23 +477,23 @@ const submit = () => {
                     <HoverCardContent class="w-96 z-50 p-4 shadow-xl border-blue-100">
                       <div class="space-y-3 text-sm">
                         <h4 class="font-bold text-slate-800 flex items-center gap-2 border-b pb-2">
-                          <Wallet class="w-4 h-4 text-blue-600"/> Gestione saldi pregressi
+                          <Wallet class="w-4 h-4 text-blue-600"/> {{ trans('gestionale.piani_rate.new.balance_distribution.tooltip.title') }}
                         </h4>
                         
                         <div class="space-y-2">
                           <p class="text-xs text-slate-600">
-                            <strong class="text-emerald-700">Crea rata separata (Saldi iniziali):</strong> <br>
-                            <span class="opacity-90">Opzione consigliata. Crea una rata iniziale dedicata solo ai debiti/crediti dell'anno precedente. Fondamentale per la massima trasparenza e per gestire correttamente i subentri.</span>
+                            <strong class="text-emerald-700">{{ trans('gestionale.piani_rate.new.balance_distribution.tooltip.separate_title') }}</strong> <br>
+                            <span class="opacity-90">{{ trans('gestionale.piani_rate.new.balance_distribution.tooltip.separate_description') }}</span>
                           </p>
                           
                           <p class="text-xs text-slate-600">
-                            <strong class="text-slate-700">Aggiungi alla prima rata:</strong> <br>
-                            <span class="opacity-90">Somma i vecchi debiti alla Rata 1 del nuovo preventivo. Metodo tradizionale, ma rende difficile per il condomino distinguere la competenza.</span>
+                            <strong class="text-slate-700">{{ trans('gestionale.piani_rate.new.balance_distribution.tooltip.first_title') }}</strong> <br>
+                            <span class="opacity-90">{{ trans('gestionale.piani_rate.new.balance_distribution.tooltip.first_description') }}</span>
                           </p>
                           
                           <p class="text-xs text-slate-600">
-                            <strong class="text-slate-700">Spalma su tutte le rate:</strong> <br>
-                            <span class="opacity-90">Divide il debito/credito in parti uguali su tutte le rate dell'anno. Sconsigliato perché maschera l'importo reale della gestione corrente.</span>
+                            <strong class="text-slate-700">{{ trans('gestionale.piani_rate.new.balance_distribution.tooltip.spread_title') }}</strong> <br>
+                            <span class="opacity-90">{{ trans('gestionale.piani_rate.new.balance_distribution.tooltip.spread_description') }}</span>
                           </p>
                         </div>
                       </div>
@@ -487,17 +502,13 @@ const submit = () => {
               </div>
 
               <v-select
-                :options="[
-                  {label: 'Crea una rata separata (Consigliato)', value: 'rata_zero'},
-                  {label: 'Aggiungi alla prima rata (Classico)', value: 'prima_rata'}, 
-                  {label: 'Spalma su tutte le rate', value: 'tutte_rate'}
-                ]"
+                :options="distribuzioneSaldoOptions"
                 class="mt-1 w-full v-select-custom"
                 v-model="form.metodo_distribuzione"
                 :reduce="opt => opt.value"
                 :clearable="false"
                 @update:modelValue="form.clearErrors('metodo_distribuzione')" 
-                placeholder="Seleziona modalità di distribuzione"
+                :placeholder="trans('gestionale.piani_rate.new.balance_distribution.placeholder')"
               />
               <InputError :message="form.errors.metodo_distribuzione" class="absolute -bottom-6 left-0 text-[11px]" />
             </div>
@@ -509,30 +520,30 @@ const submit = () => {
           <div class="flex flex-col sm:flex-row gap-6 pt-4">
             <div class="flex items-center gap-2">
               <Checkbox id="genera_subito" v-model="form.genera_subito" />
-              <Label for="genera_subito" class="cursor-pointer font-medium">Genera subito le rate</Label>
+              <Label for="genera_subito" class="cursor-pointer font-medium">{{ trans('gestionale.piani_rate.new.toggles.generate_now') }}</Label>
             </div>
 
             <div class="flex items-center gap-2">
               <Checkbox id="recurrenceToggle" v-model="showRecurrence" />
-              <Label for="recurrenceToggle" class="cursor-pointer font-medium text-primary">Ricorrenza automatica avanzata</Label>
+              <Label for="recurrenceToggle" class="cursor-pointer font-medium text-primary">{{ trans('gestionale.piani_rate.new.toggles.advanced_recurrence') }}</Label>
             </div>
           </div>
 
           <div v-if="showRecurrence" class="bg-blue-50/50 dark:bg-blue-900/10 p-5 rounded-lg border border-blue-200 space-y-4 animate-in slide-in-from-top-2 duration-200">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label>Frequenza</Label>
+                <Label>{{ trans('gestionale.piani_rate.new.recurrence.frequency') }}</Label>
                 <v-select :options="frequencies" v-model="form.recurrence_frequency" :reduce="o => o.value" class="mt-1 bg-white v-select-custom" />
               </div>
               <div>
-                <Label>Intervallo</Label>
+                <Label>{{ trans('gestionale.piani_rate.new.recurrence.interval') }}</Label>
                 <Input min="1" v-model="form.recurrence_interval" class="mt-1 w-full bg-white" />
               </div>
             </div>
 
             <div>
                 <Label class="mb-3 block text-xs font-bold uppercase tracking-wider text-gray-500">
-                  Giorni della settimana
+                  {{ trans('gestionale.piani_rate.new.recurrence.weekdays_label') }}
                 </Label>
                 <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
                   <div 
@@ -559,7 +570,7 @@ const submit = () => {
             </div>
 
           <div class="pt-2 border-t">
-            <Label for="note">Note aggiuntive per il documento</Label>
+            <Label for="note">{{ trans('gestionale.piani_rate.new.form.additional_notes') }}</Label>
             <Textarea id="note" v-model="form.note" class="mt-1 w-full" />
           </div>
 
