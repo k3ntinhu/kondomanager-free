@@ -467,6 +467,53 @@ return [
             'no_notes' => 'No notes provided for this condominium.',
         ],
     ],
+    'casse_form' => [
+        'create' => [
+            'head_title' => 'Create resource',
+            'breadcrumb_create' => 'Create resource',
+            'actions' => [
+                'save_resource' => 'Save resource',
+            ],
+            'type_options' => [
+                'cashbox' => 'Cashbox',
+                'bank_account' => 'Bank/postal account',
+                'reserve_fund' => 'Reserve fund',
+                'virtual_cashbox' => 'Virtual cashbox',
+            ],
+            'bank_account_types' => [
+                'ordinary' => 'Ordinary / Condominium',
+                'dedicated' => 'Dedicated (Extraordinary works)',
+                'postal' => 'Postal',
+                'special_accounting' => 'Special accounting',
+                'foreign' => 'Foreign',
+                'other' => 'Other',
+            ],
+            'placeholders' => [
+                'name' => 'e.g. cashbox, intesa bank...',
+                'notes' => 'Any additional notes...',
+                'bank_branch' => 'e.g. Intesa Sanpaolo',
+                'address' => 'Roma street, 10',
+            ],
+            'balance_help' => [
+                'title' => 'Balance instructions',
+                'description' => 'Enter the amount available in the account/cashbox when you start using the management system.',
+                'positive_label' => 'Positive:',
+                'positive_description' => 'Funds available.',
+                'negative_label' => 'Negative:',
+                'negative_description' => 'Overdrawn account.',
+                'example_prefix' => 'Ex',
+                'example_active' => 'Active',
+                'example_passive' => 'Liability/Overdrawn',
+            ],
+            'bank_details' => [
+                'title' => 'Bank institution details',
+                'description' => 'Here you can specify bank coordinates and branch details.',
+                'main_account' => 'Main account',
+                'account_type' => 'Account type',
+                'branch_address' => 'Branch address',
+            ],
+        ],
+    ],
     'common' => [
         'loading' => 'Loading...',
         'no_results' => 'No results found',

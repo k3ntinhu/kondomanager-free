@@ -467,6 +467,53 @@ return [
             'no_notes' => 'Nessuna nota inserita per questo condominio.',
         ],
     ],
+    'casse_form' => [
+        'create' => [
+            'head_title' => 'Crea risorsa',
+            'breadcrumb_create' => 'Crea risorsa',
+            'actions' => [
+                'save_resource' => 'Salva risorsa',
+            ],
+            'type_options' => [
+                'cashbox' => 'Cassa contanti',
+                'bank_account' => 'Conto corrente bancario/postale',
+                'reserve_fund' => 'Fondo di riserva',
+                'virtual_cashbox' => 'Cassa virtuale',
+            ],
+            'bank_account_types' => [
+                'ordinary' => 'Ordinario / Condominiale',
+                'dedicated' => 'Dedicato (Lavori Straordinari)',
+                'postal' => 'Postale',
+                'special_accounting' => 'Contabilità speciale',
+                'foreign' => 'Estero',
+                'other' => 'Altro',
+            ],
+            'placeholders' => [
+                'name' => 'Es. cassa contanti, banca intesa...',
+                'notes' => 'Eventuali annotazioni aggiuntive...',
+                'bank_branch' => 'Es. Intesa Sanpaolo',
+                'address' => 'Via roma, 10',
+            ],
+            'balance_help' => [
+                'title' => 'Istruzioni saldo',
+                'description' => 'Inserisci l\'importo presente sul conto/cassa al momento dell\'apertura del gestionale.',
+                'positive_label' => 'Positivo:',
+                'positive_description' => 'Soldi presenti.',
+                'negative_label' => 'Negativo:',
+                'negative_description' => 'Conto in rosso (scoperto).',
+                'example_prefix' => 'Es',
+                'example_active' => 'Attivo',
+                'example_passive' => 'Passivo/Rosso',
+            ],
+            'bank_details' => [
+                'title' => 'Dettagli istituto di credito',
+                'description' => 'Di seguito puoi specificare le coordinate bancarie e dati della filiale.',
+                'main_account' => 'Conto principale',
+                'account_type' => 'Tipologia conto',
+                'branch_address' => 'Indirizzo filiale',
+            ],
+        ],
+    ],
     'common' => [
         'loading' => 'Caricamento...',
         'no_results' => 'Nessun risultato trovato',

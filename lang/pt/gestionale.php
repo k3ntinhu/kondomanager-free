@@ -467,6 +467,53 @@ return [
             'no_notes' => 'Sem notas para este condomínio.',
         ],
     ],
+    'casse_form' => [
+        'create' => [
+            'head_title' => 'Criar recurso',
+            'breadcrumb_create' => 'Criar recurso',
+            'actions' => [
+                'save_resource' => 'Guardar recurso',
+            ],
+            'type_options' => [
+                'cashbox' => 'Caixa em numerário',
+                'bank_account' => 'Conta bancária/postal',
+                'reserve_fund' => 'Fundo de reserva',
+                'virtual_cashbox' => 'Caixa virtual',
+            ],
+            'bank_account_types' => [
+                'ordinary' => 'Ordinária / Condominial',
+                'dedicated' => 'Dedicada (Obras extraordinárias)',
+                'postal' => 'Postal',
+                'special_accounting' => 'Contabilidade especial',
+                'foreign' => 'Estrangeira',
+                'other' => 'Outro',
+            ],
+            'placeholders' => [
+                'name' => 'Ex.: caixa de numerário, banco intesa...',
+                'notes' => 'Notas adicionais, se existirem...',
+                'bank_branch' => 'Ex.: Intesa Sanpaolo',
+                'address' => 'Rua Roma, 10',
+            ],
+            'balance_help' => [
+                'title' => 'Instruções de saldo',
+                'description' => 'Insira o valor presente na conta/caixa no momento da abertura do sistema.',
+                'positive_label' => 'Positivo:',
+                'positive_description' => 'Dinheiro disponível.',
+                'negative_label' => 'Negativo:',
+                'negative_description' => 'Conta a descoberto (saldo negativo).',
+                'example_prefix' => 'Ex',
+                'example_active' => 'Ativo',
+                'example_passive' => 'Passivo/Descoberto',
+            ],
+            'bank_details' => [
+                'title' => 'Detalhes da instituição bancária',
+                'description' => 'Aqui pode indicar os dados bancários e da agência.',
+                'main_account' => 'Conta principal',
+                'account_type' => 'Tipo de conta',
+                'branch_address' => 'Endereço da agência',
+            ],
+        ],
+    ],
     'common' => [
         'loading' => 'A carregar...',
         'no_results' => 'Nenhum resultado encontrado',
