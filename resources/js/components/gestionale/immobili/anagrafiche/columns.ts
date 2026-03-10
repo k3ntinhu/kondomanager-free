@@ -1,4 +1,5 @@
 import { h } from 'vue'
+import { trans } from 'laravel-vue-i18n';
 import type { ColumnDef } from '@tanstack/vue-table'
 import type { AnagraficaWithPivot } from '@/types/anagrafiche'
 import type { Building } from '@/types/buildings'
@@ -8,7 +9,7 @@ import DropdownAction from '@/components/gestionale/immobili/anagrafiche/DataTab
 export const createColumns = (condominio: Building, immobile: Immobile): ColumnDef<AnagraficaWithPivot>[] => [
   {
     accessorKey: 'nome',
-    header: 'Nome',
+    header: trans('gestionale.immobili_anagrafiche.table.name'),
     cell: ({ row }) => {
       const anagrafica = row.original as AnagraficaWithPivot
       return h('span', { class: 'capitalize font-bold' }, anagrafica.nome)
@@ -16,7 +17,7 @@ export const createColumns = (condominio: Building, immobile: Immobile): ColumnD
   },
   {
     accessorKey: 'tipologia',
-    header: 'Tipologia',
+    header: trans('gestionale.immobili_anagrafiche.table.type'),
     cell: ({ row }) => {
       const anagrafica = row.original as AnagraficaWithPivot
       const tipologia = anagrafica.pivot.tipologia
@@ -42,7 +43,7 @@ export const createColumns = (condominio: Building, immobile: Immobile): ColumnD
   },
   {
     accessorKey: 'saldo.iniziale',
-    header: 'Saldo Iniziale',
+    header: trans('gestionale.immobili_anagrafiche.table.opening_balance'),
     cell: ({ row }) => {
       const anagrafica = row.original as AnagraficaWithPivot
       
@@ -64,7 +65,7 @@ export const createColumns = (condominio: Building, immobile: Immobile): ColumnD
   },
   {
     accessorKey: 'quota',
-    header: 'Quota',
+    header: trans('gestionale.immobili_anagrafiche.table.share'),
     cell: ({ row }) => {
       const anagrafica = row.original as AnagraficaWithPivot
       return h('span', { class: 'capitalize' }, `${anagrafica.pivot.quota} %`)

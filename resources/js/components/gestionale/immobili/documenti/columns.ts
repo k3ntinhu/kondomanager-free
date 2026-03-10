@@ -1,4 +1,5 @@
 import { h } from 'vue';
+import { trans } from 'laravel-vue-i18n';
 import { router } from '@inertiajs/vue3';
 import DropdownAction from '@/components/gestionale/immobili/documenti/DataTableRowActions.vue';
 import DataTableColumnHeader from '@/components/gestionale/immobili/documenti/DataTableColumnHeader.vue';
@@ -16,7 +17,7 @@ const { hasPermission,  generateRoute } = usePermission();
 export const createColumns = (condominio: Building, immobile: Immobile): ColumnDef<Documento>[] => [
   {
     accessorKey: 'name',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Titolo' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.immobili_documenti.table.title') }),
 
     cell: ({ row, table }) => {
 
@@ -44,8 +45,8 @@ export const createColumns = (condominio: Building, immobile: Immobile): ColumnD
       };
 
       const tooltip = documento.is_approved
-        ? 'Approvato - clicca per rimuovere approvazione'
-        : 'Non approvato - clicca per approvare';
+        ? trans('gestionale.immobili_documenti.approval.approved_tooltip')
+        : trans('gestionale.immobili_documenti.approval.unapproved_tooltip');
     
       const shieldIcon = hasPermission([Permission.APPROVE_ARCHIVE_DOCUMENTS])
         ? h('div', {
@@ -70,7 +71,7 @@ export const createColumns = (condominio: Building, immobile: Immobile): ColumnD
   },
   {
     accessorKey: 'is_published',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Stato' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.immobili_documenti.table.status') }),
     cell: ({ row }) => {
 
       const value = Boolean(row.getValue('is_published'));
@@ -80,7 +81,7 @@ export const createColumns = (condominio: Building, immobile: Immobile): ColumnD
   
       return h('div', { class: 'flex items-center gap-2' }, [
         h(stato.icon, { class: `h-4 w-4 ${stato.colorClass}` }),
-        h('span', stato.label)
+        h('span', trans(stato.label))
       ]);
     },
     filterFn: (row, id, value) =>
