@@ -1,6 +1,7 @@
 // columns.ts
 import { h } from 'vue'
 import { Link } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { usePermission } from "@/composables/permissions";
 import DropdownAction from '@/components/gestionale/immobili/DataTableRowActions.vue'
 import DataTableColumnHeader from '@/components/gestionale/immobili/DataTableColumnHeader.vue'
@@ -14,7 +15,7 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
   return [
     {
       accessorKey: 'nome',
-      header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Denominazione' }),
+      header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.immobili.table.name') }),
       cell: ({ row }) => {
 
         const immobile = row.original
@@ -30,7 +31,7 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
     },
     {
       accessorKey: 'tipologia',
-      header: ({ column }) =>  h(DataTableColumnHeader, { column, title: 'Tipologia' }),
+      header: ({ column }) =>  h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.immobili.table.type') }),
       cell: ({ row }) => {
         const immobile = row.original as Immobile
         const tipologia = immobile.tipologia ? immobile.tipologia.nome : '-'
@@ -43,8 +44,7 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
     {
       accessorKey: 'palazzina',
       header: ({ column }) =>
-
-        h(DataTableColumnHeader, { column, title: 'Palazzina' }),
+        h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.immobili.table.building') }),
 
       cell: ({ row }) => {
         const immobile = row.original as Immobile
@@ -58,8 +58,7 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
     {
       accessorKey: 'scala',
       header: ({ column }) =>
-
-        h(DataTableColumnHeader, { column, title: 'Scala' }),
+        h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.immobili.table.stair') }),
 
       cell: ({ row }) => {
         const immobile = row.original as Immobile
@@ -73,7 +72,7 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
     {
       accessorKey: 'dettagli',
       header: ({ column }) =>
-        h(DataTableColumnHeader, { column, title: 'Dettagli' }),
+        h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.immobili.table.details') }),
 
       cell: ({ row }) => {
         const immobile = row.original as Immobile
