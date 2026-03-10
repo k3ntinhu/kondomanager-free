@@ -91,15 +91,15 @@ function deleteAnagrafica() {
         @click="handleDelete(anagrafica)"
       >
         <Unplug class="w-4 h-4 text-xs" />
-        Dissocia
+        {{ trans('gestionale.immobili_anagrafiche.actions.detach') }}
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 
   <ConfirmDialog
     v-model:modelValue="isAlertOpen"
-    title="Sei sicuro di voler dissociare questa anagrafica?"
-    description="Questa azione non è reversibile e dissocierà l'anagrafica dall'immobile."
+    :title="trans('gestionale.immobili_anagrafiche.confirm_detach_title')"
+    :description="trans('gestionale.immobili_anagrafiche.confirm_detach_description')"
     :loading="isDeleting"
     @confirm="deleteAnagrafica"
   />

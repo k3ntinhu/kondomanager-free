@@ -2,6 +2,7 @@
 
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { Button } from '@/components/ui/button';
 import { usePermission } from "@/composables/permissions";
 import { UsersRound, Folders, TextSearch } from 'lucide-vue-next';
@@ -23,19 +24,19 @@ const topbarNavItems: LinkItem[] = [
   {
     type: 'link',
     icon: TextSearch,
-    title: 'Dettagli',
+    title: trans('gestionale.immobile_layout.tabs.details'),
     href:  generatePath('gestionale/:condominio/immobili/:immobile', { condominio: condominio.value.id, immobile: immobile.value.id }),
   },
   {
     type: 'link',
     icon: UsersRound,
-    title: 'Anagrafiche',
+    title: trans('gestionale.immobile_layout.tabs.registry'),
     href: generatePath('gestionale/:condominio/immobili/:immobile/anagrafiche', { condominio: condominio.value.id, immobile: immobile.value.id }),
   },
   {   
     type: 'link',
     icon: Folders,
-    title: 'Documenti',
+    title: trans('gestionale.immobile_layout.tabs.documents'),
     href: generatePath('gestionale/:condominio/immobili/:immobile/documenti', { condominio: condominio.value.id, immobile: immobile.value.id }),
   },
 ];
@@ -78,4 +79,3 @@ const currentPath = window.location.pathname;
     </div>
   </div>
 </template>
-

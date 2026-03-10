@@ -31,31 +31,30 @@ const flashMessage = computed(() => page.props.flash.message);
 
 // Breadcrumbs testuali per il nuovo componente Header
 const headerBreadcrumbs = computed(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
-  { title: 'Tabelle Millesimali' }
+  { title: trans('gestionale.list_pages.tabelle.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.tabelle.breadcrumbs.list') }
 ]);
 
-// Configurazione della guida
-const pageGuides = [
+const pageGuides = computed(() => [
   {
-    title: 'Motore di Riparto',
-    description: 'Le tabelle millesimali definiscono le regole matematiche di suddivisione delle spese tra le unità immobiliari del condominio.',
+    title: trans('gestionale.list_pages.tabelle.guides.allocation_engine_title'),
+    description: trans('gestionale.list_pages.tabelle.guides.allocation_engine_description'),
     icon: PieChart,
     colorVariant: 'blue' as const
   },
   {
-    title: 'Validazione Automatica',
-    description: 'Il sistema integra un validatore di coerenza che controlla in tempo reale che la somma dei millesimi di ogni tabella sia esattamente 1000.',
+    title: trans('gestionale.list_pages.tabelle.guides.auto_validation_title'),
+    description: trans('gestionale.list_pages.tabelle.guides.auto_validation_description'),
     icon: Scale,
     colorVariant: 'emerald' as const
   },
   {
-    title: 'Ripartizione Mista',
-    description: 'Crea tabelle specifiche per scale, ascensori, riscaldamento o box per gestire le ripartizioni di spesa più complesse in futuro.',
+    title: trans('gestionale.list_pages.tabelle.guides.mixed_allocation_title'),
+    description: trans('gestionale.list_pages.tabelle.guides.mixed_allocation_description'),
     icon: TableProperties,
     colorVariant: 'amber' as const
   }
-];
+]);
 </script>
 
 <template>

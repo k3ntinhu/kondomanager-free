@@ -107,7 +107,7 @@ function deleteDocumento() {
 
   <ConfirmDialog
     v-model:modelValue="isAlertOpen"
-    title="Sei sicuro di voler eliminare questo documento?"
+    :title="trans('gestionale.immobili_documenti.confirm_delete_title')"
     :description="trans('gestionale.common.confirm_delete_description')"
     :loading="isDeleting"
     @confirm="deleteDocumento"

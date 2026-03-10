@@ -2,16 +2,18 @@
 
 import { ref } from 'vue';
 import { watchDebounced } from '@vueuse/core';
-import { router, usePage} from '@inertiajs/vue3';
+import { router, Link, usePage} from '@inertiajs/vue3';
 import { Input } from '@/components/ui/input';
-import { usePermission } from "@/composables/permissions";
+import { Plus, List } from 'lucide-vue-next';
 import { trans } from 'laravel-vue-i18n';
+import { usePermission } from "@/composables/permissions";
+import { Permission } from '@/enums/Permission';
 import type { Table } from '@tanstack/vue-table';
 import type { Documento } from '@/types/documenti';
 import type { Immobile } from '@/types/gestionale/immobili';
 import type { Building } from '@/types/buildings';
 
-const { generateRoute } = usePermission();
+const { generateRoute, hasPermission, generatePath } = usePermission();
 
 // Change this to allow table reset when filter cleared
 const { table } = defineProps<{
@@ -63,6 +65,29 @@ watchDebounced(
 
   </div>
 
+  <!-- Right: Action buttons -->
+  <div class="flex items-center space-x-2">
+    <Link 
+      as="button"
+      v-if="hasPermission([Permission.CREATE_ARCHIVE_DOCUMENTS])"
+       :href="route(generateRoute('gestionale.immobili.documenti.create'), { condominio: page.props.condominio.id, immobile: page.props.immobile.id })"
+      class="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+    >
+      <Plus class="w-4 h-4" />
+      <span>{{ trans('gestionale.common.actions.create') }}</span>
+    </Link>
+
+    <Link
+      as="button"
+      :href="generatePath('gestionale/:condominio/immobili', { condominio: page.props.condominio.id })"
+      class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+    >
+      <List class="w-4 h-4" />
+      <span>{{ trans('gestionale.list_pages.immobili.page_title') }}</span>
+    </Link>
+
+  </div>
 </div>
+
 
 </template>

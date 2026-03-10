@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
+import { trans } from 'laravel-vue-i18n';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { usePermission } from "@/composables/permissions";
@@ -81,14 +82,14 @@ const mainNavItems: NavItem[] = [
     },
     {
         type: 'link',
-        title: 'Immobili',
+        title: trans('gestionale.list_pages.immobili.page_title'),
         href: generatePath('gestionale/:condominio/immobili', { condominio: condominio.value.id }),
         icon: HousePlus,
        
     },
     {
         type: 'link',
-        title: 'Tabelle',
+        title: trans('gestionale.list_pages.tabelle.menu_title'),
         href: generatePath('gestionale/:condominio/tabelle', { condominio: condominio.value.id }),
         icon: Table2,
        

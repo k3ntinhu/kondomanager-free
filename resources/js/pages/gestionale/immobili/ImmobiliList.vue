@@ -32,31 +32,30 @@ const flashMessage = computed(() => page.props.flash.message);
 
 // Breadcrumbs testuali per il componente Header
 const headerBreadcrumbs = computed(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
-  { title: 'Unità Immobiliari' }
+  { title: trans('gestionale.list_pages.immobili.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.immobili.breadcrumbs.list') }
 ]);
 
-// Configurazione della guida
-const pageGuides = [
+const pageGuides = computed(() => [
   {
-    title: 'Anagrafica immobile',
-    description: 'Registra i dati catastali e le informazioni principali degli appartamenti, box e locali commerciali che compongono il condominio.',
+    title: trans('gestionale.list_pages.immobili.guides.registry_title'),
+    description: trans('gestionale.list_pages.immobili.guides.registry_description'),
     icon: Home,
     colorVariant: 'blue' as const
   },
   {
-    title: 'Gestione Subentri',
-    description: 'Tieni traccia dei cambi di proprietà o inquilino. Il sistema gestirà le successioni calcolando i saldi di competenza per ogni periodo.',
+    title: trans('gestionale.list_pages.immobili.guides.transitions_title'),
+    description: trans('gestionale.list_pages.immobili.guides.transitions_description'),
     icon: UsersRound,
     colorVariant: 'amber' as const
   },
   {
-    title: 'Associazione Tabelle',
-    description: 'Ogni unità sarà successivamente collegata alle tabelle millesimali per permettere al motore contabile di ripartire correttamente le spese.',
+    title: trans('gestionale.list_pages.immobili.guides.tables_title'),
+    description: trans('gestionale.list_pages.immobili.guides.tables_description'),
     icon: LinkIcon,
     colorVariant: 'emerald' as const
   }
-];
+]);
 </script>
 
 <template>

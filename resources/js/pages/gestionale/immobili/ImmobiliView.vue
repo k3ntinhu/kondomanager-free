@@ -6,10 +6,8 @@ import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import ImmobileLayout from '@/layouts/gestionale/ImmobileLayout.vue';
 import Alert from "@/components/Alert.vue";
-import PageHeaderGuide from '@/components/PageHeaderGuide.vue';
 import { usePermission } from "@/composables/permissions";
-import { List, Pencil, Building2, Map, FileText, Ruler } from 'lucide-vue-next';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { List, Pencil } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 import type { Flash } from '@/types/flash';
 import type { Immobile } from '@/types/gestionale/immobili';
@@ -29,145 +27,167 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
   { title: trans('gestionale.list_pages.immobili.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, href: '#' },
   { title: trans('gestionale.list_pages.immobili.breadcrumbs.list'), href: generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id }) },
-  { title: props.immobile.nome, href: '#' },
+  { title: props.immobile.nome, href: generatePath('gestionale/:condominio/immobili/:immobile', { condominio: props.condominio.id, immobile: props.immobile.id }) },
 ]);
 
-const pageGuides = computed(() => [
-  {
-    title: trans('gestionale.list_pages.immobili.view.guides.technical_title'),
-    description: trans('gestionale.list_pages.immobili.view.guides.technical_description'),
-    icon: Building2,
-    colorVariant: 'blue' as const
-  },
-  {
-    title: trans('gestionale.list_pages.immobili.view.guides.land_title'),
-    description: trans('gestionale.list_pages.immobili.view.guides.land_description'),
-    icon: Map,
-    colorVariant: 'amber' as const
-  },
-  {
-    title: trans('gestionale.list_pages.immobili.view.guides.notes_title'),
-    description: trans('gestionale.list_pages.immobili.view.guides.notes_description'),
-    icon: FileText,
-    colorVariant: 'emerald' as const
-  }
-]);
+const truncate = (text: string, length: number = 120) => {
+  return text.length > length ? `${text.slice(0, length)}...` : text;
+};
+
 </script>
 
 <template>
-  <Head :title="trans('gestionale.list_pages.immobili.view.head_title')" />
+  <GestionaleLayout :breadcrumbs="breadcrumbs">
+    <Head :title="trans('gestionale.immobili_view.head_title')" />
 
-  <GestionaleLayout>
-    <div class="px-6 py-8 space-y-4">
-      
-      <PageHeaderGuide
-        :page-title="trans('gestionale.list_pages.immobili.view.page_title')"
-        :page-subtitle="trans('gestionale.list_pages.immobili.view.page_subtitle_named', { name: immobile.nome })"
-        :guides="pageGuides"
-        :breadcrumbs="breadcrumbs"
-      >
-        <template #actions>
-          <div class="flex items-center gap-2">
-            <Link
-              :href="generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id })"
-              class="inline-flex h-8 items-center justify-center gap-2 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-            >
-              <List class="w-3.5 h-3.5" />
-              <span>{{ trans('gestionale.form_common.actions.list') }}</span>
-            </Link>
+    <ImmobileLayout>
 
-            <Link
-              :href="generatePath('gestionale/:condominio/immobili/:immobile/edit', { condominio: props.condominio.id, immobile: props.immobile.id })"
-              class="inline-flex h-8 items-center justify-center gap-2 rounded-md shadow px-4 bg-primary text-[10px] font-bold uppercase tracking-widest text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              <Pencil class="w-3.5 h-3.5" />
-              <span>{{ trans('gestionale.form_common.actions.edit') }}</span>
-            </Link>
-          </div>
-        </template>
-      </PageHeaderGuide>
+      <div v-if="flashMessage" class="py-3">
+        <Alert :message="flashMessage.message" :type="flashMessage.type" />
+      </div>
 
-      <ImmobileLayout>
-        <div v-if="flashMessage" class="py-3">
-          <Alert :message="flashMessage.message" :type="flashMessage.type" />
-        </div>
+      <!-- Action buttons -->
+      <div class="flex flex-col lg:flex-row lg:justify-end gap-2 w-full">
+        <Link
+          as="button"
+          :href="generatePath('gestionale/:condominio/immobili/:immobile/edit', { condominio: props.condominio.id, immobile: props.immobile.id })"
+          class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <Pencil class="w-4 h-4" />
+          <span>{{ trans('gestionale.form_common.actions.edit') }}</span>
+        </Link>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          <Card class="border-dashed shadow-sm bg-slate-50/50 dark:bg-slate-900/20">
-            <CardHeader class="pb-3 border-b border-dashed mb-4">
-              <CardTitle class="text-base font-semibold">{{ trans('gestionale.list_pages.immobili.view.sections.general_title') }}</CardTitle>
-              <CardDescription>{{ trans('gestionale.list_pages.immobili.view.sections.general_description') }}</CardDescription>
-            </CardHeader>
-            <CardContent class="grid grid-cols-2 gap-y-4">
-              <div class="space-y-1">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">{{ trans('gestionale.list_pages.immobili.view.fields.type') }}</p>
-                <p class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{{ immobile.tipologia.nome }}</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">{{ trans('gestionale.list_pages.immobili.view.fields.unit_floor') }}</p>
-                <p class="text-sm font-medium">{{ immobile.interno }} / {{ immobile.piano ?? '-' }}</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">{{ trans('gestionale.list_pages.immobili.view.fields.building_stair') }}</p>
-                <p class="text-sm font-medium">{{ immobile.palazzina?.name ?? '-' }} / {{ immobile.scala?.name ?? '-' }}</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                  <Ruler class="w-3 h-3" /> {{ trans('gestionale.list_pages.immobili.view.fields.surface') }}
-                </p>
-                <p class="text-sm font-medium">{{ immobile.superficie ? immobile.superficie + ' m²' : '-' }}</p>
-              </div>
-              <div class="sm:col-span-2 pt-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">{{ trans('gestionale.form_common.labels.description') }}</p>
-                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                  {{ immobile.descrizione || trans('gestionale.list_pages.immobili.view.messages.no_description') }}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        <Link
+          as="button"
+          :href="generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id })"
+          class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <List class="w-4 h-4" />
+          <span>{{ trans('gestionale.list_pages.immobili.page_title') }}</span>
+        </Link>
+      </div>
 
-          <Card class="border-dashed shadow-sm bg-slate-50/50 dark:bg-slate-900/20">
-            <CardHeader class="pb-3 border-b border-dashed mb-4">
-              <CardTitle class="text-base font-semibold">{{ trans('gestionale.list_pages.immobili.view.sections.land_title') }}</CardTitle>
-              <CardDescription>{{ trans('gestionale.list_pages.immobili.view.sections.land_description') }}</CardDescription>
-            </CardHeader>
-            <CardContent class="grid grid-cols-2 gap-y-4">
-              <div class="sm:col-span-2 space-y-1">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">{{ trans('gestionale.list_pages.immobili.view.fields.land_city_code') }}</p>
-                <p class="text-sm font-medium">{{ immobile.comune_catasto ?? '-' }} <span class="text-slate-400" v-if="immobile.codice_catasto">({{ immobile.codice_catasto }})</span></p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">{{ trans('gestionale.list_pages.immobili.view.fields.section_sheet') }}</p>
-                <p class="text-sm font-mono">{{ immobile.sezione_catasto ?? '-' }} / {{ immobile.foglio_catasto ?? '-' }}</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">{{ trans('gestionale.list_pages.immobili.view.fields.parcel_sub') }}</p>
-                <p class="text-sm font-mono">{{ immobile.particella_catasto ?? '-' }} / {{ immobile.subalterno_catasto ?? '-' }}</p>
-              </div>
-              <div class="sm:col-span-2 pt-2">
-                 <div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/50 rounded-lg p-3 flex gap-3">
-                    <p class="text-[11px] text-amber-700 dark:text-amber-400 leading-tight">
-                      {{ trans('gestionale.list_pages.immobili.view.messages.land_warning') }}
-                    </p>
-                 </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div class="container mx-auto p-0">
+        <div class="bg-card mb-6 grid grid-cols-1 md:grid-cols-2 gap-6 rounded-lg border p-6 text-sm mt-4">
 
-          <Card class="lg:col-span-2 border-dashed shadow-sm bg-slate-50/50 dark:bg-slate-900/20">
-            <CardHeader class="pb-2">
-              <CardTitle class="text-base font-semibold">{{ trans('gestionale.list_pages.immobili.view.sections.management_notes_title') }}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic">
-                "{{ immobile.note || trans('gestionale.list_pages.immobili.view.messages.no_notes') }}"
+          <!-- Left block -->
+          <div class="space-y-6 pr-6 border-r">
+            <div class="border-b pb-2 mb-8">
+              <h3 class="text-lg font-bold">{{immobile.nome}}</h3>
+              <p class="text-muted-foreground text-sm ">
+                {{ truncate(immobile.descrizione, 80) }}
               </p>
-            </CardContent>
-          </Card>
+            </div>
+    
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Column 1 -->
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.list_pages.immobili.table.type') }}:</span>
+                  <div class="inline-flex items-center rounded-md border px-2.5 py-0.5 font-medium shadow-sm text-xs">
+                    {{ immobile.tipologia.nome }}
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.list_pages.immobili.table.building') }}:</span>
+                  <div>{{ immobile.palazzina?.name ?? '-' }}</div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.list_pages.immobili.table.stair') }}:</span>
+                  <div>{{ immobile.scala?.name ?? '-' }}</div>
+                </div>
+              </div>
+
+              <!-- Column 2 -->
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.form_common.labels.unit') }}:</span>
+                  <div>{{ immobile.interno }}</div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.form_common.labels.floor') }}:</span>
+                  <div>{{ immobile.piano ?? '-' }}</div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.form_common.labels.surface') }}:</span>
+                  <div>{{ immobile.superficie ? immobile.superficie + ' m²' : '-' }}</div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.form_common.labels.rooms') }}:</span>
+                  <div>{{ immobile.numero_vani ?? '-' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right block -->
+          <div class="space-y-6 ">
+
+            <div class="border-b pb-2 mb-8">
+              <h3 class="text-lg font-bold">{{ trans('gestionale.immobili_form.create.cadastral.title') }}</h3>
+              <p class="text-muted-foreground text-sm ">
+                {{ trans('gestionale.immobili_view.cadastral_description') }}
+              </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Column 3 -->
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-30">{{ trans('gestionale.immobili_form.create.placeholders.cadastral_city') }}:</span>
+                  <div>{{ immobile.comune_catasto ?? '-' }}</div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-30">{{ trans('gestionale.immobili_form.create.placeholders.cadastral_code') }}:</span>
+                  <div>{{ immobile.codice_catasto ?? '-'}}</div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-30">{{ trans('gestionale.immobili_form.create.labels.cadastral_section') }}:</span>
+                  <div>{{ immobile.sezione_catasto ?? '-' }}</div>
+                </div>
+              </div>
+
+              <!-- Column 4 -->
+              <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.immobili_form.create.labels.cadastral_sheet') }}:</span>
+                  <div>{{ immobile.foglio_catasto ?? '-' }}</div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.immobili_form.create.labels.cadastral_parcel') }}:</span>
+                  <div>{{ immobile.particella_catasto ?? '-' }}</div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.immobili_form.create.labels.cadastral_sub') }}:</span>
+                  <div>{{ immobile.subalterno_catasto ?? '-' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
         </div>
-      </ImmobileLayout>
-    </div>
+      </div>
+
+      <div class="bg-card mb-2 rounded-lg border p-6 text-sm">
+        <!-- Notes Section -->
+        <div class="border-b pb-2 mb-4">
+          <span class="text-lg font-bold">{{ trans('gestionale.immobili_view.notes_title') }}</span>
+        </div>
+
+        <div class="text-sm text-gray-700"> 
+          {{ immobile.note ? immobile.note : trans('gestionale.immobili_view.no_notes') }}
+        </div>
+      </div>
+
+    </ImmobileLayout>
   </GestionaleLayout>
 </template>
