@@ -43,29 +43,6 @@ const pageGuides = computed(() => [
   },
 ]);
 
-const breadcrumbs: never[] = [];
-
-const pageGuides = computed(() => [
-  {
-    title: trans('segnalazioni.guides.reports_title'),
-    description: trans('segnalazioni.guides.reports_desc'),
-    icon: TriangleAlert,
-    colorVariant: 'blue' as const,
-  },
-  {
-    title: trans('segnalazioni.guides.workflow_title'),
-    description: trans('segnalazioni.guides.workflow_desc'),
-    icon: Wrench,
-    colorVariant: 'emerald' as const,
-  },
-  {
-    title: trans('segnalazioni.guides.control_title'),
-    description: trans('segnalazioni.guides.control_desc'),
-    icon: ShieldCheck,
-    colorVariant: 'amber' as const,
-  },
-]);
-
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
 onMounted(() => {
