@@ -399,7 +399,26 @@ return [
         'tabelle' => [
             'head_title' => 'Lista de tabelas',
             'page_title' => 'Tabelas de permilagem',
+            'menu_title' => 'Tabelas',
             'page_subtitle' => 'Configure os parâmetros de repartição do condomínio. O validador de coerência ajuda a evitar erros de cálculo.',
+            'breadcrumbs' => [
+                'management' => 'Gestão',
+                'list' => 'Tabelas de permilagem',
+            ],
+            'guides' => [
+                'allocation_engine_title' => 'Motor de repartição',
+                'allocation_engine_description' => 'As tabelas de permilagem definem as regras matemáticas para repartir despesas entre os imóveis do condomínio.',
+                'auto_validation_title' => 'Validação automática',
+                'auto_validation_description' => 'O sistema inclui um validador de coerência que verifica em tempo real se a soma dos permilagens de cada tabela é exatamente 1000.',
+                'mixed_allocation_title' => 'Repartição mista',
+                'mixed_allocation_description' => 'Crie tabelas específicas para escadas, elevadores, aquecimento ou garagens para suportar repartições de despesa mais complexas.',
+            ],
+            'table' => [
+                'name' => 'Designação',
+                'building' => 'Bloco',
+                'stair' => 'Escada',
+                'type' => 'Tipo',
+            ],
         ],
         'esercizi' => [
             'head_title' => 'Lista de exercícios',
@@ -426,6 +445,13 @@ return [
                 'transitions_description' => 'Acompanhe mudanças de proprietário ou inquilino. O sistema gere as transições calculando saldos por período.',
                 'tables_title' => 'Associação a tabelas',
                 'tables_description' => 'Cada imóvel será ligado às tabelas de permilagem para garantir a repartição correta das despesas.',
+            ],
+            'table' => [
+                'name' => 'Designação',
+                'type' => 'Tipo',
+                'building' => 'Bloco',
+                'stair' => 'Escada',
+                'details' => 'Detalhes',
             ],
         ],
         'movimenti' => [

@@ -399,7 +399,26 @@ return [
         'tabelle' => [
             'head_title' => 'Allocation tables list',
             'page_title' => 'Allocation tables',
+            'menu_title' => 'Tables',
             'page_subtitle' => 'Configure condominium allocation parameters. The consistency validator helps prevent calculation errors.',
+            'breadcrumbs' => [
+                'management' => 'Management',
+                'list' => 'Allocation tables',
+            ],
+            'guides' => [
+                'allocation_engine_title' => 'Allocation engine',
+                'allocation_engine_description' => 'Allocation tables define the mathematical rules to split expenses among condominium units.',
+                'auto_validation_title' => 'Automatic validation',
+                'auto_validation_description' => 'The system includes a consistency validator that checks in real time whether each table sums exactly to 1000.',
+                'mixed_allocation_title' => 'Mixed allocation',
+                'mixed_allocation_description' => 'Create dedicated tables for stairwells, elevators, heating or garages to handle more complex expense allocations.',
+            ],
+            'table' => [
+                'name' => 'Name',
+                'building' => 'Building',
+                'stair' => 'Stairwell',
+                'type' => 'Type',
+            ],
         ],
         'esercizi' => [
             'head_title' => 'Fiscal years list',
@@ -426,6 +445,13 @@ return [
                 'transitions_description' => 'Track ownership or tenant changes. The system handles transitions by calculating balances per period.',
                 'tables_title' => 'Table association',
                 'tables_description' => 'Each unit will be linked to allocation tables so the accounting engine can split expenses correctly.',
+            ],
+            'table' => [
+                'name' => 'Name',
+                'type' => 'Type',
+                'building' => 'Building',
+                'stair' => 'Stairwell',
+                'details' => 'Details',
             ],
         ],
         'movimenti' => [

@@ -1,5 +1,6 @@
 // columns.ts
 import { h } from 'vue'
+import { trans } from 'laravel-vue-i18n';
 import { usePermission } from "@/composables/permissions";
 import DropdownAction from '@/components/gestionale/tabelle/DataTableRowActions.vue'
 import DataTableColumnHeader from '@/components/gestionale/tabelle/DataTableColumnHeader.vue'
@@ -14,15 +15,14 @@ export function getColumns(condominio: Building): ColumnDef<Tabella>[] {
   return [
     {
       accessorKey: 'nome',
-      header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Denominazione' }),
+      header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.tabelle.table.name') }),
       cell: ({ row }) => h('div', { class: 'font-bold' }, row.getValue('nome')),
 
     },
     {
       accessorKey: 'palazzina',
       header: ({ column }) =>
-
-        h(DataTableColumnHeader, { column, title: 'Palazzina' }),
+        h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.tabelle.table.building') }),
 
       cell: ({ row }) => {
         const tabella = row.original as Tabella
@@ -36,8 +36,7 @@ export function getColumns(condominio: Building): ColumnDef<Tabella>[] {
     {
       accessorKey: 'scala',
       header: ({ column }) =>
-
-        h(DataTableColumnHeader, { column, title: 'Scala' }),
+        h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.tabelle.table.stair') }),
 
       cell: ({ row }) => {
         const tabella = row.original as Tabella
@@ -50,7 +49,7 @@ export function getColumns(condominio: Building): ColumnDef<Tabella>[] {
     },
     {
       accessorKey: 'tipo',
-      header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Tipologia' }),
+      header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.tabelle.table.type') }),
       cell: ({ row }) => {
   
         const value = row.getValue('tipo');

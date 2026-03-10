@@ -89,7 +89,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         type: 'link',
-        title: 'Tabelle',
+        title: trans('gestionale.list_pages.tabelle.menu_title'),
         href: generatePath('gestionale/:condominio/tabelle', { condominio: condominio.value.id }),
         icon: Table2,
        

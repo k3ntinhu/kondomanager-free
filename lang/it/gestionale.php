@@ -399,7 +399,26 @@ return [
         'tabelle' => [
             'head_title' => 'Elenco tabelle',
             'page_title' => 'Tabelle millesimali',
+            'menu_title' => 'Tabelle',
             'page_subtitle' => 'Configura i parametri di ripartizione del condominio. Il validatore di coerenza ti assisterà per evitare errori matematici.',
+            'breadcrumbs' => [
+                'management' => 'Gestionale',
+                'list' => 'Tabelle millesimali',
+            ],
+            'guides' => [
+                'allocation_engine_title' => 'Motore di riparto',
+                'allocation_engine_description' => 'Le tabelle millesimali definiscono le regole matematiche di suddivisione delle spese tra le unità immobiliari del condominio.',
+                'auto_validation_title' => 'Validazione automatica',
+                'auto_validation_description' => 'Il sistema integra un validatore di coerenza che controlla in tempo reale che la somma dei millesimi di ogni tabella sia esattamente 1000.',
+                'mixed_allocation_title' => 'Ripartizione mista',
+                'mixed_allocation_description' => 'Crea tabelle specifiche per scale, ascensori, riscaldamento o box per gestire le ripartizioni di spesa più complesse in futuro.',
+            ],
+            'table' => [
+                'name' => 'Denominazione',
+                'building' => 'Palazzina',
+                'stair' => 'Scala',
+                'type' => 'Tipologia',
+            ],
         ],
         'esercizi' => [
             'head_title' => 'Elenco esercizi',
@@ -426,6 +445,13 @@ return [
                 'transitions_description' => 'Tieni traccia dei cambi di proprietà o inquilino. Il sistema gestirà le successioni calcolando i saldi di competenza per ogni periodo.',
                 'tables_title' => 'Associazione tabelle',
                 'tables_description' => 'Ogni unità sarà successivamente collegata alle tabelle millesimali per permettere al motore contabile di ripartire correttamente le spese.',
+            ],
+            'table' => [
+                'name' => 'Denominazione',
+                'type' => 'Tipologia',
+                'building' => 'Palazzina',
+                'stair' => 'Scala',
+                'details' => 'Dettagli',
             ],
         ],
         'movimenti' => [
