@@ -6,10 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { useEventStyling } from '@/composables/useEventStyling';
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter'; 
 import { format, differenceInDays } from 'date-fns';
-import { it } from 'date-fns/locale';
-import { Building2, Wallet, Banknote, CalendarDays, AlertCircle, ArrowRight, CheckCircle, AlertTriangle, Info, Clock, XCircle, Coins, RotateCcw, History, TrendingDown } from 'lucide-vue-next';
+import { it, enUS, pt } from 'date-fns/locale';
+import { Building2, Wallet, Banknote, CalendarDays, AlertCircle, ArrowRight, CheckCircle, AlertTriangle, Clock, XCircle, RotateCcw, History, TrendingDown } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3'; 
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{ isOpen: boolean; evento: any; }>();
 const emit = defineEmits(['close']);
@@ -59,7 +60,7 @@ const rifArretrati = computed<string>(() => {
     const firstFew = uniqueParts.slice(0, 2).join(', ');
     const remaining = uniqueParts.length - 2;
     
-    return `${firstFew} e altre ${remaining}`;
+    return trans('dashboard.event_details.and_others', { items: firstFew, count: remaining });
 });
 
 // Stati
@@ -93,7 +94,14 @@ const isSubsequentRataCoveredByInitialCredit = computed(() =>
     (props.evento?.meta?.numero_rata || 0) > 1 // Siamo dalla rata 2 in poi
 );
 
-const formatDate = (dateStr: string) => { if(!dateStr) return ''; return format(new Date(dateStr), "d MMMM yyyy", { locale: it }); };
+const getDateLocale = () => {
+    const lang = (document.documentElement.lang || 'it').toLowerCase();
+    if (lang.startsWith('pt')) return pt;
+    if (lang.startsWith('en')) return enUS;
+    return it;
+};
+
+const formatDate = (dateStr: string) => { if(!dateStr) return ''; return format(new Date(dateStr), "d MMMM yyyy", { locale: getDateLocale() }); };
 
 const reportPayment = () => {
     isProcessing.value = true;
@@ -169,7 +177,7 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                         </div>
                         
                         <div class="mb-0">
-                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Data riferimento</span>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">{{ trans('dashboard.event_details.reference_date') }}</span>
                             <div class="flex items-center gap-2" :class="isExpired ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-200'">
                                 <CalendarDays class="w-5 h-5" :class="isExpired ? 'text-red-400' : 'text-slate-400'" />
                                 <span class="text-lg font-medium capitalize">{{ formatDate(evento.start_time) }}</span>
@@ -179,7 +187,7 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
 
                     <div>
                          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1"> 
-                             {{ isAdmin ? 'Totale emissione' : (isGeneratingCredit ? 'Importo a credito' : 'Totale da versare') }} 
+                             {{ isAdmin ? trans('dashboard.event_details.total_issue') : (isGeneratingCredit ? trans('dashboard.event_details.credit_amount') : trans('dashboard.event_details.total_to_pay')) }} 
                          </span>
                         
                         <span class="text-3xl font-bold tracking-tight block tabular-nums" 
@@ -190,7 +198,7 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                         <div v-if="scontrinoData.length > 0" class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 space-y-6">
                             
                             <div class="flex flex-col gap-2 mb-2">
-                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Dettaglio copertura / Utilizzo credito</p>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">{{ trans('dashboard.event_details.coverage_details') }}</p>
                             </div>
 
                             <div v-for="(item, idx) in scontrinoData" :key="idx" class="relative group">
@@ -209,27 +217,27 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                             <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                                                 <span class="flex items-center gap-1.5">
                                                     <div class="w-1.5 h-1.5 rounded-full" :class="item.credito_disponibile < 0 ? 'bg-emerald-500' : 'bg-red-400'"></div>
-                                                    {{ item.credito_disponibile < 0 ? 'Credito disp.:' : 'Saldo prog.:' }}
+                                                    {{ item.credito_disponibile < 0 ? trans('dashboard.event_details.credit_available') : trans('dashboard.event_details.progressive_balance') }}
                                                 </span>
                                                 <span class="font-mono">{{ euro(item.credito_disponibile) }}</span>
                                             </div>
 
                                             <div class="flex justify-between items-center text-slate-900 dark:text-white font-medium">
-                                                <span class="pl-3">Quota rata:</span>
+                                                <span class="pl-3">{{ trans('dashboard.event_details.installment_quota') }}</span>
                                                 <span class="font-mono text-slate-700 dark:text-slate-300">
                                                     {{ euro(item.quota_rata, { forcePlus: true }) }}
                                                 </span>
                                             </div>
 
                                             <div class="border-t border-slate-100 dark:border-slate-700 pt-1.5 mt-1 flex justify-between items-center">
-                                                <span class="text-xs font-bold uppercase text-slate-400">Nuovo saldo:</span>
+                                                <span class="text-xs font-bold uppercase text-slate-400">{{ trans('dashboard.event_details.new_balance') }}</span>
                                                 <span class="font-mono font-bold" :class="item.nuovo_saldo < -0.01 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'">
                                                     {{ euro(item.nuovo_saldo) }}
                                                 </span>
                                             </div>
                                             
                                             <div v-if="item.is_credito" class="text-right text-xs text-emerald-600 dark:text-emerald-500 italic">
-                                                (Sei ancora a credito)
+                                                {{ trans('dashboard.event_details.still_in_credit') }}
                                             </div>
                                         </div>
                                     </div>
@@ -240,17 +248,17 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                 
                                 <div v-if="importoPagato > 0.01 && !isGeneratingCredit && !isFullyCoveredByCredit" class="flex flex-col gap-1 mb-2 pb-2 border-b border-slate-200 dark:border-slate-700 text-xs">
                                     <div class="flex justify-between text-slate-500 dark:text-slate-400">
-                                        <span>Totale rata</span>
+                                        <span>{{ trans('dashboard.event_details.total_installment') }}</span>
                                         <span>{{ euro(importoOriginale) }}</span>
                                     </div>
                                     <div class="flex justify-between text-emerald-600 dark:text-emerald-500 font-medium">
-                                        <span class="flex items-center gap-1"><CheckCircle class="w-3 h-3" /> Già versato</span>
+                                        <span class="flex items-center gap-1"><CheckCircle class="w-3 h-3" /> {{ trans('dashboard.event_details.already_paid') }}</span>
                                         <span>- {{ euro(importoPagato) }}</span>
                                     </div>
                                 </div>
 
                                 <div class="flex justify-between items-center">
-                                    <span class="font-bold text-sm text-slate-900 dark:text-white">Netto da pagare</span>
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white">{{ trans('dashboard.event_details.net_to_pay') }}</span>
                                     <span class="text-xl font-bold font-mono tracking-tight" 
                                           :class="isFullyCoveredByCredit ? 'text-emerald-600' : (isGeneratingCredit ? 'text-blue-600' : 'text-slate-900 dark:text-white')"> 
                                         {{ euro(isFullyCoveredByCredit ? 0 : importoRestante, { forcePlus: false }) }} 
@@ -279,12 +287,12 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                     
                     <h2 class="text-xl font-bold pr-10 leading-tight flex items-start gap-2" :class="[isExpired ? 'text-red-600 dark:text-red-500' : 'text-slate-900 dark:text-white', hasFinancialDetails ? 'mb-6' : 'mb-3']"> <AlertTriangle v-if="isExpired" class="w-6 h-6 shrink-0" /> {{ evento.title }} </h2>
                     
-                    <div v-if="isRejected" class="mb-3 p-4 rounded-lg bg-red-50 border border-red-100"><div class="flex items-start gap-3"><XCircle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" /><div><h4 class="font-bold text-red-700 text-sm">Pagamento rifiutato</h4><div class="bg-white p-2.5 rounded text-xs text-red-800 font-medium border border-red-200/50 italic mt-2"> "{{ evento.meta?.rejection_reason }}" </div><p class="text-xs text-red-500 mt-2">Verifica i dati e riprova.</p></div></div></div>
+                    <div v-if="isRejected" class="mb-3 p-4 rounded-lg bg-red-50 border border-red-100"><div class="flex items-start gap-3"><XCircle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" /><div><h4 class="font-bold text-red-700 text-sm">{{ trans('dashboard.event_details.payment_rejected_title') }}</h4><div class="bg-white p-2.5 rounded text-xs text-red-800 font-medium border border-red-200/50 italic mt-2"> "{{ evento.meta?.rejection_reason }}" </div><p class="text-xs text-red-500 mt-2">{{ trans('dashboard.event_details.payment_rejected_retry') }}</p></div></div></div>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                         <div v-if="evento.meta?.condominio_nome" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-lg min-w-0">
                             <span class="text-[10px] uppercase font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
-                                <Building2 class="w-3.5 h-3.5" /> Condominio
+                                <Building2 class="w-3.5 h-3.5" /> {{ trans('dashboard.event_details.building') }}
                             </span>
                             <p class="font-medium text-sm text-slate-900 dark:text-white truncate" :title="evento.meta.condominio_nome">
                                 {{ evento.meta.condominio_nome }}
@@ -292,7 +300,7 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                         </div>
                         <div v-if="evento.meta?.gestione" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-lg min-w-0">
                             <span class="text-[10px] uppercase font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
-                                <Wallet class="w-3.5 h-3.5" /> Gestione
+                                <Wallet class="w-3.5 h-3.5" /> {{ trans('dashboard.event_details.management') }}
                             </span>
                             <p class="font-medium text-sm text-slate-900 dark:text-white truncate" :title="evento.meta.gestione">
                                 {{ evento.meta.gestione }}
@@ -300,10 +308,10 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                         </div>
                         <div v-if="evento.meta?.numero_rata" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-lg min-w-0">
                             <span class="text-[10px] uppercase font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
-                                <Banknote class="w-3.5 h-3.5" /> Rata
+                                <Banknote class="w-3.5 h-3.5" /> {{ trans('dashboard.event_details.installment') }}
                             </span>
                             <p class="font-medium text-sm text-slate-900 dark:text-white truncate">
-                                Numero {{ evento.meta.numero_rata }}
+                                {{ trans('dashboard.event_details.installment_number', { number: evento.meta.numero_rata }) }}
                             </p>
                         </div>
                     </div>
@@ -315,12 +323,12 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                 <History class="w-4 h-4" />
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-amber-800 mb-1">Saldo precedente incluso</h4>
+                                <h4 class="text-sm font-bold text-amber-800 mb-1">{{ trans('dashboard.event_details.previous_balance_included_title') }}</h4>
                                 <p class="text-xs text-amber-700 leading-relaxed mb-2">
-                                    Questa rata include un saldo debitore di <span class="font-bold">{{ euro(saldoIncorporato) }}</span> dall'esercizio precedente.
+                                    {{ trans('dashboard.event_details.previous_balance_included_description', { amount: euro(saldoIncorporato) }) }}
                                 </p>
                                 <p class="text-xs text-amber-600/80">
-                                    Pagando questa rata regolarizzerai anche il debito passato.
+                                    {{ trans('dashboard.event_details.previous_balance_included_hint') }}
                                 </p>
                             </div>
                         </div>
@@ -330,9 +338,9 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                 <TrendingDown class="w-4 h-4" />
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-blue-800 mb-1">Sconto da credito precedente</h4>
+                                <h4 class="text-sm font-bold text-blue-800 mb-1">{{ trans('dashboard.event_details.previous_credit_discount_title') }}</h4>
                                 <p class="text-xs text-blue-700 leading-relaxed mb-2">
-                                    L'importo di questa rata è stato ridotto grazie a un credito di <span class="font-bold">{{ euro(Math.abs(saldoIncorporato)) }}</span> dall'esercizio precedente.
+                                    {{ trans('dashboard.event_details.previous_credit_discount_description', { amount: euro(Math.abs(saldoIncorporato)) }) }}
                                 </p>
                             </div>
                         </div>
@@ -342,15 +350,13 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                 <AlertTriangle class="w-4 h-4" />
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-orange-800 mb-1">Attenzione: rate precedenti insolute</h4>
+                                <h4 class="text-sm font-bold text-orange-800 mb-1">{{ trans('dashboard.event_details.unpaid_previous_installments_title') }}</h4>
                                 <p class="text-xs text-orange-700 leading-relaxed mb-2">
-                                    Risultano arretrati non saldati per un totale di 
-                                    <span class="font-bold">{{ euro(arretratiPregressi) }}</span>
-                                    <span v-if="rifArretrati"> (rif. rate {{ rifArretrati }})</span>.
+                                    {{ trans('dashboard.event_details.unpaid_previous_installments_description', { amount: euro(arretratiPregressi) }) }}
+                                    <span v-if="rifArretrati"> {{ trans('dashboard.event_details.unpaid_previous_installments_reference', { refs: rifArretrati }) }}</span>
                                 </p>
                                 <p class="text-xs text-orange-600/80">
-                                    L'importo qui sotto si riferisce solo alla rata corrente. 
-                                    Per regolarizzare la situazione, verifica le rate scadute precedenti, effettua il pagamento e segnalalo.
+                                    {{ trans('dashboard.event_details.unpaid_previous_installments_hint') }}
                                 </p>
                             </div>
                         </div>
@@ -358,60 +364,59 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                         <div v-if="isPartiallyCoveredByCredit" class="mb-6">
                             <div class="flex items-center justify-between p-4 rounded-lg bg-indigo-50 border border-indigo-200 mb-4">
                                 <div class="flex flex-col">
-                                    <span class="text-indigo-700 flex items-center gap-2 font-semibold text-sm"><RotateCcw class="w-4 h-4" /> Parzialmente coperta</span>
-                                    <span class="text-xs text-indigo-600/80 mt-1">Il credito ha coperto {{ euro(importoOriginale - importoRestante) }}.</span>
+                                    <span class="text-indigo-700 flex items-center gap-2 font-semibold text-sm"><RotateCcw class="w-4 h-4" /> {{ trans('dashboard.event_details.partially_covered') }}</span>
+                                    <span class="text-xs text-indigo-600/80 mt-1">{{ trans('dashboard.event_details.credit_covered_amount', { amount: euro(importoOriginale - importoRestante) }) }}</span>
                                 </div>
                             </div>
                             <div class="flex items-center justify-between p-4 rounded-lg bg-amber-50 border border-amber-200 mb-4">
-                                <span class="text-amber-700 flex items-center gap-2 font-semibold text-sm"><AlertCircle class="w-4 h-4" /> Resta da versare</span>
+                                <span class="text-amber-700 flex items-center gap-2 font-semibold text-sm"><AlertCircle class="w-4 h-4" /> {{ trans('dashboard.event_details.remaining_to_pay') }}</span>
                                 <span class="font-bold text-xl text-amber-700">{{ euro(importoRestante) }}</span>
                             </div>
 
                             <div v-if="isReported">
                                 <Button class="w-full h-12 bg-amber-100 text-amber-700 border border-amber-200 cursor-not-allowed rounded-lg font-medium shadow-none text-xs" disabled>
-                                    Saldo inviato - In attesa di conferma...
+                                    {{ trans('dashboard.event_details.balance_sent_waiting') }}
                                 </Button>
                             </div>
                             <div v-else-if="!isEmitted">
                                 <div class="p-3 rounded-lg bg-slate-100 border border-slate-200 mb-3 flex gap-3 items-start">
                                     <Clock class="w-4 h-4 mt-0.5 text-slate-400" />
                                     <div>
-                                        <h4 class="font-bold text-slate-700 text-xs mb-0.5">Rata in attesa di emissione</h4>
+                                        <h4 class="font-bold text-slate-700 text-xs mb-0.5">{{ trans('dashboard.event_details.installment_pending_issue_title') }}</h4>
                                         <p class="text-xs text-slate-500 leading-snug">
-                                            L'amministratore non ha ancora abilitato i versamenti per questa scadenza. 
-                                            Potrai registrare il pagamento nei prossimi giorni.
+                                            {{ trans('dashboard.event_details.installment_pending_issue_description') }}
                                         </p>
                                     </div>
                                 </div>
                                 <Button class="w-full h-10 bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed rounded-lg font-medium hover:bg-slate-100 shadow-none text-xs" disabled>
-                                    Pagamento non ancora attivo
+                                    {{ trans('dashboard.event_details.payment_not_active') }}
                                 </Button>
                             </div>
-                            <div v-else><Button class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-semibold rounded-lg" :disabled="isProcessing" @click="reportPayment">{{ isProcessing ? 'Invio...' : 'Segnala pagamento saldo' }}</Button></div>
+                            <div v-else><Button class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-semibold rounded-lg" :disabled="isProcessing" @click="reportPayment">{{ isProcessing ? trans('dashboard.event_details.sending') : trans('dashboard.event_details.report_balance_payment') }}</Button></div>
                         </div>
 
                         <div v-else-if="isFullyCoveredByCredit" class="mb-3 flex items-center justify-between p-4 rounded-lg bg-emerald-50 border border-emerald-200">
                             <div class="flex flex-col">
                                 <span class="text-emerald-700 flex items-center gap-2 font-semibold text-sm">
-                                    <CheckCircle class="w-4 h-4" /> Coperta da credito
+                                    <CheckCircle class="w-4 h-4" /> {{ trans('dashboard.event_details.fully_covered_by_credit') }}
                                 </span>
                                 <span class="text-xs text-emerald-600/80 mt-1">
                                     {{ isSubsequentRataCoveredByInitialCredit 
-                                        ? "Rata coperta dal credito residuo dell'esercizio precedente." 
-                                        : "Rata saldata con il tuo credito residuo." 
+                                        ? trans('dashboard.event_details.covered_by_previous_credit') 
+                                        : trans('dashboard.event_details.covered_by_residual_credit') 
                                     }}
                                 </span>
                             </div>
                             <div class="text-right">
-                                <span class="text-xs uppercase text-emerald-600/70 font-bold block">Da versare</span>
-                                <span class="font-bold text-xl text-emerald-700">€ 0,00</span>
+                                <span class="text-xs uppercase text-emerald-600/70 font-bold block">{{ trans('dashboard.event_details.amount_to_pay') }}</span>
+                                <span class="font-bold text-xl text-emerald-700">{{ euro(0) }}</span>
                             </div>
                         </div>
                         
                         <div v-else-if="isGeneratingCredit" class="mb-3 flex items-center justify-between p-4 rounded-lg bg-blue-50 border border-blue-200">
                             <div class="flex flex-col">
-                                <span class="text-blue-700 flex items-center gap-2 font-semibold text-sm"><Wallet class="w-4 h-4" /> Credito residuo</span>
-                                <span class="text-xs text-blue-600/80 mt-1">Eccedenza dal saldo precedente.</span>
+                                <span class="text-blue-700 flex items-center gap-2 font-semibold text-sm"><Wallet class="w-4 h-4" /> {{ trans('dashboard.event_details.residual_credit') }}</span>
+                                <span class="text-xs text-blue-600/80 mt-1">{{ trans('dashboard.event_details.excess_from_previous_balance') }}</span>
                             </div>
                             <span class="font-bold text-xl text-blue-700">{{ euro(importoRestante) }}</span>
                         </div>
@@ -422,20 +427,20 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                    <Clock class="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <h4 class="text-sm font-bold text-amber-800 mb-1">Pagamento in verifica</h4>
+                                    <h4 class="text-sm font-bold text-amber-800 mb-1">{{ trans('dashboard.event_details.payment_under_review_title') }}</h4>
                                     <p class="text-xs text-amber-700 leading-relaxed">
-                                        Hai segnalato di aver effettuato il pagamento. L'amministratore sta verificando l'incasso. Riceverai una notifica a conferma avvenuta.
+                                        {{ trans('dashboard.event_details.payment_under_review_description') }}
                                     </p>
                                 </div>
                             </div>
                             <Button class="w-full h-12 bg-amber-100 text-amber-700 border border-amber-200 cursor-not-allowed rounded-lg font-medium shadow-none text-xs" disabled>
-                                In attesa di conferma...
+                                {{ trans('dashboard.event_details.waiting_confirmation') }}
                             </Button>
                         </div>
 
                         <div v-else-if="!isPaid && !isReported && !isRejected" class="mb-6 space-y-4">
                             <div class="flex items-center justify-between p-3 rounded-lg bg-amber-50 border border-amber-200">
-                                <span class="text-amber-700 flex items-center gap-2 font-semibold text-sm"><AlertCircle class="w-4 h-4" /> Totale da versare</span>
+                                <span class="text-amber-700 flex items-center gap-2 font-semibold text-sm"><AlertCircle class="w-4 h-4" /> {{ trans('dashboard.event_details.total_to_pay') }}</span>
                                 <span class="font-bold text-xl text-amber-700">{{ euro(importoRestante) }}</span>
                             </div>
                             
@@ -443,29 +448,28 @@ const scontrinoData = computed<ScontrinoItem[]>(() => {
                                 <div class="p-3 rounded-lg bg-slate-100 border border-slate-200 mb-3 flex gap-3 items-start">
                                     <Clock class="w-4 h-4 mt-0.5 text-slate-500" />
                                     <div>
-                                        <h4 class="font-bold text-slate-700 text-xs mb-0.5">Rata in attesa di emissione</h4>
+                                        <h4 class="font-bold text-slate-700 text-xs mb-0.5">{{ trans('dashboard.event_details.installment_pending_issue_title') }}</h4>
                                         <p class="text-xs text-slate-500 leading-snug">
-                                            L'amministratore non ha ancora abilitato i versamenti per questa scadenza. 
-                                            Potrai registrare il pagamento nei prossimi giorni.
+                                            {{ trans('dashboard.event_details.installment_pending_issue_description') }}
                                         </p>
                                     </div>
                                 </div>
                                 <Button class="w-full h-10 bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed rounded-lg font-medium hover:bg-slate-100 shadow-none text-xs" disabled>
-                                    Pagamento non ancora attivo
+                                    {{ trans('dashboard.event_details.payment_not_active') }}
                                 </Button>
                             </div>
                             <div v-else>
-                                <Button class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-semibold rounded-lg" :disabled="isProcessing" @click="reportPayment">{{ isProcessing ? 'Invio...' : 'Ho effettuato il pagamento' }}</Button>
+                                <Button class="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-semibold rounded-lg" :disabled="isProcessing" @click="reportPayment">{{ isProcessing ? trans('dashboard.event_details.sending') : trans('dashboard.event_details.report_payment_done') }}</Button>
                             </div>
                         </div>
 
                         <div v-if="isRejected" class="mb-6">
-                             <Button variant="destructive" class="w-full h-12 shadow-sm font-semibold rounded-lg" :disabled="isProcessing" @click="reportPayment">{{ isProcessing ? 'Invio...' : 'Riprova Segnalazione' }}</Button>
+                             <Button variant="destructive" class="w-full h-12 shadow-sm font-semibold rounded-lg" :disabled="isProcessing" @click="reportPayment">{{ isProcessing ? trans('dashboard.event_details.sending') : trans('dashboard.event_details.retry_report') }}</Button>
                         </div>
                     </div>
 
                     <div v-if="isAdmin && evento.meta?.action_url" class="mb-6">
-                        <Button as-child class="w-full h-12 text-white font-semibold shadow-lg rounded-lg" :class="isExpired ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'"><a :href="evento.meta.action_url" class="flex items-center justify-center gap-2">{{ isExpired ? 'Emetti subito' : "Vai all'emissione" }}<ArrowRight class="w-4 h-4" /></a></Button>
+                        <Button as-child class="w-full h-12 text-white font-semibold shadow-lg rounded-lg" :class="isExpired ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'"><a :href="evento.meta.action_url" class="flex items-center justify-center gap-2">{{ isExpired ? trans('dashboard.event_details.issue_now') : trans('dashboard.event_details.go_to_issue') }}<ArrowRight class="w-4 h-4" /></a></Button>
                     </div>
 
                     <div v-if="evento.description" :class="hasFinancialDetails ? 'mt-3 pt-3 border-t border-slate-100 dark:border-slate-800' : ''">
