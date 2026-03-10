@@ -24,6 +24,27 @@ defineProps<{
 
 const page = usePage<{ flash: { message?: Flash } }>();
 const flashMessage = computed(() => page.props.flash.message);
+const breadcrumbs: never[] = [];
+const pageGuides = computed(() => [
+  {
+    title: trans('documenti.guides.archive_title'),
+    description: trans('documenti.guides.archive_desc'),
+    icon: FolderArchive,
+    colorVariant: 'blue' as const,
+  },
+  {
+    title: trans('documenti.guides.categories_title'),
+    description: trans('documenti.guides.categories_desc'),
+    icon: FolderTree,
+    colorVariant: 'emerald' as const,
+  },
+  {
+    title: trans('documenti.guides.access_title'),
+    description: trans('documenti.guides.access_desc'),
+    icon: ShieldCheck,
+    colorVariant: 'amber' as const,
+  },
+]);
 
 // Array vuoto per forzare l'header in modalità compatta
 const breadcrumbs: never[] = [];

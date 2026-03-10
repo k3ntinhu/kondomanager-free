@@ -49,6 +49,15 @@ return [
         ],
     ],
 
+    'guides' => [
+        'archive_title'    => 'Centralized archive',
+        'archive_desc'     => 'Browse all building documents in one place with fast search and filtering.',
+        'categories_title' => 'Category organization',
+        'categories_desc'  => 'Organize the archive by categories to keep documentation clear and manageable.',
+        'access_title'     => 'Access control',
+        'access_desc'      => 'Set visibility and approval rules to keep documents secure and compliant.',
+    ],
+
     /* ------------------------------------------------------------------
      | Table
      | ------------------------------------------------------------------ */

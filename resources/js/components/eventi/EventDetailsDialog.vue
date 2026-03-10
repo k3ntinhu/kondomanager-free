@@ -9,6 +9,7 @@ import { it } from 'date-fns/locale';
 import { Building2, Wallet, Banknote, CalendarDays, AlertCircle, ArrowRight, CheckCircle, AlertTriangle, Clock, XCircle, TrendingDown } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3'; 
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{ isOpen: boolean; evento: any; }>();
 const emit = defineEmits(['close']);
@@ -235,12 +236,12 @@ const reportPaymentWithCredit = () => {
                     
                     <h2 class="text-xl font-bold pr-10 leading-tight flex items-start gap-2" :class="[isExpired ? 'text-red-600 dark:text-red-500' : 'text-slate-900 dark:text-white', hasFinancialDetails ? 'mb-6' : 'mb-3']"> <AlertTriangle v-if="isExpired" class="w-6 h-6 shrink-0" /> {{ evento.title }} </h2>
                     
-                    <div v-if="isRejected" class="mb-3 p-4 rounded-lg bg-red-50 border border-red-100"><div class="flex items-start gap-3"><XCircle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" /><div><h4 class="font-bold text-red-700 text-sm">Pagamento rifiutato</h4><div class="bg-white p-2.5 rounded text-xs text-red-800 font-medium border border-red-200/50 italic mt-2"> "{{ evento.meta?.rejection_reason }}" </div><p class="text-xs text-red-500 mt-2">Verifica i dati e riprova.</p></div></div></div>
+                    <div v-if="isRejected" class="mb-3 p-4 rounded-lg bg-red-50 border border-red-100"><div class="flex items-start gap-3"><XCircle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" /><div><h4 class="font-bold text-red-700 text-sm">{{ trans('dashboard.event_details.payment_rejected_title') }}</h4><div class="bg-white p-2.5 rounded text-xs text-red-800 font-medium border border-red-200/50 italic mt-2"> "{{ evento.meta?.rejection_reason }}" </div><p class="text-xs text-red-500 mt-2">{{ trans('dashboard.event_details.payment_rejected_retry') }}</p></div></div></div>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                         <div v-if="evento.meta?.condominio_nome" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-lg min-w-0">
                             <span class="text-[10px] uppercase font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
-                                <Building2 class="w-3.5 h-3.5" /> Condominio
+                                <Building2 class="w-3.5 h-3.5" /> {{ trans('dashboard.event_details.building') }}
                             </span>
                             <p class="font-medium text-sm text-slate-900 dark:text-white truncate" :title="evento.meta.condominio_nome">
                                 {{ evento.meta.condominio_nome }}
@@ -248,7 +249,7 @@ const reportPaymentWithCredit = () => {
                         </div>
                         <div v-if="evento.meta?.gestione" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-lg min-w-0">
                             <span class="text-[10px] uppercase font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
-                                <Wallet class="w-3.5 h-3.5" /> Gestione
+                                <Wallet class="w-3.5 h-3.5" /> {{ trans('dashboard.event_details.management') }}
                             </span>
                             <p class="font-medium text-sm text-slate-900 dark:text-white truncate" :title="evento.meta.gestione">
                                 {{ evento.meta.gestione }}
@@ -256,7 +257,7 @@ const reportPaymentWithCredit = () => {
                         </div>
                         <div v-if="evento.meta?.numero_rata !== undefined" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-lg min-w-0">
                             <span class="text-[10px] uppercase font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
-                                <Banknote class="w-3.5 h-3.5" /> Rata
+                                <Banknote class="w-3.5 h-3.5" /> {{ trans('dashboard.event_details.installment') }}
                             </span>
                             <p class="font-medium text-sm text-slate-900 dark:text-white truncate">
                                 {{ evento.meta.numero_rata === 0 ? 'Saldo Iniziale' : 'Numero ' + evento.meta.numero_rata }}
@@ -284,7 +285,7 @@ const reportPaymentWithCredit = () => {
                                 <AlertTriangle class="w-4 h-4" />
                             </div>
                             <div>
-                                <h4 class="text-sm font-bold text-orange-800 mb-1">Attenzione: rate precedenti insolute</h4>
+                                <h4 class="text-sm font-bold text-orange-800 mb-1">{{ trans('dashboard.event_details.unpaid_previous_installments_title') }}</h4>
                                 <p class="text-xs text-orange-700 leading-relaxed mb-2">
                                     Oltre a questa rata, risultano arretrati non saldati per un totale di <span class="font-bold">{{ euro(evento.meta.storico_arretrati) }}</span>
                                     <span v-if="evento.meta?.storico_rate_rif"> (rif. rate {{ evento.meta.storico_rate_rif }})</span>.
@@ -314,14 +315,14 @@ const reportPaymentWithCredit = () => {
                                    <Clock class="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <h4 class="text-sm font-bold text-amber-800 mb-1">Pagamento in verifica</h4>
+                                    <h4 class="text-sm font-bold text-amber-800 mb-1">{{ trans('dashboard.event_details.payment_under_review_title') }}</h4>
                                     <p class="text-xs text-amber-700 leading-relaxed">
-                                        Hai segnalato di aver effettuato il pagamento. L'amministratore sta verificando l'incasso. Riceverai una notifica a conferma avvenuta.
+                                        {{ trans('dashboard.event_details.payment_under_review_description') }}
                                     </p>
                                 </div>
                             </div>
                             <Button class="w-full h-12 bg-amber-100 text-amber-700 border border-amber-200 cursor-not-allowed rounded-lg font-medium shadow-none text-xs" disabled>
-                                In attesa di conferma...
+                                {{ trans('dashboard.event_details.waiting_confirmation') }}
                             </Button>
                         </div>
 
@@ -352,14 +353,14 @@ const reportPaymentWithCredit = () => {
                                 <div class="p-3 rounded-lg bg-slate-100 border border-slate-200 mb-3 flex gap-3 items-start">
                                     <Clock class="w-4 h-4 mt-0.5 text-slate-500" />
                                     <div>
-                                        <h4 class="font-bold text-slate-700 text-xs mb-0.5">Rata in attesa di emissione</h4>
+                                        <h4 class="font-bold text-slate-700 text-xs mb-0.5">{{ trans('dashboard.event_details.installment_pending_issue_title') }}</h4>
                                         <p class="text-xs text-slate-500 leading-snug">
                                             L'amministratore non ha ancora abilitato i versamenti per questa scadenza. 
                                         </p>
                                     </div>
                                 </div>
                                 <Button class="w-full h-10 bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed rounded-lg font-medium hover:bg-slate-100 shadow-none text-xs" disabled>
-                                    Pagamento non ancora attivo
+                                    {{ trans('dashboard.event_details.payment_not_active') }}
                                 </Button>
                             </div>
                             <div v-else>
@@ -413,7 +414,7 @@ const reportPaymentWithCredit = () => {
                     </div>
 
                     <div v-if="isAdmin && evento.meta?.action_url" class="mb-6">
-                        <Button as-child class="w-full h-12 text-white font-semibold shadow-lg rounded-lg" :class="isExpired ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'"><a :href="evento.meta.action_url" class="flex items-center justify-center gap-2">{{ isExpired ? 'Emetti subito' : "Vai all'emissione" }}<ArrowRight class="w-4 h-4" /></a></Button>
+                        <Button as-child class="w-full h-12 text-white font-semibold shadow-lg rounded-lg" :class="isExpired ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'"><a :href="evento.meta.action_url" class="flex items-center justify-center gap-2">{{ isExpired ? trans('dashboard.event_details.issue_now') : trans('dashboard.event_details.go_to_issue') }}<ArrowRight class="w-4 h-4" /></a></Button>
                     </div>
 
                     <div v-if="evento.description" :class="hasFinancialDetails ? 'mt-3 pt-3 border-t border-slate-100 dark:border-slate-800' : ''">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import { usePermission } from "@/composables/permissions";
 import { useDateConverter } from '@/composables/useDateConverter';
@@ -273,7 +274,7 @@ const submitEmissione = () => {
         onError: (errors) => {
             console.error("Errore Emissione:", errors);
             const flashError = page.props.flash.message?.type === 'error' ? page.props.flash.message.message : null;
-            const msg = flashError || Object.values(errors)[0] || "Si è verificato un errore imprevisto.";
+            const msg = flashError || Object.values(errors)[0] || trans('gestionale.form_common.messages.unexpected_error');
             showFeedback('Errore Emissione', msg, true); 
         },
     });
@@ -520,7 +521,7 @@ const getRateStats = (dettaglioQuote: any[]): DettaglioStats => {
 
 <template>   
 
-  <Head title="Dettaglio piano rate" />
+  <Head :title="trans('gestionale.form_common.actions.edit')" />
 
   <GestionaleLayout :breadcrumbs="breadcrumbs">
     <div class="px-4 py-6">
@@ -1039,7 +1040,7 @@ const getRateStats = (dettaglioQuote: any[]): DettaglioStats => {
               </template>
 
               <div v-else class="text-center py-12 text-muted-foreground bg-gray-50 rounded-lg border border-dashed">
-                <p v-if="!props.pianoRate">Caricamento dati...</p>
+                <p v-if="!props.pianoRate">{{ trans('gestionale.form_common.messages.loading_data') }}</p>
                 <p v-else>{{ showOnlyCredits ? "Nessun credito da rimborsare." : "Nessuna quota trovata." }}</p>
               </div>
             </TabsContent>

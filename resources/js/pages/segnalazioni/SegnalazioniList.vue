@@ -21,6 +21,27 @@ defineProps<{
 
 const page = usePage<{ flash: { message?: Flash } }>();
 const flashMessage = computed(() => page.props.flash.message);
+const breadcrumbs: never[] = [];
+const pageGuides = computed(() => [
+  {
+    title: trans('segnalazioni.guides.reports_title'),
+    description: trans('segnalazioni.guides.reports_desc'),
+    icon: TriangleAlert,
+    colorVariant: 'blue' as const,
+  },
+  {
+    title: trans('segnalazioni.guides.workflow_title'),
+    description: trans('segnalazioni.guides.workflow_desc'),
+    icon: Wrench,
+    colorVariant: 'emerald' as const,
+  },
+  {
+    title: trans('segnalazioni.guides.control_title'),
+    description: trans('segnalazioni.guides.control_desc'),
+    icon: ShieldCheck,
+    colorVariant: 'amber' as const,
+  },
+]);
 
 const breadcrumbs: never[] = [];
 

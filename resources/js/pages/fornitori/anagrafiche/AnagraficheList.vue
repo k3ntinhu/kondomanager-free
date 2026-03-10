@@ -10,6 +10,7 @@ import Alert from "@/components/Alert.vue";
 import { trans } from 'laravel-vue-i18n';
 import type { Flash } from '@/types/flash';
 import type { Fornitore } from '@/types/fornitori';
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   fornitore: Fornitore;

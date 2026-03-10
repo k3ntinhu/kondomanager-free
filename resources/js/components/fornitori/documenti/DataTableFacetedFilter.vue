@@ -11,6 +11,7 @@ import { Check, PlusCircle } from 'lucide-vue-next';
 import { trans } from 'laravel-vue-i18n';
 import type { Component } from 'vue';
 import type { Column } from '@tanstack/vue-table';
+import { trans } from 'laravel-vue-i18n';
 
 interface Option {
   label: string

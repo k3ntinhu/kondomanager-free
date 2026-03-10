@@ -27,6 +27,27 @@ const props = defineProps<{
 const { generateRoute } = usePermission();
 const page = usePage<{ flash: { message?: Flash } }>();
 const flashMessage = computed(() => page.props.flash.message);
+const breadcrumbs: never[] = [];
+const pageGuides = computed(() => [
+  {
+    title: trans('eventi.guides.centralized_title'),
+    description: trans('eventi.guides.centralized_desc'),
+    icon: CalendarClock,
+    colorVariant: 'blue' as const,
+  },
+  {
+    title: trans('eventi.guides.planning_title'),
+    description: trans('eventi.guides.planning_desc'),
+    icon: CalendarRange,
+    colorVariant: 'emerald' as const,
+  },
+  {
+    title: trans('eventi.guides.tracking_title'),
+    description: trans('eventi.guides.tracking_desc'),
+    icon: BellRing,
+    colorVariant: 'amber' as const,
+  },
+]);
 
 // Gestione Filtri
 const filters = reactive({ ...props.filters });

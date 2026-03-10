@@ -2,6 +2,7 @@
 
 import { computed } from 'vue';
 import { Link, Head, useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import ImmobileLayout from '@/layouts/gestionale/ImmobileLayout.vue';
 import { usePermission } from "@/composables/permissions";

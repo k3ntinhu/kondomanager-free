@@ -5,7 +5,7 @@ import { usePage } from "@inertiajs/vue3";
 import DataTable from '@/components/fornitori/DataTable.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import Heading from '@/components/Heading.vue';
+import PageHeaderGuide from '@/components/PageHeaderGuide.vue';
 import { columns } from '@/components/fornitori/columns';
 import Alert from "@/components/Alert.vue";
 import { trans } from 'laravel-vue-i18n';
@@ -69,10 +69,17 @@ watch(flashMessage, (newValue) => {
         <Alert :message="flashMessage.message" :type="flashMessage.type" />
       </div>
 
-      <div class="container mx-auto">
-        <DataTable :columns="columns" :data="fornitori" :meta="meta" />
-      </div>
+      <div class="w-full">
+        <section class="w-full">
+          <div v-if="flashMessage" class="py-3">
+            <Alert :message="flashMessage.message" :type="flashMessage.type" />
+          </div>
 
+          <div class="border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-950 overflow-hidden shadow-sm p-4 mt-2">
+            <DataTable :columns="columns" :data="fornitori" :meta="meta" />
+          </div>
+        </section>
+      </div>
     </div>
   </AppLayout> 
 

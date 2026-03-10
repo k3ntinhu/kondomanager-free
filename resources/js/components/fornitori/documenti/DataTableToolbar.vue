@@ -11,6 +11,7 @@ import { trans } from 'laravel-vue-i18n';
 import type { Table } from '@tanstack/vue-table';
 import type { Documento } from '@/types/documenti';
 import type { Fornitore } from '@/types/fornitori';
+import { trans } from 'laravel-vue-i18n';
 
 const { generateRoute, hasPermission, generatePath } = usePermission();
 
