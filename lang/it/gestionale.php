@@ -415,6 +415,18 @@ return [
             'head_title' => 'Elenco immobili',
             'page_title' => 'Unità immobiliari',
             'page_subtitle' => 'Gestisci l\'anagrafica fisica del condominio. Aggiungi le unità immobiliari e preparati ad assegnare i soggetti.',
+            'breadcrumbs' => [
+                'management' => 'Gestionale',
+                'list' => 'Unità immobiliari',
+            ],
+            'guides' => [
+                'registry_title' => 'Anagrafica unità',
+                'registry_description' => 'Registra i dati catastali e le informazioni principali degli appartamenti, box e locali commerciali che compongono il condominio.',
+                'transitions_title' => 'Gestione subentri',
+                'transitions_description' => 'Tieni traccia dei cambi di proprietà o inquilino. Il sistema gestirà le successioni calcolando i saldi di competenza per ogni periodo.',
+                'tables_title' => 'Associazione tabelle',
+                'tables_description' => 'Ogni unità sarà successivamente collegata alle tabelle millesimali per permettere al motore contabile di ripartire correttamente le spese.',
+            ],
         ],
         'movimenti' => [
             'head_title' => 'Movimenti',

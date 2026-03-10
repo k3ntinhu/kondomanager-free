@@ -415,6 +415,18 @@ return [
             'head_title' => 'Units list',
             'page_title' => 'Real estate units',
             'page_subtitle' => 'Manage the condominium physical registry. Add units and prepare assignment of related subjects.',
+            'breadcrumbs' => [
+                'management' => 'Management',
+                'list' => 'Real estate units',
+            ],
+            'guides' => [
+                'registry_title' => 'Unit registry',
+                'registry_description' => 'Register cadastral data and key information for apartments, garages and commercial premises in the condominium.',
+                'transitions_title' => 'Turnover management',
+                'transitions_description' => 'Track ownership or tenant changes. The system handles transitions by calculating balances per period.',
+                'tables_title' => 'Table association',
+                'tables_description' => 'Each unit will be linked to allocation tables so the accounting engine can split expenses correctly.',
+            ],
         ],
         'movimenti' => [
             'head_title' => 'Transactions',

@@ -413,8 +413,20 @@ return [
         ],
         'immobili' => [
             'head_title' => 'Lista de imóveis',
-            'page_title' => 'Unidades imobiliárias',
+            'page_title' => 'Imóveis',
             'page_subtitle' => 'Gira o cadastro físico do condomínio. Adicione unidades imobiliárias e prepare a atribuição de titulares.',
+            'breadcrumbs' => [
+                'management' => 'Gestão',
+                'list' => 'Imóveis',
+            ],
+            'guides' => [
+                'registry_title' => 'Cadastro de imóveis',
+                'registry_description' => 'Registe os dados cadastrais e as informações principais dos apartamentos, garagens e lojas do condomínio.',
+                'transitions_title' => 'Gestão de subentradas',
+                'transitions_description' => 'Acompanhe mudanças de proprietário ou inquilino. O sistema gere as transições calculando saldos por período.',
+                'tables_title' => 'Associação a tabelas',
+                'tables_description' => 'Cada imóvel será ligado às tabelas de permilagem para garantir a repartição correta das despesas.',
+            ],
         ],
         'movimenti' => [
             'head_title' => 'Movimentos',
