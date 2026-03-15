@@ -27,6 +27,8 @@ return [
         'edit_resident_description'   => 'Fill out the following form to edit the resident record registered in the address book',
         'resident_info_heading'       => 'Personal information',
         'resident_info_description'   => 'Below you can enter the general personal details of the resident',
+        'resident_contacts_heading'   => 'Contacts and address',
+        'resident_contacts_description' => 'Residential address and primary contacts of the resident record.',
         'resident_fiscal_heading'     => 'Tax information',
         'resident_fiscal_description' => 'Below you can enter the tax details of the resident',
     ],
@@ -51,7 +53,10 @@ return [
         'edit_resident'   => 'Edit',
         'delete_resident' => 'Delete',
         'save_resident'   => 'Save',
+        'update_resident' => 'Update resident record',
         'list_residents'  => 'List',
+        'back_to_list'    => 'Back to list',
+        'cancel'          => 'Cancel',
     ],
 
     /* ------------------------------------------------------------------
@@ -104,6 +109,10 @@ return [
     'tooltip' => [
         'buildings_header'      => 'Select and associate buildings',
         'buildings_description' => 'You can select one or more buildings to associate with this resident record. This will allow the resident to view data related to the associated buildings.',
+        'missing_building_title' => 'Missing a building?',
+        'missing_building_prefix' => 'Go to ',
+        'building_management_link' => 'building management',
+        'missing_building_suffix' => ' to register it in the system.',
     ],
 
     /* ------------------------------------------------------------------

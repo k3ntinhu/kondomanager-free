@@ -64,7 +64,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     href: route(generateRoute('anagrafiche.index')),
   },
   {
-    title: 'Modifica Anagrafica',
+    title: trans('anagrafiche.header.edit_resident_head'),
     href: '#',
   }
 ];
@@ -123,7 +123,7 @@ const submit = () => {
         :breadcrumbs="breadcrumbs"
         :video-url="null"
         :back-url="route(generateRoute('anagrafiche.index'))"
-        back-text="Indietro all'elenco"
+        :back-text="trans('anagrafiche.actions.back_to_list')"
       />
 
       <form @submit.prevent="submit" class="space-y-6">
@@ -167,8 +167,10 @@ const submit = () => {
                                       <p>{{ trans('anagrafiche.tooltip.buildings_description') }}</p>
                                       <Separator class="my-2 border-slate-100 dark:border-slate-800"/>
                                       <div class="text-xs">
-                                        <span class="font-semibold text-slate-700 dark:text-slate-300">Manca un condominio?</span><br>
-                                        Vai in <Link :href="route('condomini.index')" class="text-indigo-600 dark:text-indigo-400 hover:underline">gestione condomini</Link> per registrarlo a sistema.
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300">{{ trans('anagrafiche.tooltip.missing_building_title') }}</span><br>
+                                        {{ trans('anagrafiche.tooltip.missing_building_prefix') }}
+                                        <Link :href="route('condomini.index')" class="text-indigo-600 dark:text-indigo-400 hover:underline">{{ trans('anagrafiche.tooltip.building_management_link') }}</Link>
+                                        {{ trans('anagrafiche.tooltip.missing_building_suffix') }}
                                       </div>
                                     </div>
                                   </div>
@@ -230,8 +232,8 @@ const submit = () => {
 
         <Card class="border-dashed shadow-sm bg-slate-50/50 dark:bg-slate-900/20">
           <CardHeader class="pb-3 border-b border-dashed mb-4">
-              <CardTitle class="text-base font-semibold">Recapiti e sede</CardTitle>
-              <CardDescription>Indirizzo di residenza e contatti principali dell'anagrafica.</CardDescription>
+              <CardTitle class="text-base font-semibold">{{ trans('anagrafiche.header.resident_contacts_heading') }}</CardTitle>
+              <CardDescription>{{ trans('anagrafiche.header.resident_contacts_description') }}</CardDescription>
           </CardHeader>
           <CardContent class="space-y-6">
               <div class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-6">
@@ -388,7 +390,7 @@ const submit = () => {
                 :href="route(generateRoute('anagrafiche.index'))"
                 class="inline-flex items-center justify-center h-9 px-6 rounded-md border border-input bg-background text-sm font-semibold hover:bg-accent hover:text-accent-foreground transition-all shadow-sm"
             >
-                Annulla
+                {{ trans('anagrafiche.actions.cancel') }}
             </Link>
 
             <Button 
@@ -398,7 +400,7 @@ const submit = () => {
             >
                 <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
                 <Save v-else class="h-4 w-4" />
-                Aggiorna anagrafica
+                {{ trans('anagrafiche.actions.update_resident') }}
             </Button>
         </div>
 

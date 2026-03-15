@@ -24,6 +24,8 @@ return [
         'edit_resident_description'   => 'Compila il seguente modulo per modificare l\'anagrafica registrata in rubrica',
         'resident_info_heading'       => 'Dati anagrafici',
         'resident_info_description'   => 'Di seguito è possibile specificare i dati anagrafici generici dell\'anagrafica',
+        'resident_contacts_heading'   => 'Recapiti e sede',
+        'resident_contacts_description' => 'Indirizzo di residenza e contatti principali dell\'anagrafica.',
         'resident_fiscal_heading'     => 'Dati fiscali',
         'resident_fiscal_description' => 'Di seguito è possibile specificare i dati fiscali dell\'anagrafica',
     ],
@@ -48,7 +50,10 @@ return [
         'edit_resident'   => 'Modifica',
         'delete_resident' => 'Elimina',
         'save_resident'   => 'Salva',
+        'update_resident' => 'Aggiorna anagrafica',
         'list_residents'  => 'Elenco',
+        'back_to_list'    => 'Indietro all\'elenco',
+        'cancel'          => 'Annulla',
     ],
 
     /* ------------------------------------------------------------------
@@ -101,6 +106,10 @@ return [
     'tooltip' => [
         'buildings_header'      => 'Seleziona e associa condomini',
         'buildings_description' => 'Puoi selezionare uno o più di un condominio da associare all\'anagrafica, questo permetterà all\'anagrafica di visualizzare i dati dei condomini associati ad essa',
+        'missing_building_title' => 'Manca un condominio?',
+        'missing_building_prefix' => 'Vai in ',
+        'building_management_link' => 'gestione condomini',
+        'missing_building_suffix' => ' per registrarlo a sistema.',
     ],
 
     /* ------------------------------------------------------------------

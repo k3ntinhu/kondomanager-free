@@ -27,6 +27,8 @@ return [
         'edit_resident_description'   => 'Preencha o seguinte formulário para editar o registo na lista de contactos',
         'resident_info_heading'       => 'Dados pessoais',
         'resident_info_description'   => 'A seguir pode especificar os dados pessoais gerais do registo',
+        'resident_contacts_heading'   => 'Contactos e morada',
+        'resident_contacts_description' => 'Morada de residência e contactos principais do registo.',
         'resident_fiscal_heading'     => 'Dados fiscais',
         'resident_fiscal_description' => 'A seguir pode especificar os dados fiscais do registo',
     ],
@@ -51,7 +53,10 @@ return [
         'edit_resident'   => 'Editar',
         'delete_resident' => 'Eliminar',
         'save_resident'   => 'Guardar',
+        'update_resident' => 'Atualizar registo',
         'list_residents'  => 'Lista',
+        'back_to_list'    => 'Voltar à lista',
+        'cancel'          => 'Cancelar',
     ],
 
     /* ------------------------------------------------------------------
@@ -104,6 +109,10 @@ return [
     'tooltip' => [
         'buildings_header'      => 'Selecionar e associar condomínios',
         'buildings_description' => 'Pode selecionar um ou mais condomínios para associar a este registo. Isto permitirá que o registo visualize os dados dos condomínios associados.',
+        'missing_building_title' => 'Falta um condomínio?',
+        'missing_building_prefix' => 'Vá a ',
+        'building_management_link' => 'gestão de condomínios',
+        'missing_building_suffix' => ' para o registar no sistema.',
     ],
 
     /* ------------------------------------------------------------------
