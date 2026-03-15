@@ -151,6 +151,7 @@ return [
             'activities_count' => ':count ATTIVITÀ',
             'empty' => 'Inbox vuota',
             'badges' => [
+                'to_verify' => 'DA VERIFICARE',
                 'expired' => 'SCADUTO',
                 'todo' => 'DA FARE',
             ],
@@ -163,11 +164,22 @@ return [
         ],
         'actions' => [
             'open' => 'Apri',
+            'register' => 'Registra',
+            'mark_completed' => 'Segna come completato',
             'analyze_entries' => 'Analizza voci',
             'manage_rate_plans' => 'Gestisci piani rate',
             'go_to_rate_plans' => 'Vai ai piani rate',
             'resolve' => 'Risolvi',
             'close' => 'Chiudi',
+        ],
+        'reject_modal' => [
+            'reject_report' => 'Rifiuta segnalazione',
+            'you_are_about_to_reject' => 'Stai per rifiutare il pagamento segnalato da ',
+            'condomino' => 'Condòmino',
+            'irreversible_action' => 'Attenzione: questa azione sarà irreversibile.',
+            'reason_visible_to_user' => 'Motivazione (visibile all\'utente)',
+            'reason_example' => 'Es: Bonifico non trovato nell\'estratto conto...',
+            'confirm_rejection' => 'Conferma rifiuto',
         ],
     ],
     'piani_rate' => [

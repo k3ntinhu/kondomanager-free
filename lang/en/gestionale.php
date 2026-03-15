@@ -151,6 +151,7 @@ return [
             'activities_count' => ':count ACTIVITIES',
             'empty' => 'Inbox empty',
             'badges' => [
+                'to_verify' => 'TO VERIFY',
                 'expired' => 'EXPIRED',
                 'todo' => 'TODO',
             ],
@@ -163,11 +164,22 @@ return [
         ],
         'actions' => [
             'open' => 'Open',
+            'register' => 'Register',
+            'mark_completed' => 'Mark as completed',
             'analyze_entries' => 'Analyze entries',
             'manage_rate_plans' => 'Manage installment plans',
             'go_to_rate_plans' => 'Go to installment plans',
             'resolve' => 'Resolve',
             'close' => 'Close',
+        ],
+        'reject_modal' => [
+            'reject_report' => 'Reject report',
+            'you_are_about_to_reject' => 'You are about to reject the payment reported by ',
+            'condomino' => 'Resident',
+            'irreversible_action' => 'Warning: this action is irreversible.',
+            'reason_visible_to_user' => 'Reason (visible to the user)',
+            'reason_example' => 'Ex: Bank transfer not found in account statement...',
+            'confirm_rejection' => 'Confirm rejection',
         ],
     ],
     'piani_rate' => [

@@ -151,6 +151,7 @@ return [
             'activities_count' => ':count ATIVIDADES',
             'empty' => 'Inbox vazia',
             'badges' => [
+                'to_verify' => 'POR VERIFICAR',
                 'expired' => 'EXPIRADO',
                 'todo' => 'POR FAZER',
             ],
@@ -163,11 +164,22 @@ return [
         ],
         'actions' => [
             'open' => 'Abrir',
+            'register' => 'Registar',
+            'mark_completed' => 'Marcar como concluído',
             'analyze_entries' => 'Analisar rubricas',
             'manage_rate_plans' => 'Gerir planos de prestações',
             'go_to_rate_plans' => 'Ir para planos de prestações',
             'resolve' => 'Resolver',
             'close' => 'Fechar',
+        ],
+        'reject_modal' => [
+            'reject_report' => 'Rejeitar sinalização',
+            'you_are_about_to_reject' => 'Está prestes a rejeitar o pagamento sinalizado por ',
+            'condomino' => 'Condómino',
+            'irreversible_action' => 'Atenção: esta ação é irreversível.',
+            'reason_visible_to_user' => 'Motivação (visível ao utilizador)',
+            'reason_example' => 'Ex.: Transferência não encontrada no extrato da conta...',
+            'confirm_rejection' => 'Confirmar rejeição',
         ],
     ],
     'piani_rate' => [
