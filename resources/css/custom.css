@@ -60,6 +60,15 @@
   color: #fafafa;
 }
 
+.dark .vs__selected {
+  background-color: #3f3f46;
+  border-color: #52525b;
+}
+
+.dark .vs__deselect {
+  fill: #d4d4d8;
+}
+
 .dark .vs__search::placeholder {
   color: #a1a1aa;
 }
