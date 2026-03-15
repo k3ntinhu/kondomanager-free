@@ -138,7 +138,7 @@ const submit = () => {
                     <Label for="tipologia">{{ trans('gestionale.form_common.labels.type') }}</Label>
                     <v-select 
                         :options="tipologie" 
-                        label="nome" 
+                        label="localized_name" 
                         class="mt-1 block w-full"
                         v-model="form.tipologia_id"
                         :placeholder="trans('gestionale.immobili_form.create.placeholders.type')"
