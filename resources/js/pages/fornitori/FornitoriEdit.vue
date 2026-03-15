@@ -427,7 +427,7 @@ const submit = () => {
                             :options="categorie"
                             v-model="form.categoria_id"
                             :reduce="(d: Categoria) => d.id"
-                            label="name"
+                            label="localized_name"
                             :placeholder="trans('fornitori.forms.select_category')"
                         />
                     </div>

@@ -266,6 +266,17 @@ return [
         'delete_document_error' => 'Error while deleting document.',
     ],
 
+    'categories' => [
+        'elettricista'           => 'Electrician',
+        'idraulico'              => 'Plumber',
+        'muratore'               => 'Mason',
+        'giardiniere'            => 'Gardener',
+        'servizi_di_pulizia'     => 'Cleaning services',
+        'sicurezza_e_antincendio'=> 'Security and fire safety',
+        'ascensorista'           => 'Elevator technician',
+        'azienda_multiservizi'   => 'Multi-service company',
+    ],
+
     'view' => [
         'title'                => 'Supplier details',
         'breadcrumb_detail'    => 'Supplier details',

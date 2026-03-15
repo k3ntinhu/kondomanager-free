@@ -266,6 +266,17 @@ return [
         'delete_document_error' => 'Errore durante l\'eliminazione del documento.',
     ],
 
+    'categories' => [
+        'elettricista'           => 'Elettricista',
+        'idraulico'              => 'Idraulico',
+        'muratore'               => 'Muratore',
+        'giardiniere'            => 'Giardiniere',
+        'servizi_di_pulizia'     => 'Servizi di pulizia',
+        'sicurezza_e_antincendio'=> 'Sicurezza e antincendio',
+        'ascensorista'           => 'Ascensorista',
+        'azienda_multiservizi'   => 'Azienda multiservizi',
+    ],
+
     'view' => [
         'title'                  => 'Dettagli fornitore',
         'breadcrumb_detail'      => 'Dettaglio fornitore',

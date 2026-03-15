@@ -269,6 +269,17 @@ return [
         'delete_document_error' => 'Erro ao eliminar o documento.',
     ],
 
+    'categories' => [
+        'elettricista'           => 'Eletricista',
+        'idraulico'              => 'Canalizador',
+        'muratore'               => 'Pedreiro',
+        'giardiniere'            => 'Jardineiro',
+        'servizi_di_pulizia'     => 'Serviços de limpeza',
+        'sicurezza_e_antincendio'=> 'Segurança e incêndio',
+        'ascensorista'           => 'Técnico de elevadores',
+        'azienda_multiservizi'   => 'Empresa multisserviços',
+    ],
+
     'view' => [
         'title'                  => 'Detalhes do fornecedor',
         'breadcrumb_detail'      => 'Detalhe do fornecedor',
