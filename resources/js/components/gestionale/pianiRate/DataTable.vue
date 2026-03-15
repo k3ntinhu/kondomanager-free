@@ -7,12 +7,8 @@ import { valueUpdater } from '@/lib/utils';
 import DataTablePagination from '@/components/DataTablePagination.vue';
 import DataTableToolbar from '@/components/gestionale/pianiRate/DataTableToolbar.vue';
 import { usePermission } from "@/composables/permissions";
-
-// Import componenti Empty e icone
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
-import { CalendarDays, ArrowRight } from 'lucide-vue-next';
-import { trans } from 'laravel-vue-i18n';
-
+import { CalendarDays} from 'lucide-vue-next';
 import type { ColumnDef, SortingState } from '@tanstack/vue-table';
 import type { PianoRate } from '@/types/gestionale/piani-rate';
 import type { Building } from '@/types/buildings';
@@ -114,10 +110,10 @@ const table = useVueTable({
       <EmptyMedia variant="icon" class="bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-500">
         <CalendarDays class="w-8 h-8" />
       </EmptyMedia>
-      <EmptyTitle>{{ trans('gestionale.piani_rate.empty.title') }}</EmptyTitle>
+      <EmptyTitle>Nessun piano rate trovato</EmptyTitle>
       <EmptyDescription>
-        {{ trans('gestionale.piani_rate.empty.description') }} <br>
-        {{ trans('gestionale.piani_rate.empty.hint') }}
+        Non sono ancora stati generati piani rate per questo esercizio. <br>
+        Se hai già creato un piano dei conti, inizia cliccando su "Crea piano rate" per definire le scadenze delle rate e i relativi importi.
       </EmptyDescription>
     </EmptyHeader>
   </Empty>

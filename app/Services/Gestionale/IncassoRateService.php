@@ -24,7 +24,10 @@ class IncassoRateService
                 'righe.anagrafica', 
                 'righe.cassa',
                 // 🔥 EAGER LOADING: Carichiamo le quote e le rate padre in un colpo solo
-                'quotePagate.rata' 
+                'quotePagate.rata', 
+                'quotePagate.immobile',  // ← aggiungi
+                'figlie.quotePagate.rata',     // ← aggiungi per credito
+                'figlie.quotePagate.immobile', // ← aggiungi per credito
             ]);
 
         if ($search) {
@@ -70,7 +73,7 @@ class IncassoRateService
             'data_registrazione'       => $movimento->data_registrazione?->format('Y-m-d'),
             'causale'                  => $movimento->causale,
             
-            // 🔥 Passiamo l'oggetto intero, non l'ID, per usare i dati in memoria
+            // Passiamo l'oggetto intero, non l'ID, per usare i dati in memoria
             'dettagli_rate'            => $this->getDettagliRate($movimento),
             
             'importo_totale_raw'       => $rigaCassa ? $rigaCassa->importo / 100 : 0,
@@ -94,6 +97,46 @@ class IncassoRateService
      */
     private function getDettagliRate(ScritturaContabile $movimento): array
     {
+        $dettagli = collect();
+
+        // Quote pagate con contanti (scrittura padre)
+        foreach ($movimento->quotePagate as $quota) {
+            if ($quota->importo <= 0) continue; // salta saldo_iniziale
+
+            $dettagli->push([
+                'numero'            => $quota->rata->numero_rata ?? '-',
+                'scadenza'          => $quota->rata->data_scadenza?->format('d/m/Y') ?? '-',
+                'immobile'          => $quota->immobile?->interno ?? null,
+                'importo_formatted' => MoneyHelper::format($quota->pivot->importo_pagato),
+                'tipo'              => 'contanti', // 💶 icona banconota
+            ]);
+        }
+
+        // Quote pagate con credito (scritture figlie storno_credito)
+        foreach ($movimento->figlie as $figlia) {
+            if ($figlia->tipo_movimento !== 'storno_credito') continue;
+
+            foreach ($figlia->quotePagate as $quota) {
+                if ($quota->importo <= 0) continue;
+                if ($quota->pivot->importo_pagato <= 0) continue;
+
+                $dettagli->push([
+                    'numero'            => $quota->rata->numero_rata ?? '-',
+                    'scadenza'          => $quota->rata->data_scadenza?->format('d/m/Y') ?? '-',
+                    'immobile'          => $quota->immobile?->interno ?? null,
+                    'importo_formatted' => MoneyHelper::format($quota->pivot->importo_pagato),
+                    'tipo'              => 'credito', // 🪙 icona monete
+                ]);
+            }
+        }
+
+        return $dettagli
+            ->sortBy(fn($d) => $d['numero'])
+            ->values()
+            ->toArray();
+    }
+    /* private function getDettagliRate(ScritturaContabile $movimento): array
+    {
         // Se non ci sono quote pagate (es. anticipo puro), ritorna array vuoto
         if ($movimento->quotePagate->isEmpty()) {
             return [];
@@ -109,13 +152,13 @@ class IncassoRateService
                         ? $quota->rata->data_scadenza->format('d/m/Y') 
                         : '-',
                     
-                    // 🔥 Legge dalla pivot caricata in memoria
+                    // Legge dalla pivot caricata in memoria
                     'importo_formatted' => MoneyHelper::format($quota->pivot->importo_pagato)
                 ];
             })
             ->values() // Resetta indici array
             ->toArray();
-    }
+    } */
 
     /**
      * Determina il ruolo del pagante

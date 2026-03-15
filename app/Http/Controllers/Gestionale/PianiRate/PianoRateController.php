@@ -310,17 +310,38 @@ class PianoRateController extends Controller
             'scoperto_count' => count($orfani), 
             'orfani' => $orfani
         ];
-        
-        // Estrazione delle sole scadenze (Rate pure) per la timeline
+
+        // 1. Troviamo gli ID delle rate di questo piano che sono state emesse ma "nascoste"
+        // (Cerchiamo nella tabella eventi quegli eventi legati al condomino che hanno visibility = hidden)
+        $rateNascosteIds = Evento::where('meta->type', 'scadenza_rata_condomino')
+            ->where('meta->context->piano_rate_id', $pianoRate->id)
+            ->where('visibility', VisibilityStatus::HIDDEN->value)
+            ->get()
+            ->pluck('meta.context.rata_id')
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->toArray();
+
+        // 2. Estrazione delle sole scadenze (Rate pure) per la timeline
         $ratePure = $pianoRate->rate()
             ->orderBy('numero_rata')
             ->get()
-            ->map(fn($rata) => [
-                'id' => $rata->id, 
-                'numero_rata' => $rata->numero_rata, 
-                'is_emessa' => $rata->rateQuote()->whereNotNull('scrittura_contabile_id')->exists(), 
-                'totale_rata' => MoneyHelper::fromCents($rata->importo_totale)
-            ]);
+            ->map(function ($rata) use ($rateNascosteIds) {
+                $isEmessa = $rata->rateQuote()->whereNotNull('scrittura_contabile_id')->exists();
+                
+                // Una rata è pubblicata SE: 
+                // È emessa E il suo ID NON si trova nell'elenco delle rate nascoste.
+                // (Se non è emessa, non ha senso parlare di pubblicazione, quindi null o false)
+                $isPublished = $isEmessa ? !in_array($rata->id, $rateNascosteIds) : false;
+
+                return [
+                    'id' => $rata->id, 
+                    'numero_rata' => $rata->numero_rata, 
+                    'is_emessa' => $isEmessa, 
+                    'is_published' => $isPublished, // Il nuovo flag per il frontend
+                    'totale_rata' => MoneyHelper::fromCents($rata->importo_totale)
+                ];
+            });
 
         // Preparazione dati per la logica "Sposta Spesa" (Movimenti Budget)
         $sources = $pianoRate->capitoli->map(function ($conto) {
@@ -348,23 +369,6 @@ class PianoRateController extends Controller
             Log::warning("Sposta Spesa: Nessun Piano Conto trovato per la gestione {$pianoRate->gestione_id}");
         }
 
-        // --- INIZIO DEBUG ---
-        $debugEventi = Evento::where('meta->type', 'scadenza_rata_condomino')
-            ->where('meta->context->piano_rate_id', $pianoRate->id)
-            ->get(['id', 'title', 'meta', 'visibility']);
-            
-        Log::info("=== DEBUG EVENTI PIANO RATE ID: {$pianoRate->id} ===");
-        Log::info($debugEventi->toArray());
-        
-        $conteggioNascoste = Evento::where('meta->type', 'scadenza_rata_condomino')
-            ->where('meta->context->piano_rate_id', $pianoRate->id)
-            ->where('meta->is_emitted', true)
-            ->where('meta->is_published', false)
-            ->count();
-            
-        Log::info("EVENTI TROVATI COME NASCOSTI: " . $conteggioNascoste);
-        // --- FINE DEBUG ---
-
         return Inertia::render('gestionale/pianiRate/PianiRateShow', [
             'condominio' => $condominio, 
             'esercizio' => $esercizio, 
@@ -378,8 +382,8 @@ class PianoRateController extends Controller
             'destinations' => $destinations,
             'has_unpublished_rates' => Evento::where('meta->type', 'scadenza_rata_condomino')
                 ->where('meta->context->piano_rate_id', $pianoRate->id)
-                ->where('meta->is_emitted', true)        // 🟢 Cerca quelle emesse...
-                ->where('meta->is_published', false)     // 🟢 ...ma ancora silenziose!
+                ->where('meta->is_emitted', true)        // Cerca quelle emesse...
+                ->where('meta->is_published', false)     // ...ma ancora silenziose!
                 ->exists(),
         ]);
     }

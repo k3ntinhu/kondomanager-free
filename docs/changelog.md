@@ -2,6 +2,77 @@
 
 Tutte le modifiche notevoli a questo progetto saranno documentate in questo file.
 
+# [1.9.16] - Accounting Intelligence & Precision (Latest)
+
+## Potenziamento del Motore Finanziario
+
+### Motore Finanziario in Centesimi (MoneyHelper)
+- **Rimosso l'uso dei float nativi di PHP** per i calcoli finanziari sensibili
+- **Integrata la classe `MoneyHelper`** in tutto il ciclo di incasso
+- **Precisione assoluta garantita** - eliminati definitivamente i bug di arrotondamento nel bilancio
+- Tutte le operazioni monetarie operano ora a livello centesimale per una precisione impeccabile
+
+### Ordinamento Visivo a Cascata (Waterfall)
+- **Riprogettata la visualizzazione dei movimenti** nell'Estratto Conto Anagrafica
+- All'interno della stessa operazione, i movimenti in **DARE** (Addebiti/Prelievi dal Salvadanaio) ora precedono visivamente quelli in **AVERE** (Incassi/Compensazioni)
+- Risulta in una **curva del saldo logica** e priva di "falsi rossi" nella visualizzazione
+
+### Single Source of Truth (Pivot Engine)
+- **Ottimizzato il processo di salvataggio delle quote**
+- **Eliminati gli aggiornamenti manuali ridondanti** (`update()`) sui record delle quote
+- Il ricalcolo dello stato ora si affida **interamente ai dati registrati nella tabella pivot**
+- Garantisce **massime performance e integrità dei dati** attraverso un'architettura semplificata
+
+### Correzioni di Bug
+
+#### Fix Race Condition "NON PAGATA"
+- Risolto un bug temporale nel ricalcolo degli stati durante le compensazioni
+- **Spostata la chiamata `ricalcolaStato()`** per eseguire **dopo** l'effettivo `attach()` dei pagamenti
+- Le rate chiuse tramite credito vengono ora etichettate correttamente come **"PAGATA" in tempo reale**
+
+#### Fix Sbilanciamento Incassi Misti
+- Introdotto il **controllo rigoroso `$budgetCashCents`** in `StoreIncassoRateAction`
+- Il sistema ora **impedisce alla scrittura di cassa di consumare debito virtuale**
+- Crea lo spazio appropriato per la scrittura di storno e completa **la partita doppia in modo perfettamente bilanciato**
+
+---
+
+*Questa release garantisce che ogni operazione finanziaria mantenga un'integrità perfetta, dalle transazioni individuali agli estratti conto completi.*
+
+### [1.9.15] Tenant Experience & UI
+* **Smart Wallet (Salvadanaio Condòmino):** Completamente ridisegnato il widget per l'utilizzo dei crediti pregressi. Adotta ora un design pulito e professionale (stile "Digital Wallet"), con un breakdown matematico trasparente che mostra il costo della rata, il credito applicato e il nuovo totale da versare.
+* **Credito Puro (Zero-Payment):** Ripristinata e migliorata la "Card Trionfale" blu/azzurra per le rate che generano un credito netto a favore del condòmino. Il sistema nasconde automaticamente le istruzioni per il bonifico e i bottoni di pagamento, indicando chiaramente che non è richiesta alcuna azione.
+* **Sincronizzazione Dinamica UI:** L'interfaccia dell'app del condòmino reagisce ora istantaneamente a *qualsiasi* azione dell'amministratore (incasso, incasso parziale, storno, annullamento emissione), ricalcolando in tempo reale lo stato (Pagato, Parziale, In attesa) e l'importo residuo al centesimo.
+
+### [1.9.14] Accounting Engine & Sync (Ciclo Attivo)
+* **Motore di Storno "Self-Healing":** Sviluppato il sistema di annullamento incassi (Storno). L'architettura esegue una fotografia preventiva dei soggetti coinvolti, inverte la partita doppia (generando una scrittura di rettifica) e ripristina chirurgicamente il debito sulle quote originali. Immediatamente dopo, il Tenant Portal del condòmino viene aggiornato, rimuovendo la spunta verde di "Rata Saldata" e ripristinando la richiesta di pagamento.
+* **Onboarding Silenzioso (Gestione Iniziata):** Risolto un bug critico nel rilascio delle "Rate Silenziose". Ora, quando l'amministratore pubblica le rate (dopo aver magari registrato decine di incassi pregressi di nascosto), il sistema filtra ed elabora i pagamenti *esclusivamente* per la singola anagrafica, evitando di sovrascrivere l'estratto conto del singolo utente con il debito dell'intero condominio.
+* **Prevenzione Falsi Positivi JSON:** Reso impermeabile il frontend Vue ai problemi di serializzazione dei dati JSON provenienti da MySQL. Il flag di emissione (`is_emitted`) viene ora interpretato correttamente a prescindere dal tipo di dato (booleano, intero o stringa), garantendo lo sblocco immediato dei pulsanti di pagamento alla pubblicazione della rata.
+
+### [1.9.13] Bugfixes & Ottimizzazioni
+* **Fix Popup di Storno:** Corretto un errore che mostrava "€ 0,00" nel dialog di conferma dello storno. Il frontend ora riconverte correttamente i decimali del backend in centesimi prima di passarli al formattatore di valuta.
+* **Fix Vue Warnings:** Aggiunta la prop `esercizi` mancante nel controller della lista incassi, eliminando i warning in console e migliorando la stabilità del rendering.
+* **Protezione Query Relazionali:** Sostituite le fragili query dirette su campi JSON nidificati (`whereIn` su meta JSON) con costrutti logici multi-tipo più robusti, garantendo che gli eventi vengano sempre intercettati e aggiornati durante storni e annullamenti.
+
+## [1.9.12] Tenant Experience & Payment Loops
+
+**Zero-Anxiety UI & Rassicurazione Visiva**
+* **Debito Pregresso non "Scaduto":** La Rata 0 (che rappresenta il saldo dell'anno precedente) non viene più etichettata con il badge rosso di allarme "Scaduta". Adotta ora un design dedicato color ambra con la dicitura "Debito Pregresso" e l'icona "Storico", eliminando la frustrazione visiva per i documenti di competenza passata.
+* **Positive Feedback Loop (Rata Saldata):** Una volta che l'amministratore registra l'incasso, la rata non scompare più disorientando l'utente. Nel widget delle scadenze compare un rassicurante badge verde "Pagamento Ricevuto". Aprendo il dettaglio, il condòmino viene accolto da un box trionfale "Rata Saldata", avendo l'immediata certezza che i suoi soldi sono stati contabilizzati.
+* **Pulizia Istruzioni Obsolete:** Nelle rate con stato "Pagato", il sistema nasconde automaticamente il testo descrittivo con le istruzioni per il bonifico e rimuove i pulsanti di segnalazione, garantendo un'interfaccia pulita, inequivocabile e priva di inviti ad azioni inutili.
+
+**Dispute Resolution & Logiche di Sblocco**
+* **Self-Healing Loop (Pagamenti Rifiutati):** Se l'amministratore rifiuta una segnalazione di incasso (es. bonifico non arrivato in banca), la modale mostra il motivo del rifiuto e *riattiva* dinamicamente i controlli. Il bottone di azione diventa rosso e cambia la dicitura in "Ho ri-effettuato il pagamento (Segnala di nuovo)", permettendo all'utente di risolvere la disputa in totale autonomia.
+* **Smart Visibility Bypass:** Risolto un "falso positivo" che manteneva bloccati i pulsanti di pagamento con la dicitura "Pagamento non ancora attivo" sulle nuove emissioni. Il frontend ora applica un'euristica intelligente: se la rata appare nella bacheca del condòmino, i pagamenti vengono sbloccati istantaneamente, ignorando i flag di sistema usati per l'emissione silenziosa lato admin.
+
+## [1.9.11] Time-Travel Accounting (Debito Esercizio Precedente)
+* **Caricamento Fatture Pregresse:** Introdotta la possibilità vitale di registrare nel gestionale le fatture datate negli anni passati (es. fattura 2025 caricata nel 2026) senza inquinare il bilancio dell'anno in corso.
+* **Smart Date Check (Rilevatore di Competenza):** Quando l'amministratore inserisce la data del documento, l'interfaccia Vue riconosce in millisecondi se la fattura appartiene a un esercizio chiuso. Appare automaticamente un nuovo "Scudo Giallo" (Debito Esercizio Precedente) pronto per essere attivato.
+* **Esenzione Budget Attiva:** Attivando l'opzione "Debito Pregresso", il sistema disinnesca in automatico l'allarme "Sforamento Budget". Il gestionale comprende che essendo una spesa vecchia, non ha alcun senso confrontarla con il preventivo dell'anno corrente, evitando stress e falsi allarmi (Audit Trail).
+* **Partita Doppia Invisibile:** Il motore `FatturaPassivaService` è stato istruito a deviare questi importi. Invece di addebitare la spesa sui capitoli ordinari (Conto Economico), il debito viene forzato silenziosamente sul conto patrimoniale di sistema **"Fondo Passate Gestioni"**.
+* **Cash Flow Lineare:** Questo aggiornamento chiude perfettamente il cerchio con la "Rata 0": i soldi incassati dai vecchi morosi rimpinguano il Fondo Passate Gestioni, mentre i bonifici fatti ai fornitori per le fatture pregresse svuotano lo stesso fondo. Il bilancio quadra al centesimo e il debito sparisce magicamente dallo scadenzario.
+* **UI "Pregresso" Globale:** Aggiunto un badge dedicato `[Archive Pregresso]` nella Data Table principale delle fatture passive. L'amministratore può distinguere a colpo d'occhio i debiti correnti dagli strascichi delle gestioni passate.
+
 ## [1.9.10] - Silent Emission & Inbox Zero (Zero-Anxiety Update)
 
 Questa release introduce potenti strumenti di controllo sul flusso di lavoro dell'amministratore, chiudendo le "finestre di vulnerabilità" comunicative con i condòmini e automatizzando la pulizia della scrivania virtuale (Inbox).

@@ -139,33 +139,43 @@ class EmissioneRateController extends Controller
                         ]);
                     }
 
-                    // 4. Gestione Eventi Condòmini (Finestra di Vulnerabilità)
+                    // 4. Gestione Eventi Condòmini (Rendiamo la query robusta)
+                    $rataId = (int) $rata->id;
                     $userEvents = Evento::where('meta->type', 'scadenza_rata_condomino')
-                        ->where('meta->context->rata_id', $rata->id)
+                        ->where(function($q) use ($rataId) {
+                            $q->where('meta->context->rata_id', $rataId)
+                            ->orWhere('meta->context->rata_id', (string) $rataId);
+                        })
                         ->get();
 
                     foreach ($userEvents as $evt) {
                         $meta = $evt->meta;
-                        $meta['is_emitted'] = true; // Contabilmente è emessa
-                        $meta['is_published'] = $inviaNotifiche; // Se falso, l'utente non lo sa ancora
+                        $meta['is_emitted'] = true;
+                        $meta['is_published'] = $inviaNotifiche; 
                         
                         $evt->update([
                             'meta' => $meta,
-                            // Nascondiamo fisicamente l'evento se è un'emissione silenziosa
                             'visibility' => $inviaNotifiche ? VisibilityStatus::PRIVATE->value : VisibilityStatus::HIDDEN->value
                         ]);
                     }
 
-                    // 5. Invio Notifiche (SOLO SE RICHIESTO)
+                    // 5. Invio Notifiche
                     if ($inviaNotifiche) {
                         RataEmessa::dispatch($rata);
                     }
 
-                    // 6. Pulizia Task Admin (Promemoria Emissione)
-                    Evento::whereJsonContains('meta->context->rata_id', $rata->id)
-                        ->whereJsonContains('meta->type', 'emissione_rata')
-                        ->delete(); 
+                    // 6. Pulizia Task Admin (CORRETTO: usiamo where standard per i path JSON)
+                    Evento::where('meta->type', 'emissione_rata')
+                        ->where(function($q) use ($rataId) {
+                            $q->where('meta->context->rata_id', $rataId)
+                            ->orWhere('meta->context->rata_id', (string) $rataId);
+                        })
+                        ->delete();
+
                 }
+
+                // Aggiorniamo lo stato massivo nel DB
+                Rata::whereIn('id', $request->rate_ids)->update(['stato' => 'emessa']);
             });
 
             InboxService::clearAdminCache();
@@ -187,7 +197,7 @@ class EmissioneRateController extends Controller
 
             return back()->with($this->flashError('Si è verificato un errore tecnico durante l\'emissione.'));
         }
-    }
+}
 
     /**
      * Annulla l'emissione di una singola rata.
@@ -199,6 +209,7 @@ class EmissioneRateController extends Controller
      * @param Rata $rata
      * @return \Illuminate\Http\RedirectResponse
      */
+
     public function destroy(Request $request, Condominio $condominio, PianoRate $pianoRate, Rata $rata)
     {
         $haPagamenti = DB::table('rate_quote')
@@ -219,7 +230,7 @@ class EmissioneRateController extends Controller
         try {
             DB::transaction(function () use ($rata, $condominio, $pianoRate, $request, $esercizio) { 
                 
-                // 1. Sgancio e rimozione Scritture
+                // 1. Sgancio e rimozione Scritture (Perfetto, non toccato)
                 $scrittureIds = $rata->rateQuote()->pluck('scrittura_contabile_id')->filter()->unique();
                 $rata->rateQuote()->update(['scrittura_contabile_id' => null]);
 
@@ -228,19 +239,27 @@ class EmissioneRateController extends Controller
                     ScritturaContabile::whereIn('id', $scrittureIds)->forceDelete(); 
                 }
 
-                // 2. Ripristino Eventi Utente
+                // Riportiamo la rata in stato di bozza
+                $rata->update(['stato' => 'bozza']);
+
+                $rataId = (int) $rata->id; // Cast sicuro
+
+                // 2. Ripristino Eventi Utente (Query Robusta Applicata)
                 $userEvents = Evento::where('meta->type', 'scadenza_rata_condomino')
-                    ->where('meta->context->rata_id', $rata->id)
+                    ->where(function($q) use ($rataId) {
+                        $q->where('meta->context->rata_id', $rataId)
+                          ->orWhere('meta->context->rata_id', (string) $rataId);
+                    })
                     ->get();
 
                 foreach ($userEvents as $evt) {
                     $meta = $evt->meta;
                     $meta['is_emitted'] = false; 
-                    $meta['is_published'] = false; // Reset stato pubblicazione
+                    $meta['is_published'] = false; 
                     
                     $evt->update([
                         'meta' => $meta,
-                        'visibility' => VisibilityStatus::PRIVATE->value // Torna "Bozza" visibile ma non pagabile
+                        'visibility' => VisibilityStatus::PRIVATE->value 
                     ]);
                 }
                 
@@ -248,52 +267,41 @@ class EmissioneRateController extends Controller
                 $catAdmin = CategoriaEvento::where('name', CategoriaEventoEnum::SCADENZE_AMMINISTRATIVE->value)->first();
                 $dataPromemoria = $rata->data_scadenza->copy()->subDays(7)->setTime(9, 0);
                 
-                Evento::firstOrCreate(
-                    [
-                        'title' => "Emettere rata {$rata->numero_rata} - {$condominio->nome}",
-                        'meta->context->rata_id' => $rata->id, 
-                        'meta->type' => 'emissione_rata'
-                    ],
-                    [
-                        'start_time' => $dataPromemoria,
-                        'end_time'   => $dataPromemoria->copy()->addHour(),
-                        'created_by' => $request->user()->id,
-                        'description' => "Ricordati di emettere le ricevute per questa rata entro la scadenza. (Riemissione dopo annullamento)",
-                        'category_id' => $catAdmin?->id,
-                        'visibility'  => VisibilityStatus::HIDDEN->value, 
-                        'is_approved' => true,
-                        'meta' => [
-                            'type'            => 'emissione_rata',
-                            'requires_action' => true, 
-                            'context' => [
-                                'piano_rate_id' => $pianoRate->id,
-                                'rata_id'       => $rata->id
-                            ],
-                            'gestione'          => $pianoRate->gestione->nome ?? 'Gestione',
-                            'condominio_nome'   => $condominio->nome,
-                            'totale_rata'       => $rata->importo_totale,
-                            'anagrafiche_count' => $rata->rateQuote->unique('anagrafica_id')->count(),
-                            'scadenza_reale'    => $rata->data_scadenza->toDateString(),
-                            'numero_rata'       => $rata->numero_rata,
-                            'piano_nome'        => $pianoRate->nome,
-                            'action_url'        => route('admin.gestionale.esercizi.piani-rate.show', [
-                                'condominio' => $condominio->id,
-                                'esercizio'  => $esercizio->id, 
-                                'pianoRate'  => $pianoRate->id
-                            ])
+                // Evitiamo firstOrCreate con chiavi JSON complesse, creiamo diretto (dato che l'abbiamo appena cancellato o non c'è)
+                $eventoAdmin = Evento::create([
+                    'title' => "Emettere rata {$rata->numero_rata} - {$condominio->nome}",
+                    'start_time' => $dataPromemoria,
+                    'end_time'   => $dataPromemoria->copy()->addHour(),
+                    'created_by' => $request->user()->id,
+                    'description' => "Ricordati di emettere le ricevute per questa rata entro la scadenza. (Riemissione dopo annullamento)",
+                    'category_id' => $catAdmin?->id,
+                    'visibility'  => VisibilityStatus::HIDDEN->value, 
+                    'is_approved' => true,
+                    'meta' => [
+                        'type'            => 'emissione_rata',
+                        'requires_action' => true, 
+                        'context' => [
+                            'piano_rate_id' => $pianoRate->id,
+                            'rata_id'       => $rataId 
                         ],
-                    ]
-                );
+                        'gestione'          => $pianoRate->gestione->nome ?? 'Gestione',
+                        'condominio_nome'   => $condominio->nome,
+                        'totale_rata'       => $rata->importo_totale,
+                        'anagrafiche_count' => $rata->rateQuote->unique('anagrafica_id')->count(),
+                        'scadenza_reale'    => $rata->data_scadenza->toDateString(),
+                        'numero_rata'       => $rata->numero_rata,
+                        'piano_nome'        => $pianoRate->nome,
+                        'action_url'        => route('admin.gestionale.esercizi.piani-rate.show', [
+                            'condominio' => $condominio->id,
+                            'esercizio'  => $esercizio->id, 
+                            'pianoRate'  => $pianoRate->id
+                        ])
+                    ],
+                ]);
                 
-                $evento = Evento::where('meta->context->rata_id', $rata->id)
-                                ->where('meta->type', 'emissione_rata')
-                                ->first();
-                                
-                if ($evento) {
-                    $evento->condomini()->syncWithoutDetaching([$condominio->id]);
-                    if ($request->user()->anagrafica_id) {
-                        $evento->anagrafiche()->syncWithoutDetaching([$request->user()->anagrafica_id]);
-                    }
+                $eventoAdmin->condomini()->syncWithoutDetaching([$condominio->id]);
+                if ($request->user()->anagrafica_id) {
+                    $eventoAdmin->anagrafiche()->syncWithoutDetaching([$request->user()->anagrafica_id]);
                 }
             });
 
@@ -311,55 +319,81 @@ class EmissioneRateController extends Controller
      * Sblocca la visibilità delle rate emesse in modalità "Silenziosa".
      * Le rende visibili nell'app e invia finalmente le notifiche ai condòmini.
      */
-    public function publishSilent(Request $request, Condominio $condominio, $esercizio, PianoRate $pianoRate)
+   public function publishSilent(Request $request, Condominio $condominio, $esercizio, PianoRate $pianoRate)
     {
         try {
-            DB::transaction(function () use ($pianoRate) {
-    
-                // 1. Trova tutti gli eventi "Silenziosi" usando i meta flag
-                $hiddenEvents = Evento::where('meta->type', 'scadenza_rata_condomino')
-                    ->where('meta->context->piano_rate_id', $pianoRate->id)
-                    ->where('meta->is_emitted', true)
-                    ->where('meta->is_published', false)
-                    ->get();
+            $idPiano = (int) $pianoRate->id;
 
-                if ($hiddenEvents->isEmpty()) {
-                    return;
-                }
+            // 1. Trova gli eventi usando la ricerca robusta per ID Piano
+            $hiddenEvents = Evento::where('meta->type', 'scadenza_rata_condomino')
+                ->where(function($q) use ($idPiano) {
+                    $q->where('meta->context->piano_rate_id', $idPiano)
+                      ->orWhere('meta->context->piano_rate_id', (string) $idPiano);
+                })
+                ->where('visibility', VisibilityStatus::HIDDEN->value)
+                ->get();
 
+            if ($hiddenEvents->isEmpty()) {
+                return back()->with($this->flashWarning('Nessuna rata nascosta trovata.'));
+            }
+
+            DB::transaction(function () use ($hiddenEvents) {
                 $rataIds = [];
 
-                // 2. Sblocca la visibilità
                 foreach ($hiddenEvents as $evt) {
                     $meta = $evt->meta;
-                    $meta['is_published'] = true;
+                    $meta['is_published'] = true; 
+                    $meta['is_emitted'] = true; // Assicuriamoci che ci sia!
                     
+                    // RETE DI SICUREZZA: Controlliamo se nel frattempo l'admin l'ha incassata
+                    if (isset($meta['context']['rata_id'])) {
+                        $rataId = $meta['context']['rata_id'];
+                        $rataIds[] = $rataId;
+                        
+                        // FIX: Recuperiamo l'ID di Marta (o del condomino a cui appartiene l'evento)
+                        $paganteId = $evt->anagrafiche->first()->id ?? null;
+                        
+                        if ($paganteId) {
+                            // Ora sommiamo SOLO i soldi di questo specifico condomino
+                            $importoPagato = DB::table('rate_quote')
+                                ->where('rata_id', $rataId)
+                                ->where('anagrafica_id', $paganteId) 
+                                ->sum('importo_pagato');
+                                
+                            $importoTotale = DB::table('rate_quote')
+                                ->where('rata_id', $rataId)
+                                ->where('anagrafica_id', $paganteId) 
+                                ->sum('importo');
+
+                            if ($importoPagato > 0 && $importoPagato >= $importoTotale) {
+                                $meta['status'] = 'paid'; 
+                            } elseif ($importoPagato > 0) {
+                                $meta['status'] = 'partial'; 
+                            }
+                            
+                            $meta['importo_pagato'] = $importoPagato;
+                            $meta['importo_restante'] = max(0, $importoTotale - $importoPagato);
+                        }
+                    }
+
                     $evt->update([
                         'meta' => $meta,
-                        'visibility' => VisibilityStatus::PRIVATE->value
+                        'visibility' => VisibilityStatus::PRIVATE->value 
                     ]);
-                    
-                    // Raccoglie l'ID della rata per inviare la notifica collettiva
-                    if (isset($meta['context']['rata_id'])) {
-                        $rataIds[] = $meta['context']['rata_id'];
-                    }
                 }
 
-                // 3. Spedisce le notifiche Push/Email per ogni rata sbloccata
-                $uniqueRataIds = array_unique($rataIds);
-                foreach ($uniqueRataIds as $rataId) {
-                    $rata = Rata::find($rataId);
-                    if ($rata) {
-                        RataEmessa::dispatch($rata);
-                    }
+                // 2. Notifiche (Dispatch una sola volta per rata id)
+                foreach (array_unique($rataIds) as $rId) {
+                    $rata = Rata::find($rId);
+                    if ($rata) RataEmessa::dispatch($rata);
                 }
             });
 
-            return back()->with($this->flashSuccess('Rate pubblicate! I condòmini ora le vedono e hanno ricevuto le notifiche.'));
+            return back()->with($this->flashSuccess('Rate pubblicate! I condòmini ora le vedono.'));
 
         } catch (\Throwable $e) {
-            Log::error("Errore pubblicazione rate silenziose: " . $e->getMessage());
-            return back()->with($this->flashError('Errore durante la pubblicazione delle rate.'));
+            Log::error("Errore sblocco rate: " . $e->getMessage());
+            return back()->with($this->flashError('Errore durante la pubblicazione.'));
         }
     }
 }

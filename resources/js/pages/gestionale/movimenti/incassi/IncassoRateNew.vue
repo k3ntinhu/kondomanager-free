@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import { ref, watch, computed, onMounted, nextTick } from 'vue'; 
 import { useForm, Head } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
@@ -11,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import MoneyInput from '@/components/MoneyInput.vue';
 import InputError from '@/components/InputError.vue';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { AlertCircle, CheckCircle2, RotateCcw,  User, Building, ArrowRight, FileText, Receipt, ArrowRightLeft, Info } from 'lucide-vue-next';
+import { AlertCircle, CheckCircle2, RotateCcw,  User, Building, ArrowRight, FileText, Receipt, ArrowRightLeft, Info, Lock } from 'lucide-vue-next';
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter'; 
 import { usePermission } from "@/composables/permissions";
 import { usePaymentDistribution } from '@/composables/usePaymentDistribution';
@@ -46,6 +45,7 @@ const {
     loadingRate, 
     mode,
     isScaduta,
+    priorityRataId,
     setPriorityRataId,
     getRateListByGestione,
     getTotaleDebito,
@@ -78,7 +78,6 @@ const form = useForm({
 
 const rateList = ref<Rata[]>([]);
 
-// TRADUTTORE VALUTA -> NUMERO
 const parseResiduoQuota = (value: string | number) => {
     if (typeof value === 'number') return value;
     if (!value) return 0;
@@ -90,7 +89,6 @@ const parseResiduoQuota = (value: string | number) => {
     return parseFloat(str.replace(/[^\d.-]/g, '')) || 0;
 };
 
-// RILEVATORE SALDI COMPENSATI
 const hasSaldoMisto = (r: any) => {
     if (Math.abs(parseResiduoQuota(r.residuo)) < 0.01 && r.dettaglio_quote && r.dettaglio_quote.length > 1) {
         const hasDebito = r.dettaglio_quote.some((q: any) => parseResiduoQuota(q.residuo) > 0);
@@ -100,11 +98,10 @@ const hasSaldoMisto = (r: any) => {
     return false;
 };
 
-// RILEVATORE RATA ZERO / SALDO PREGRESSO
 const isRataZero = (r: any) => {
     const desc = (r.descrizione || '').toLowerCase();
     return desc.includes('saldo') || desc.includes('rata 0') || desc.includes('pregresso');
-};
+}; 
 
 const importoNumerico = computed(() => parseResiduoQuota(form.importo_totale));
 
@@ -117,12 +114,10 @@ const bilancioFinale = computed(() => getBilancioFinale(totaleDebito.value, impo
 const showOnlyOverdue = ref(false);
 const intentUsaCredito = ref(false);
 
-// RILEVATORE PRESENZA SALDO IN LISTA
 const hasSaldoPregressoInLista = computed(() => {
     return rateList.value.some(r => isRataZero(r));
 });
 
-// ANTEPRIMA CONTABILE PULITA E INTELLIGENTE
 const previewContabile = computed(() => {
     const pagamenti = form.dettaglio_pagamenti;
     const importo = importoNumerico.value;
@@ -136,18 +131,16 @@ const previewContabile = computed(() => {
         const r = rateList.value.find(rate => rate.id === p.rata_id);
         if (!r) return null;
         
-        const baseRata = parseResiduoQuota(r.residuo); // Il residuo di partenza
+        const baseRata = parseResiduoQuota(r.residuo);
         const isCredito = baseRata < 0;
         
         let residuoDopoPagamento = 0;
         let status = '';
 
         if (isCredito) {
-            // Es: baseRata = -200, p.importo = -112.  (-200) - (-112) = -88
             residuoDopoPagamento = baseRata - p.importo; 
             status = (residuoDopoPagamento >= -0.01) ? 'ESAURITO' : 'CREDITO_USATO';
         } else {
-            // Normale debito
             residuoDopoPagamento = Math.max(0, baseRata - p.importo);
             status = (residuoDopoPagamento <= 0.01) ? 'SALDATA' : 'PARZIALE';
         }
@@ -181,57 +174,72 @@ const fetchDebiti = async (params: { anagrafica_id?: number | null; immobile_id?
             isScaduta
         );
         rawRateList.value = result as Rata[];
-        if (importoNumerico.value > 0) runDistribution();
     } finally {
         loadingRate.value = false;
     }
 };
 
-// Gestione del pulsante (Ora fa solo da "interruttore On/Off")
 const toggleCredito = (rata: Rata) => {
     rata.selezionata = !rata.selezionata;
     if (!rata.selezionata) rata.da_pagare = 0;
     runDistribution();
 };
 
-// Algoritmo di distribuzione con PRELIEVO INTELLIGENTE
 const runDistribution = async () => { 
     await nextTick(); 
     
-    // Trova la rata a credito se l'amministratore ha cliccato "Usa Credito"
-    const rataCredito = rateList.value.find(r => isRataZero(r) && parseResiduoQuota(r.residuo) < 0 && r.selezionata);
-    const creditoDisponibile = rataCredito ? Math.abs(parseResiduoQuota(rataCredito.residuo)) : 0;
-    
-    if (mode.value === 'auto') {
-        // 1. Calcoliamo la somma di tutti i DEBITI aperti
-        const totaleDebiti = rateList.value.filter(r => parseResiduoQuota(r.residuo) > 0).reduce((s, r) => s + parseResiduoQuota(r.residuo), 0);
-        
-        // 2. Calcoliamo quanti soldi ci MANCANO dopo aver usato i contanti
-        let creditoDaUsare = 0;
-        if (rataCredito) {
-            const fabbisogno = Math.max(0, totaleDebiti - importoNumerico.value);
-            // Preleviamo dal salvadanaio solo quello che serve, senza superare il credito disponibile
-            creditoDaUsare = Math.min(creditoDisponibile, fabbisogno);
-            rataCredito.da_pagare = -creditoDaUsare; // Si registra col segno meno (uscita dal salvadanaio)
-        }
+    // 1. Troviamo la rata bersaglio
+    const targetRataId = priorityRataId.value; 
+    const rataTarget = rateList.value.find(r => 
+        (r.id === targetRataId || r.rata_padre_id === targetRataId) && 
+        parseResiduoQuota(r.residuo) > 0
+    );
 
-        // 3. Potenza di fuoco = Contanti + Credito Prelevato
-        const budgetTotale = importoNumerico.value + creditoDaUsare;
-        form.eccedenza = distributeGreedy(rateList.value, budgetTotale); 
-        
-    } else {
-        // Stessa logica per la modalità MANUALE
-        const debitiAllocati = rateList.value.filter(r => parseResiduoQuota(r.residuo) > 0).reduce((s, r) => s + parseResiduoQuota(r.da_pagare), 0);
-        
-        let creditoDaUsare = 0;
-        if (rataCredito) {
-            const fabbisogno = Math.max(0, debitiAllocati - importoNumerico.value);
-            creditoDaUsare = Math.min(creditoDisponibile, fabbisogno);
+    // 2. Individuiamo la riga del credito (Rata 0)
+    const isInboxMode = priorityRataId.value !== null && rataTarget !== undefined;
+    const rataCredito = rateList.value.find(
+        r => isRataZero(r) && parseResiduoQuota(r.residuo) < 0 && (r.selezionata || isInboxMode)
+    );
+    const creditoDisponibile = rataCredito ? Math.abs(parseResiduoQuota(rataCredito.residuo)) : 0;
+
+    if (mode.value === 'auto') {
+        rateList.value.forEach(r => {
+            if (parseResiduoQuota(r.residuo) > 0) r.da_pagare = 0;
+        });
+
+        if (rataTarget && rataCredito) {
+            const debitoRata = parseResiduoQuota(rataTarget.residuo);
+            const creditoDaUsare = Math.min(creditoDisponibile, debitoRata);
+            
+            rataCredito.selezionata = true;
+
+            rataTarget.da_pagare = creditoDaUsare + importoNumerico.value;
+            rataTarget.selezionata = rataTarget.da_pagare > 0;
+            
             rataCredito.da_pagare = -creditoDaUsare;
+            
+            form.eccedenza = Math.max(0, (creditoDaUsare + importoNumerico.value) - debitoRata);
+            
+            if (form.eccedenza > 0) {
+                rataTarget.da_pagare = debitoRata;
+            }
+        } else {
+            const budgetTotale = importoNumerico.value + (rataCredito ? creditoDisponibile : 0);
+            form.eccedenza = distributeGreedy(rateList.value, budgetTotale);
+            
+            if (rataCredito) {
+                const totaleDebitiEmettibili = rateList.value
+                    .filter(r => parseResiduoQuota(r.residuo) > 0)
+                    .reduce((s, r) => s + parseResiduoQuota(r.residuo), 0);
+                
+                const creditoEffettivoUsato = Math.min(creditoDisponibile, Math.max(0, totaleDebitiEmettibili - importoNumerico.value));
+                rataCredito.da_pagare = -creditoEffettivoUsato;
+            }
         }
-        
-        const budgetTotale = importoNumerico.value + creditoDaUsare;
-        form.eccedenza = calculateExcess(rateList.value, budgetTotale);
+    } else {
+        const budgetContante = importoNumerico.value;
+        const budgetCredito = rataCredito ? Math.abs(rataCredito.da_pagare) : 0;
+        form.eccedenza = calculateExcess(rateList.value, budgetContante + budgetCredito);
     }
 
     rateList.value = [...rateList.value]; 
@@ -243,7 +251,19 @@ const distributeAuto = () => {
 };
 
 const handleManualChange = (rata: any, val: string | number) => { 
+    // 🟢 FIX: Ignoriamo l'evento se siamo in auto per evitare race conditions al mount
+    if (mode.value === 'auto') return;
+
     onManualChange(rata, val.toString()); 
+    
+    const nuovoTotaleVersato = rateList.value.reduce((sum, r) => {
+        if (parseResiduoQuota(r.residuo) > 0) {
+            return sum + parseResiduoQuota(r.da_pagare);
+        }
+        return sum;
+    }, 0);
+
+    form.importo_totale = nuovoTotaleVersato;
     calculateExcessOnly(); 
     syncForm(); 
 };
@@ -252,16 +272,9 @@ const calculateExcessOnly = () => { form.eccedenza = calculateExcess(rateList.va
 const toggleMode = () => { mode.value = mode.value === 'auto' ? 'manual' : 'auto'; if (mode.value === 'auto') distributeAuto(); };
 
 const resetAllocation = () => {
-    // 1. Azzeriamo l'input dell'importo totale
     form.importo_totale = '';
-
-    // 2. Eseguiamo il reset logico (mette i da_pagare a 0 e passa in Manuale)
     resetAllocationComposable(rateList.value);
-
-    // 3. CHIRURGICO: Forziamo il refresh della lista per svuotare i MoneyInput in tabella
     rateList.value = [...rateList.value];
-
-    // 4. Aggiorniamo i calcoli di eccedenza e il payload del form
     calculateExcessOnly(); 
     syncForm(); 
 };
@@ -274,24 +287,24 @@ const pagaTutto = () => {
 };
 
 const pagaScadute = async () => { 
-    // 1. Cambiamo la modalità
     mode.value = 'manual'; 
-    
-    // 2. Eseguiamo il calcolo nel composable
     const somma = pagaScaduteComposable(rateList.value); 
-    
-    // 3. Aggiorniamo l'importo totale nel form
     form.importo_totale = somma; 
-    
-    // TRUCCO CHIRURGICO: Forziamo il refresh della lista per far apparire i numeri
     rateList.value = [...rateList.value];
-    
     await nextTick();
     calculateExcessOnly(); 
     syncForm(); 
 };
 
-const syncForm = () => { form.dettaglio_pagamenti = syncFormData(rateList.value); };
+const syncForm = () => { 
+    // 🟢 FIX: Formattazione perfetta a 2 decimali per evitare errori 500
+    form.dettaglio_pagamenti = rateList.value
+        .filter(r => typeof r.da_pagare === 'number' && r.da_pagare !== 0)
+        .map(r => ({
+            rata_id: r.id,
+            importo: parseFloat(Number(r.da_pagare).toFixed(2))
+        }));
+};
 
 const toggleSearchMode = (newMode: 'persona' | 'immobile') => {
     if (searchMode.value !== newMode) {
@@ -304,10 +317,14 @@ const toggleSearchMode = (newMode: 'persona' | 'immobile') => {
 };
 
 const submit = () => {
+    // 🟢 FIX: Clean total prima dell'invio
+    const cleanTotal = parseFloat(Number(importoNumerico.value).toFixed(2));
+
     const payload = form.transform((data) => ({
         ...data,
-        importo_totale: importoNumerico.value
+        importo_totale: cleanTotal
     }));
+    
     payload.post(route(generateRoute('gestionale.movimenti-rate.store'), props.condominio.id), {
         preserveScroll: true,
         onSuccess: () => {
@@ -322,21 +339,32 @@ const submit = () => {
 
 watch(() => form.pagante_id, (newVal) => { if (searchMode.value === 'persona' && newVal) fetchDebiti({ anagrafica_id: newVal }); });
 watch(selectedImmobileId, (newVal) => { if (searchMode.value === 'immobile' && newVal) fetchDebiti({ immobile_id: newVal }); });
-watch(importoNumerico, () => { runDistribution(); });
+watch(importoNumerico, () => { if (rateList.value.length > 0) runDistribution(); });
 
-watch([rawRateList, () => form.gestione_id, showOnlyOverdue], () => {
-    // 1. Prendiamo la lista base filtrata per gestione
+watch([rawRateList, () => form.gestione_id, showOnlyOverdue], async () => {
     let list = getRateListByGestione(form.gestione_id);
 
-    // 2. Se il toggle è attivo, filtriamo solo le scadute
-    // Manteniamo sempre visibile la Rata 0 (Saldo Pregresso) perché è il punto di partenza
     if (showOnlyOverdue.value) {
         list = list.filter(r => isScaduta(r.data_scadenza || r.scadenza_human) || isRataZero(r));
     }
 
+    if (intentUsaCredito.value) {
+        const rataCredito = list.find(r => isRataZero(r) && parseResiduoQuota(r.residuo) < 0);
+        if (rataCredito && !rataCredito.selezionata) {
+            rataCredito.selezionata = true; 
+            intentUsaCredito.value = false; 
+        }
+    }
+
     rateList.value = list;
-    runDistribution();
-}, { deep: true, immediate: true });
+
+    await nextTick();
+    await nextTick();
+    // 🟢 FIX: Triggeriamo solo se c'è un motivo valido per evitare reset non voluti
+    if (importoNumerico.value > 0 || priorityRataId.value) {
+        runDistribution();
+    }
+}, { deep: true, immediate: true }); 
 
 onMounted(async () => {
     const params = new URLSearchParams(window.location.search);
@@ -346,7 +374,6 @@ onMounted(async () => {
     const prefillDesc = params.get('prefill_descrizione');
     const prefillRataId = params.get('prefill_rata_id');
 
-    // NUOVO: Leggiamo l'intento di usare il credito
     if (params.get('intent_usa_credito') === 'true') {
         intentUsaCredito.value = true;
     }
@@ -474,6 +501,7 @@ onMounted(async () => {
                                     label="nome" 
                                     :reduce="(c: any) => c.id" 
                                     class="w-full bg-white text-sm shadow-sm" 
+                                    @update:modelValue="form.clearErrors('cassa_id')" 
                                     placeholder="Dove versi i soldi?"
                                 >
                                     <template #option="{ nome, tipo, conto_corrente }">
@@ -530,7 +558,11 @@ onMounted(async () => {
                             <span class="text-slate-500 uppercase tracking-wider font-semibold">Totale allocato:</span>
                             <span class="font-bold text-slate-800 text-sm">{{ euro(totalAllocato) }}</span>
                         </div>
-                        <Button @click="submit" :disabled="form.processing || importoNumerico <= 0 || !form.pagante_id" class="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md shadow-emerald-600/20 transition-all text-sm">
+                        <Button 
+                            @click="submit" 
+                            :disabled="form.processing || !previewContabile.hasData || !form.pagante_id" 
+                            class="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md shadow-emerald-600/20 transition-all text-sm"
+                        >
                             <CheckCircle2 class="w-4 h-4 mr-2" /> Conferma incasso
                         </Button>
                     </div>
@@ -613,15 +645,67 @@ onMounted(async () => {
                                 </thead>
                                 <tbody class="divide-y divide-gray-50">
                                     <tr v-for="r in rateList" :key="r.id" class="transition-colors group" :class="[r.da_pagare > 0 ? 'bg-emerald-50/20' : 'hover:bg-gray-50', parseResiduoQuota(r.residuo) < 0 ? 'bg-blue-50/30' : '']">
-                                        <td class="p-3 pl-4 align-top">
+                                       <td class="p-3 pl-4 align-top">
                                             <div class="flex flex-col">
                                                 <span class="font-mono text-xs font-medium text-gray-600">{{ r.scadenza_human }}</span>
-                                                <span v-if="r.is_emitted === false" class="mt-1 inline-flex items-center text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded w-fit uppercase tracking-tighter" title="Questa rata non è stata ancora emessa contabilmente">
-                                                    <AlertCircle class="w-2.5 h-2.5 mr-1" /> No emissione
-                                                </span>
-                                                <span v-if="r.scaduta && parseResiduoQuota(r.residuo) > 0" class="text-[9px] text-red-500 font-bold uppercase mt-1 flex items-center bg-red-50 w-fit px-1 rounded">
-                                                    <AlertCircle class="w-2.5 h-2.5 mr-1"/> Scaduta
-                                                </span>
+
+                                                <div class="mt-1 flex flex-col gap-1">
+    
+                                                    <span v-if="parseResiduoQuota(r.residuo) < 0" 
+                                                        class="inline-flex items-center text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded w-fit uppercase tracking-tighter" 
+                                                        title="I crediti sono automaticamente attivi e pronti per la compensazione">
+                                                        <CheckCircle2 class="w-2.5 h-2.5 mr-1" /> Credito Attivo
+                                                    </span>
+
+                                                    <template v-else>
+                                                        <span v-if="!r.is_emitted || Number(r.is_emitted) === 0" 
+                                                            class="inline-flex items-center text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded w-fit uppercase tracking-tighter" 
+                                                            title="Questa rata non ha ancora generato una scrittura contabile">
+                                                            <AlertCircle class="w-2.5 h-2.5 mr-1" /> No emissione
+                                                        </span>
+
+                                                        <span v-else-if="!r.is_published || Number(r.is_published) === 0" 
+                                                            class="inline-flex items-center text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded w-fit uppercase tracking-tighter" 
+                                                            title="Rata emessa contabilmente ma attualmente nascosta ai condòmini">
+                                                            <Lock class="w-2.5 h-2.5 mr-1" /> Silenziosa
+                                                        </span>
+
+                                                        <span v-else 
+                                                            class="inline-flex items-center text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded w-fit uppercase tracking-tighter">
+                                                            <CheckCircle2 class="w-2.5 h-2.5 mr-1" /> Emessa
+                                                        </span>
+                                                    </template>
+
+                                                    <span v-if="r.scaduta && parseResiduoQuota(r.residuo) > 0" 
+                                                        class="text-[9px] text-red-500 font-bold uppercase flex items-center bg-red-50 border border-red-100 w-fit px-1.5 py-0.5 rounded tracking-tighter">
+                                                        <AlertCircle class="w-2.5 h-2.5 mr-1"/> Scaduta
+                                                    </span>
+                                                </div>
+
+                                               <!--  <div class="mt-1 flex flex-col gap-1">
+                                                    
+                                                    <span v-if="r.is_emitted === false" 
+                                                        class="inline-flex items-center text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded w-fit uppercase tracking-tighter" 
+                                                        title="Questa rata non ha ancora generato una scrittura contabile">
+                                                        <AlertCircle class="w-2.5 h-2.5 mr-1" /> No emissione
+                                                    </span>
+
+                                                    <span v-else-if="r.is_published === false" 
+                                                        class="inline-flex items-center text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded w-fit uppercase tracking-tighter" 
+                                                        title="Rata emessa contabilmente ma attualmente nascosta ai condòmini">
+                                                        <Lock class="w-2.5 h-2.5 mr-1" /> Silenziosa
+                                                    </span>
+
+                                                    <span v-else 
+                                                        class="inline-flex items-center text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded w-fit uppercase tracking-tighter">
+                                                        <CheckCircle2 class="w-2.5 h-2.5 mr-1" /> Emessa
+                                                    </span>
+
+                                                    <span v-if="r.scaduta && parseResiduoQuota(r.residuo) > 0" 
+                                                        class="text-[9px] text-red-500 font-bold uppercase flex items-center bg-red-50 border border-red-100 w-fit px-1.5 py-0.5 rounded tracking-tighter">
+                                                        <AlertCircle class="w-2.5 h-2.5 mr-1"/> Scaduta
+                                                    </span>
+                                                </div> -->
                                             </div>
                                         </td>
                                         <td class="p-3 align-top">
@@ -736,6 +820,7 @@ onMounted(async () => {
                                             <MoneyInput 
                                                 v-if="parseResiduoQuota(r.residuo) > 0" 
                                                 :id="'rata_' + r.id"
+                                                :key="'input_' + r.id + '_' + mode + '_' + r.da_pagare" 
                                                 v-model="r.da_pagare" 
                                                 @update:modelValue="handleManualChange(r, $event)" 
                                                 :disabled="mode === 'auto'" 

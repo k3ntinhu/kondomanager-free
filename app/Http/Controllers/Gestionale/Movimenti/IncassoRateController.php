@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Gestionale\Movimenti;
 
 use App\Actions\Gestionale\Movimenti\StoreIncassoRateAction;
-use App\Actions\Gestionale\Movimenti\StornoIncassoRateAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestionale\Movimenti\StoreIncassoRateRequest;
 use App\Http\Resources\Condominio\CondominioResource;
@@ -13,7 +12,6 @@ use App\Models\Evento;
 use App\Models\Immobile;
 use App\Models\Gestionale\Cassa;
 use App\Models\Gestionale\Rata;
-use App\Models\Gestionale\ScritturaContabile;
 use App\Models\Gestionale\RataQuote; 
 use App\Services\Gestionale\InboxService;
 use App\Services\Gestionale\IncassoRateService;
@@ -28,20 +26,20 @@ class IncassoRateController extends Controller
     use HandleFlashMessages, HasEsercizio, HasCondomini;
 
     /**
-     * Costruttore del controller.
-     * Inietta il service responsabile del recupero e della formattazione dei dati per gli incassi.
+     * Inizializza il controller iniettando il servizio per la gestione incassi.
      *
-     * @param IncassoRateService $incassoService
+     * @param IncassoRateService $incassoService Servizio contenente le logiche di query e formattazione dei movimenti.
      */
     public function __construct(private IncassoRateService $incassoService) {}
 
     /**
-     * Mostra la lista degli incassi registrati per il condominio corrente.
-     * Supporta la ricerca, la paginazione e prepara i dati per i filtri frontend.
+     * Mostra la lista paginata degli incassi registrati per il condominio selezionato.
+     * Fornisce al frontend i dati necessari per popolare la vista, inclusi i filtri di ricerca,
+     * la lista dei condòmini e gli esercizi contabili disponibili.
      *
-     * @param Request $request La richiesta HTTP corrente (contiene eventuali query di ricerca).
-     * @param Condominio $condominio Il condominio su cui si sta operando.
-     * @return \Inertia\Response Renderizzazione della vista Vue (IncassoRateList).
+     * @param Request $request L'istanza della richiesta HTTP corrente contenente gli eventuali parametri di ricerca (es. ?search=...).
+     * @param Condominio $condominio L'istanza del condominio in cui si sta operando.
+     * @return \Inertia\Response Ritorna il componente Vue della lista incassi con le relative properties.
      */
     public function index(Request $request, Condominio $condominio)
     {
@@ -54,15 +52,17 @@ class IncassoRateController extends Controller
             ->withQueryString()
             ->through(fn($mov) => $this->incassoService->formatMovimentoForFrontend($mov));
 
-        // 1. Recuperiamo i PALAZZI veri per il menu a tendina
         $listaPalazzi = CondominioResource::collection($this->getCondomini())->resolve();
         
-        // 2. Recuperiamo le PERSONE (se ti servono per la vista o i filtri) e li chiamiamo 'soggetti'
         $soggettiList = Anagrafica::whereHas('immobili', fn($q) => 
             $q->where('condominio_id', $condominio->id)
         )->orderBy('nome')->get();
         
         $esercizio = $this->getEsercizioCorrente($condominio);
+
+        $esercizi = $condominio->esercizi()
+            ->orderBy('data_inizio', 'desc')
+            ->get(['id', 'nome', 'stato']);
 
         return Inertia::render('gestionale/movimenti/incassi/IncassoRateList', [
             'condominio' => $condominio,
@@ -70,17 +70,18 @@ class IncassoRateController extends Controller
             'condomini'  => $listaPalazzi, 
             'soggetti'   => $soggettiList, 
             'esercizio'  => $esercizio,
+            'esercizi'   => $esercizi,
             'filters'    => $request->all(['search']),
         ]);
     }
 
     /**
-     * Mostra la schermata per la registrazione di un nuovo incasso.
-     * Prepara le dipendenze necessarie ai menu a tendina: risorse finanziarie,
-     * soggetti paganti, immobili e gestioni attive.
+     * Genera la schermata e prepara i dati per il form di registrazione di un nuovo incasso.
+     * Recupera le entità relazionali attive (casse, anagrafiche, immobili, gestioni dell'esercizio corrente)
+     * necessarie per compilare correttamente la Partita Doppia.
      *
-     * @param Condominio $condominio Il condominio su cui si sta operando.
-     * @return \Inertia\Response Renderizzazione della vista Vue (IncassoRateNew).
+     * @param Condominio $condominio L'istanza del condominio in cui si sta operando.
+     * @return \Inertia\Response Ritorna il componente Vue per la creazione dell'incasso.
      */
     public function create(Condominio $condominio)
     {
@@ -113,65 +114,71 @@ class IncassoRateController extends Controller
     }
 
     /**
-     * Salva un nuovo incasso nel sistema.
-     * Delega la logica contabile (spalmatura waterfall) alla StoreIncassoRateAction.
-     * Successivamente, aggiorna lo stato degli eventi ("scontrini digitali" nello scadenziario) 
-     * e chiude eventuali task pendenti nella Inbox dell'amministratore.
+     * Elabora, salva e contabilizza la registrazione di un incasso.
+     * * Oltre ad affidare la creazione delle righe contabili alla StoreIncassoRateAction, 
+     * questo metodo esegue operazioni di sincronizzazione dell'ecosistema:
+     * 1. Ricalcola in tempo reale gli importi residui delle rate nello scadenziario dell'utente
+     * (aggiornando lo stato in 'paid', 'partial' o 'pending').
+     * 2. Intercetta e chiude automaticamente i "Task" di verifica incasso nella Inbox dell'amministratore 
+     * se l'incasso è derivato da una segnalazione del condòmino.
      *
-     * @param StoreIncassoRateRequest $request Dati validati provenienti dal form Vue.
-     * @param Condominio $condominio Il condominio corrente.
-     * @param StoreIncassoRateAction $action L'azione di business che gestisce il salvataggio contabile.
-     * @return \Illuminate\Http\RedirectResponse Reindirizzamento alla lista incassi con messaggio di successo.
+     * @param StoreIncassoRateRequest $request Request validata con payload rigoroso per l'operazione contabile.
+     * @param Condominio $condominio L'istanza del condominio in cui si sta operando.
+     * @param StoreIncassoRateAction $action L'Azione dedicata al salvataggio in Partita Doppia (Cassa vs Crediti).
+     * @return \Illuminate\Http\RedirectResponse Reindirizzamento alla lista degli incassi con messaggio flash di successo.
      */
     public function store(StoreIncassoRateRequest $request, Condominio $condominio, StoreIncassoRateAction $action) 
     {
-        // 1. Esegui l'azione di business (registra soldi)
         $action->execute($request->validated(), $condominio, $this->getEsercizioCorrente($condominio));
 
-        // --- INIZIO AGGIORNAMENTO EVENTI ---
-
+        // --- AGGIORNAMENTO EVENTI SCADENZIARIO ---
         $paganteId = $request->input('pagante_id');
-        
-        // Recuperiamo gli ID delle QUOTE (rate_quote) dal form
         $dettaglioPagamenti = $request->input('dettaglio_pagamenti', []);
-        $quoteIds = collect($dettaglioPagamenti)->pluck('rata_id')->filter()->toArray();
 
-        if (!empty($quoteIds) && $paganteId) {
-            
-            // FIX FONDAMENTALE: Convertiamo ID Quote -> ID Rate (Padri)
-            // L'evento è legato alla Rata generale, non alla singola quota
-            $rataIdsReali = RataQuote::whereIn('id', $quoteIds)
+        // FIX: Consideriamo SOLO i pagamenti ordinari (importo > 0)
+        $quoteOrdinarie = collect($dettaglioPagamenti)
+            ->filter(fn($item) => $item['importo'] > 0)
+            ->pluck('rata_id')
+            ->filter()
+            ->toArray();
+
+        if (!empty($quoteOrdinarie) && $paganteId) {
+
+            // FIX: Convertiamo ID Quote -> ID Rate (Padri)
+            $rataIdsReali = RataQuote::whereIn('id', $quoteOrdinarie)
                 ->pluck('rata_id')
                 ->unique()
                 ->toArray();
 
-            // Ora cerchiamo usando gli ID corretti
             $eventiDaAggiornare = Evento::where('meta->type', 'scadenza_rata_condomino')
-                ->whereIn('meta->context->rata_id', $rataIdsReali)
+                ->where(function ($q) use ($rataIdsReali) {
+                    foreach ($rataIdsReali as $rId) {
+                        $q->orWhere('meta->context->rata_id', (int)$rId)
+                          ->orWhere('meta->context->rata_id', (string)$rId);
+                    }
+                })
                 ->whereHas('anagrafiche', fn($q) => $q->where('anagrafica_id', $paganteId))
                 ->get();
 
             foreach ($eventiDaAggiornare as $evento) {
                 
                 $rataId = $evento->meta['context']['rata_id'] ?? null;
-                
-                // Ricarichiamo la rata dal DB per avere i dati aggiornati
                 $rataFresca = Rata::with('rateQuote')->find($rataId);
                 
                 if ($rataFresca) {
-                    // Filtriamo le quote di questo specifico condomino
-                    $quoteUtente = $rataFresca->rateQuote->where('anagrafica_id', $paganteId);
+                    // Escludiamo le quote saldo_iniziale negative (crediti) dal calcolo
+                    $quoteUtente = $rataFresca->rateQuote
+                        ->where('anagrafica_id', $paganteId)
+                        ->where('importo', '>', 0);
                     
                     $totaleDovuto = $quoteUtente->sum('importo');
                     $totalePagato = $quoteUtente->sum('importo_pagato');
                     $restante = $totaleDovuto - $totalePagato;
 
-                    // Aggiorniamo i metadati dell'evento
                     $meta = $evento->meta;
                     $meta['importo_pagato'] = $totalePagato;
-                    $meta['importo_restante'] = $restante;
+                    $meta['importo_restante'] = max(0, $restante);
 
-                    // Calcolo dello Stato
                     if ($restante <= 0.01) {
                         $meta['status'] = 'paid';
                     } elseif ($totalePagato > 0.01) {
@@ -185,46 +192,60 @@ class IncassoRateController extends Controller
             }
         }
 
-        // C. Chiusura Specifica del Task Admin (Solo se arriviamo dalla Inbox)
+        // Chiusura del Task Admin
         $relatedTaskId = $request->input('related_task_id');
 
         if ($relatedTaskId) {
-            
-            /** @var \App\Models\Evento $task */
+            /** @var \App\Models\Evento|null $task */
             $task = Evento::find($relatedTaskId);
-            
+
             if ($task && !$task->is_completed) {
                 $task->update([
                     'is_completed' => true,
                     'completed_at' => now(),
                 ]);
-                
-                InboxService::clearAdminCache();
             }
         }
+
+        // -------------------------------------------------------------
+        // 2. SMART TASK KILLER: Uccisione Globale (Verifica incassi rata)
+        // -------------------------------------------------------------
+        if (!empty($quoteOrdinarie)) {
+            // Prendiamo le rate padri coinvolte in questo pagamento
+            $ratePadri = Rata::whereIn('id', $rataIdsReali)->with('rateQuote')->get();
+
+            foreach ($ratePadri as $rataPadre) {
+                // Calcoliamo quanto è stato pagato in totale per QUESTA rata in TUTTO il condominio
+                $totaleDovutoCondominio = $rataPadre->rateQuote->where('importo', '>', 0)->sum('importo');
+                $totalePagatoCondominio = $rataPadre->rateQuote->where('importo', '>', 0)->sum('importo_pagato');
+                
+                $residuoCondominio = $totaleDovutoCondominio - $totalePagatoCondominio;
+
+                // Se l'intera rata del condominio è stata saldata (tolleranza 1 centesimo)
+                if ($residuoCondominio <= 0.01) {
+                    
+                    // Cerchiamo l'evento globale "Verifica incassi" per questa rata
+                    $rataPadreId = (int) $rataPadre->id;
+                    
+                    Evento::where('meta->type', 'controllo_incassi')
+                        ->where(function($q) use ($rataPadreId) {
+                            $q->where('meta->context->rata_id', $rataPadreId)
+                              ->orWhere('meta->context->rata_id', (string) $rataPadreId);
+                        })
+                        ->where('is_completed', false)
+                        ->update([
+                            'is_completed' => true,
+                            'completed_at' => now(),
+                        ]);
+                }
+            }
+        }
+
+        // Svuotiamo la cache della inbox dell'admin una sola volta alla fine
+        InboxService::clearAdminCache();
 
         return to_route('admin.gestionale.movimenti-rate.index', $condominio)
             ->with($this->flashSuccess('Incasso registrato con successo.'));
     }
     
-    /**
-     * Esegue lo storno (annullamento) di un incasso precedentemente registrato.
-     * Ripristina il debito sulle rate e segna la scrittura contabile come annullata.
-     *
-     * @param Request $request La richiesta HTTP corrente.
-     * @param Condominio $condominio Il condominio corrente.
-     * @param ScritturaContabile $scrittura Il movimento contabile da stornare.
-     * @param StornoIncassoRateAction $action L'azione di business che gestisce lo storno.
-     * @return \Illuminate\Http\RedirectResponse Reindirizzamento alla vista precedente con messaggio di successo.
-     */
-    public function storno(Request $request, Condominio $condominio, ScritturaContabile $scrittura, StornoIncassoRateAction $action) 
-    {
-        if ($scrittura->stato === 'annullata') {
-            return back();
-        }
-
-        $action->execute($scrittura, $condominio);
-
-        return back()->with($this->flashSuccess('Storno completato.'));
-    }
 }
