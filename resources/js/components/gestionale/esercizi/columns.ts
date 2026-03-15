@@ -4,6 +4,7 @@ import DropdownAction from '@/components/gestionale/esercizi/DataTableRowActions
 import DataTableColumnHeader from '@/components/gestionale/esercizi/DataTableColumnHeader.vue'
 import { statusConstants } from '@/lib/gestionale/esercizi/constants';
 import { useDateConverter } from '@/composables/useDateConverter';
+import { trans } from 'laravel-vue-i18n';
 import type { ColumnDef } from '@tanstack/vue-table'
 import type { Esercizio } from '@/types/gestionale/esercizi'
 import type { Building } from '@/types/buildings'
@@ -14,31 +15,31 @@ export function getColumns(condominio: Building): ColumnDef<Esercizio>[] {
   return [
     {
       accessorKey: 'nome',
-      header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Denominazione' }),
+      header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.esercizi.table.name') }),
       cell: ({ row }) => h('div', { class: 'font-bold' }, row.getValue('nome')),
 
     },
     {
       accessorKey: 'descrizione',
-      header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Descrizione' }),
+      header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.esercizi.table.description') }),
       cell: ({ row }) => h('div', row.getValue('descrizione')),
 
     },
     {
       accessorKey: 'data_inizio',
-      header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Inizio' }),
+      header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.esercizi.table.start') }),
       cell: ({ row }) => h('div', toItalian(row.getValue('data_inizio'))),
 
     },
     {
       accessorKey: 'data_fine',
-      header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Fine' }),
+      header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.esercizi.table.end') }),
       cell: ({ row }) => h('div', toItalian(row.getValue('data_fine'))),
 
     },
     {
       accessorKey: 'stato',
-      header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Stato' }),
+      header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.esercizi.table.status') }),
       cell: ({ row }) => {
   
         const value = row.getValue('stato');

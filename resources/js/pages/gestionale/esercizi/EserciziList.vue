@@ -31,27 +31,30 @@ const flashMessage = computed(() => page.props.flash.message);
 
 // Breadcrumbs testuali per il componente Header
 const headerBreadcrumbs = computed(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
-  { title: 'Elenco Esercizi' }
+  {
+    title: trans('gestionale.list_pages.esercizi.breadcrumbs.management'),
+    href: generatePath('gestionale/:condominio', { condominio: props.condominio.id })
+  },
+  { title: trans('gestionale.list_pages.esercizi.breadcrumbs.list') }
 ]);
 
 // Configurazione della guida specifica per gli Esercizi Contabili
 const pageGuides = [
   {
-    title: 'Ciclo Contabile',
-    description: 'L\'Esercizio definisce l\'anno contabile (es. 2024). È il contenitore master che raggruppa tutte le gestioni ordinarie e straordinarie del periodo.',
+    title: trans('gestionale.list_pages.esercizi.guides.accounting_cycle_title'),
+    description: trans('gestionale.list_pages.esercizi.guides.accounting_cycle_description'),
     icon: CalendarRange,
     colorVariant: 'blue' as const
   },
   {
-    title: 'Transizione Fluida',
-    description: 'Il sistema ti permette di gestire i mesi a cavallo d\'anno senza interruzioni operative sui pagamenti e sulle fatture.',
+    title: trans('gestionale.list_pages.esercizi.guides.smooth_transition_title'),
+    description: trans('gestionale.list_pages.esercizi.guides.smooth_transition_description'),
     icon: ArrowRightLeft,
     colorVariant: 'emerald' as const
   },
   {
-    title: 'Chiusura Automatizzata',
-    description: 'Il wizard di fine anno (in arrivo prossimamente) si occuperà di creare il nuovo esercizio e calcolare in automatico i saldi pregressi (Rata 0).',
+    title: trans('gestionale.list_pages.esercizi.guides.automated_closure_title'),
+    description: trans('gestionale.list_pages.esercizi.guides.automated_closure_description'),
     icon: Lock, // L'icona del lucchetto qui è perfetta perché suggerisce che la funzione è "bloccata/protetta" per ora
     colorVariant: 'amber' as const
   }

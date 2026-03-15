@@ -424,6 +424,25 @@ return [
             'head_title' => 'Fiscal years list',
             'page_title' => 'Fiscal years',
             'page_subtitle' => 'Manage condominium accounting years. Open new fiscal years or close previous ones to consolidate balances.',
+            'breadcrumbs' => [
+                'management' => 'Management',
+                'list' => 'Fiscal years list',
+            ],
+            'guides' => [
+                'accounting_cycle_title' => 'Accounting cycle',
+                'accounting_cycle_description' => 'The fiscal year defines the accounting period (e.g. 2024). It is the main container grouping ordinary and extraordinary management periods.',
+                'smooth_transition_title' => 'Smooth transition',
+                'smooth_transition_description' => 'The system handles year-crossing months without operational interruptions for payments and invoices.',
+                'automated_closure_title' => 'Automated closure',
+                'automated_closure_description' => 'The year-end wizard (coming soon) will create the new fiscal year and automatically compute carry-over balances (Installment 0).',
+            ],
+            'table' => [
+                'name' => 'Name',
+                'description' => 'Description',
+                'start' => 'Start',
+                'end' => 'End',
+                'status' => 'Status',
+            ],
         ],
         'gestioni' => [
             'head_title' => 'Management periods list',

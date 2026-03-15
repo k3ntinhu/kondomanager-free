@@ -424,6 +424,25 @@ return [
             'head_title' => 'Lista de exercícios',
             'page_title' => 'Exercícios contabilísticos',
             'page_subtitle' => 'Gira os anos contabilísticos do condomínio. Abra novos exercícios ou feche os anteriores para consolidar saldos.',
+            'breadcrumbs' => [
+                'management' => 'Gestão',
+                'list' => 'Lista de exercícios',
+            ],
+            'guides' => [
+                'accounting_cycle_title' => 'Ciclo contabilístico',
+                'accounting_cycle_description' => 'O exercício define o ano contabilístico (ex.: 2024). É o contentor principal que agrupa as gestões ordinárias e extraordinárias do período.',
+                'smooth_transition_title' => 'Transição fluida',
+                'smooth_transition_description' => 'O sistema permite gerir meses de viragem de ano sem interrupções operacionais em pagamentos e faturas.',
+                'automated_closure_title' => 'Fecho automatizado',
+                'automated_closure_description' => 'O assistente de fim de ano (em breve) criará o novo exercício e calculará automaticamente os saldos de transição (Prestação 0).',
+            ],
+            'table' => [
+                'name' => 'Designação',
+                'description' => 'Descrição',
+                'start' => 'Início',
+                'end' => 'Fim',
+                'status' => 'Estado',
+            ],
         ],
         'gestioni' => [
             'head_title' => 'Lista de gestões',

@@ -424,6 +424,25 @@ return [
             'head_title' => 'Elenco esercizi',
             'page_title' => 'Esercizi contabili',
             'page_subtitle' => 'Gestisci gli anni contabili del condominio. Apri nuovi esercizi o chiudi quelli passati per consolidare i saldi.',
+            'breadcrumbs' => [
+                'management' => 'Gestionale',
+                'list' => 'Elenco esercizi',
+            ],
+            'guides' => [
+                'accounting_cycle_title' => 'Ciclo contabile',
+                'accounting_cycle_description' => 'L\'esercizio definisce l\'anno contabile (es. 2024). E il contenitore principale che raggruppa le gestioni ordinarie e straordinarie del periodo.',
+                'smooth_transition_title' => 'Transizione fluida',
+                'smooth_transition_description' => 'Il sistema permette di gestire i mesi a cavallo d\'anno senza interruzioni operative su pagamenti e fatture.',
+                'automated_closure_title' => 'Chiusura automatizzata',
+                'automated_closure_description' => 'Il wizard di fine anno (in arrivo) creera il nuovo esercizio e calcolera automaticamente i saldi pregressi (Rata 0).',
+            ],
+            'table' => [
+                'name' => 'Denominazione',
+                'description' => 'Descrizione',
+                'start' => 'Inizio',
+                'end' => 'Fine',
+                'status' => 'Stato',
+            ],
         ],
         'gestioni' => [
             'head_title' => 'Elenco gestioni',
