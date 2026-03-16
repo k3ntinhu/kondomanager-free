@@ -523,6 +523,27 @@ return [
             'head_title' => 'Lista de planos de contas',
             'page_title' => 'Planos de contas',
             'page_subtitle' => 'Configure a estrutura das rubricas de despesa (orçamento) para organizar o budget das gestões do condomínio.',
+            'breadcrumbs' => [
+                'management' => 'Gestão',
+                'list' => 'Lista de planos de contas',
+            ],
+            'guides' => [
+                'one_to_one_title' => 'Estrutura 1 para 1',
+                'one_to_one_description' => 'Cada gestão tem apenas um plano de contas. Todas as rubricas de despesa desse período devem estar aqui.',
+                'integrative_plans_title' => 'Planos integrativos',
+                'integrative_plans_description' => 'Para adicionar novas despesas, atualize o plano existente criando um plano de prestações integrativo. Não crie um novo plano de contas.',
+                'extraordinary_cases_title' => 'Casos extraordinários',
+                'extraordinary_cases_description' => 'Crie uma nova gestão (ex.: obras extraordinárias) apenas quando precisar de fundos e prestação de contas separados da gestão ordinária.',
+            ],
+            'table' => [
+                'chart_of_accounts' => 'Plano de contas',
+                'view_structure' => 'Ver estrutura',
+                'management' => 'Gestão',
+                'management_na' => 'Sem gestão associada',
+                'budget_composition' => 'Composição do orçamento',
+                'expense_entries' => ':count rubricas',
+                'created_at' => 'Data de criação',
+            ],
         ],
     ],
     'struttura' => [

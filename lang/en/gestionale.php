@@ -523,6 +523,27 @@ return [
             'head_title' => 'Chart of accounts list',
             'page_title' => 'Chart of accounts',
             'page_subtitle' => 'Configure the structure of expense items (budget) to organize management-period budgeting.',
+            'breadcrumbs' => [
+                'management' => 'Management',
+                'list' => 'Chart of accounts list',
+            ],
+            'guides' => [
+                'one_to_one_title' => '1-to-1 structure',
+                'one_to_one_description' => 'Each management period has one chart of accounts. All relevant expense entries for that period should be defined here.',
+                'integrative_plans_title' => 'Integrative plans',
+                'integrative_plans_description' => 'To add new expenses, update the existing chart by creating an integrative installment plan. Do not create a new chart of accounts.',
+                'extraordinary_cases_title' => 'Extraordinary cases',
+                'extraordinary_cases_description' => 'Create a new management period (e.g. extraordinary works) only when you need funds and reporting separated from ordinary management.',
+            ],
+            'table' => [
+                'chart_of_accounts' => 'Chart of accounts',
+                'view_structure' => 'View structure',
+                'management' => 'Management period',
+                'management_na' => 'No management period linked',
+                'budget_composition' => 'Budget composition',
+                'expense_entries' => ':count expense entries',
+                'created_at' => 'Created at',
+            ],
         ],
     ],
     'struttura' => [

@@ -523,6 +523,27 @@ return [
             'head_title' => 'Elenco piani dei conti',
             'page_title' => 'Piani dei conti',
             'page_subtitle' => 'Configura la struttura delle voci di spesa (preventivo) per organizzare il budget delle gestioni del condominio.',
+            'breadcrumbs' => [
+                'management' => 'Gestionale',
+                'list' => 'Elenco piani dei conti',
+            ],
+            'guides' => [
+                'one_to_one_title' => 'Struttura 1 a 1',
+                'one_to_one_description' => 'Ogni gestione ha un solo piano dei conti. Tutte le voci di spesa di competenza devono risiedere qui.',
+                'integrative_plans_title' => 'Piani integrativi',
+                'integrative_plans_description' => 'Per aggiungere nuove spese, aggiorna il piano esistente creando un piano rate integrativo. Non creare un nuovo piano dei conti.',
+                'extraordinary_cases_title' => 'Casi straordinari',
+                'extraordinary_cases_description' => 'Crea una nuova gestione (es. lavori straordinari) solo se devi gestire fondi e rendicontazioni separati da quella ordinaria.',
+            ],
+            'table' => [
+                'chart_of_accounts' => 'Piano dei conti',
+                'view_structure' => 'Visualizza struttura',
+                'management' => 'Gestione',
+                'management_na' => 'Nessuna gestione associata',
+                'budget_composition' => 'Composizione budget',
+                'expense_entries' => ':count voci di spesa',
+                'created_at' => 'Data creazione',
+            ],
         ],
     ],
     'struttura' => [

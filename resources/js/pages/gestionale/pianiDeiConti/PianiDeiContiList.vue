@@ -32,27 +32,27 @@ const flashMessage = computed(() => page.props.flash.message);
 
 // Breadcrumbs testuali per il componente Header
 const headerBreadcrumbs = computed(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
-  { title: 'Elenco Piani Conti' }
+  { title: trans('gestionale.list_pages.piani_conti.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.piani_conti.breadcrumbs.list') }
 ]);
 
 // Configurazione della guida per QUESTA specifica pagina
 const pageGuides = [
   {
-    title: 'Struttura 1 a 1',
-    description: 'Ogni gestione ha un solo Piano dei Conti. Tutte le voci di spesa di competenza devono risiedere qui.',
+    title: trans('gestionale.list_pages.piani_conti.guides.one_to_one_title'),
+    description: trans('gestionale.list_pages.piani_conti.guides.one_to_one_description'),
     icon: Layers,
     colorVariant: 'blue' as const
   },
   {
-    title: 'Piani Integrativi',
-    description: 'Per aggiungere nuove spese, aggiorna il piano esistente creando un piano rate integrativo. Non creare un nuovo piano dei conti.',
+    title: trans('gestionale.list_pages.piani_conti.guides.integrative_plans_title'),
+    description: trans('gestionale.list_pages.piani_conti.guides.integrative_plans_description'),
     icon: Plus,
     colorVariant: 'amber' as const
   },
   {
-    title: 'Casi Straordinari',
-    description: 'Crea una nuova Gestione (es. Lavori Straordinari) solo se devi gestire fondi e rendicontazioni separati da quella ordinaria.',
+    title: trans('gestionale.list_pages.piani_conti.guides.extraordinary_cases_title'),
+    description: trans('gestionale.list_pages.piani_conti.guides.extraordinary_cases_description'),
     icon: FolderSync,
     colorVariant: 'emerald' as const
   }
