@@ -49,7 +49,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
   { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, href: '#' },
   { title: props.esercizio.nome.toLowerCase(), href: '#' },
-  { title: 'Piani dei conti', href: generatePath('gestionale/:condominio/esercizi/:esercizio/piani-conti', { condominio: props.condominio.id, esercizio: props.esercizio.id }) },
+  { title: trans('gestionale.list_pages.piani_conti.page_title'), href: generatePath('gestionale/:condominio/esercizi/:esercizio/piani-conti', { condominio: props.condominio.id, esercizio: props.esercizio.id }) },
   { title: props.pianoConti.nome, href: '#' }
 ])
 
@@ -198,13 +198,13 @@ const rimuoviTabella = () => {
 </script>
 
 <template>
-  <Head title="Gestione conto" />
+  <Head :title="trans('gestionale.list_pages.piani_conti.show.head_title')" />
 
   <GestionaleLayout :breadcrumbs="breadcrumbs">
     <div class="px-4 py-6">
-      <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-6">
         <div>
-          <h2 class="text-2xl font-bold text-gray-900">Gestione spese</h2>
+          <h2 class="text-2xl font-bold text-gray-900">{{ trans('gestionale.list_pages.piani_conti.show.head_title') }}</h2>
           <div class="flex items-center gap-3 mt-1">
              <p class="text-gray-600">{{ props.pianoConti.nome }}</p>
           </div>
@@ -213,7 +213,7 @@ const rimuoviTabella = () => {
         <div class="flex gap-2">
             <Button @click="showModalNew = true" class="h-9">
               <Plus class="w-4 h-4" />
-              <span class="ml-1">Aggiungi voce di spesa</span>
+              <span class="ml-1">{{ trans('gestionale.list_pages.piani_conti.show.add_expense_entry') }}</span>
             </Button>
 
             <Link
@@ -237,11 +237,11 @@ const rimuoviTabella = () => {
           <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
             
             <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-slate-50/50 rounded-t-lg">
-              <h3 class="text-lg font-semibold text-gray-900">Elenco conti e sottoconti</h3>
+              <h3 class="text-lg font-semibold text-gray-900">{{ trans('gestionale.list_pages.piani_conti.show.accounts_and_subaccounts') }}</h3>
               
               <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold px-3 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
                  <Wallet class="w-4 h-4" />
-                 Totale: {{ euro(props.totalePreventivo) }}
+                 {{ trans('gestionale.list_pages.piani_conti.show.total') }}: {{ euro(props.totalePreventivo) }}
               </span>
             </div>
             
@@ -256,7 +256,7 @@ const rimuoviTabella = () => {
           <!-- Colonna destra: Dettagli conto selezionato -->
           <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
             <div class="p-4 border-b border-gray-200">
-              <h3 class="text-lg font-semibold text-gray-900">Dettagli voce selezionata</h3>
+              <h3 class="text-lg font-semibold text-gray-900">{{ trans('gestionale.list_pages.piani_conti.show.selected_entry_details') }}</h3>
             </div>
             <div class="p-4">
             <DettaglioConto
@@ -303,9 +303,9 @@ const rimuoviTabella = () => {
     <!-- Dialog di conferma rimozione tabella -->
     <ConfirmDialog
       v-model:modelValue="showModalRimuoviTabella"
-      title="Rimuovi tabella associata"
-      description="Sei sicuro di voler rimuovere questa tabella millesimale dal conto?"
-      confirm-text="Rimuovi"
+      :title="trans('gestionale.list_pages.piani_conti.show.remove_linked_table_title')"
+      :description="trans('gestionale.list_pages.piani_conti.show.remove_linked_table_description')"
+      :confirm-text="trans('gestionale.list_pages.piani_conti.show.remove')"
       :cancel-text="trans('gestionale.form_common.actions.cancel')"
       variant="destructive"
       @confirm="rimuoviTabella"
@@ -314,9 +314,9 @@ const rimuoviTabella = () => {
 
     <ConfirmDialog
       v-model:modelValue="showModalDelete"
-      title="Sei sicuro di voler eliminare"
-      description="Questa azione non è reversibile. Il conto verrà eliminato permanentemente."
-      confirm-text="Elimina"
+      :title="trans('gestionale.list_pages.piani_conti.show.delete_account_title')"
+      :description="trans('gestionale.list_pages.piani_conti.show.delete_account_description')"
+      :confirm-text="trans('gestionale.list_pages.piani_conti.show.delete')"
       :cancel-text="trans('gestionale.form_common.actions.cancel')"
       variant="destructive"
       @confirm="eliminaConto"
