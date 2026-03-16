@@ -728,6 +728,10 @@ return [
                 'associate_all_description' => 'Quando selezioni questa opzione, tutti gli immobili registrati verranno associati automaticamente alla tabella.',
             ],
         ],
+        'edit' => [
+            'head_title' => 'Modifica tabella',
+            'breadcrumb_edit' => 'Modifica tabella',
+        ],
     ],
     'tabelle_quote' => [
         'head_title' => 'Millesimi tabella',

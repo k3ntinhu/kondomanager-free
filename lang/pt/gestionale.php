@@ -946,6 +946,10 @@ return [
                 'associate_all_description' => 'Ao selecionar esta opção, todos os imóveis registados serão associados automaticamente à tabela.',
             ],
         ],
+        'edit' => [
+            'head_title' => 'Editar tabela',
+            'breadcrumb_edit' => 'Editar tabela',
+        ],
     ],
     'tabelle_quote' => [
         'head_title' => 'Permilagens da tabela',

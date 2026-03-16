@@ -728,6 +728,10 @@ return [
                 'associate_all_description' => 'When this option is selected, all registered units are automatically associated with the table.',
             ],
         ],
+        'edit' => [
+            'head_title' => 'Edit table',
+            'breadcrumb_edit' => 'Edit table',
+        ],
     ],
     'tabelle_quote' => [
         'head_title' => 'Table shares',
