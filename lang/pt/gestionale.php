@@ -345,6 +345,8 @@ return [
                 'integrated' => 'Integrada',
                 'partial' => 'Parcial',
                 'standard' => 'Padrão',
+                'includes_children' => 'Inclui',
+                'view_history' => 'ver histórico',
                 'includes_moved_funds' => 'Inclui fundos movidos de outras rubricas',
                 'remove_and_recalculate' => 'Remover rubrica e recalcular',
                 'no_entries' => 'Nenhuma rubrica de despesa associada. Use o botão "Sincronizar" para adicionar.',
@@ -373,6 +375,7 @@ return [
                 'remaining_debt' => 'Dívida remanescente: :amount',
                 'remaining_credit' => 'Crédito remanescente: :amount',
                 'installment_total' => 'Total da prestação',
+                'partial_short' => 'PARC.',
                 'due_date' => 'Vencimento',
                 'debt' => 'Deve',
                 'credit' => 'Crédito',
@@ -385,6 +388,8 @@ return [
             'tooltips' => [
                 'paid_on' => 'Pago em :date',
                 'paid_remaining' => 'Pagos: :paid | Restantes: :remaining',
+                'entry_received_budget' => 'Esta rubrica recebeu orçamento de outra rubrica',
+                'open_statement' => 'Ver extrato de conta e histórico de pagamentos',
             ],
             'hover' => [
                 'blocked_action' => 'Ação bloqueada',

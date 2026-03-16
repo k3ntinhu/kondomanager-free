@@ -916,7 +916,7 @@ const executePublishSilent = () => {
                                     <span 
                                         v-if="isVoceRicevente(capitolo.id)" 
                                         class="text-[9px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1"
-                                        title="Questa voce ha ricevuto budget da un altro capitolo"
+                                        :title="trans('gestionale.piani_rate.show.tooltips.entry_received_budget')"
                                     >
                                         <ArrowRightLeft class="w-3 h-3" /> {{ trans('gestionale.piani_rate.show.coverage.integrated') }}
                                     </span>
@@ -947,13 +947,13 @@ const executePublishSilent = () => {
                                 </div>
                                 
                                 <p v-if="capitolo.is_parent" class="text-[10px] text-gray-400 leading-tight max-w-md">
-                                    Include: {{ capitolo.figli_names }}
+                                    {{ trans('gestionale.piani_rate.show.coverage.includes_children') }}: {{ capitolo.figli_names }}
                                 </p>
                                 
                                 <p v-if="isVoceRicevente(capitolo.id)" class="text-[10px] text-amber-600 leading-tight flex items-center gap-1">
                                     {{ trans('gestionale.piani_rate.show.coverage.includes_moved_funds') }}
                                     <span class="inline-flex items-center gap-0.5 whitespace-nowrap opacity-80">
-                                        (vedi storico <History class="w-2.5 h-2.5" />)
+                                        ({{ trans('gestionale.piani_rate.show.coverage.view_history') }} <History class="w-2.5 h-2.5" />)
                                     </span>
                                 </p>
                             </div>
@@ -1080,7 +1080,7 @@ const executePublishSilent = () => {
                                   anagrafica: item.anagrafica.id 
                               })"
                               class="font-semibold text-primary hover:text-primary/80 hover:underline cursor-pointer transition-colors block"
-                              title="Vedi estratto conto e storico pagamenti"
+                              :title="trans('gestionale.piani_rate.show.tooltips.open_statement')"
                             >
                               {{ item.anagrafica.nome }}
                             </Link>
@@ -1117,7 +1117,7 @@ const executePublishSilent = () => {
                                             </div>
                                             
                                             <div v-if="item.rateMap[col.numero].stato === 'parzialmente_pagata'" class="absolute -top-1.5 right-0 bg-amber-100 text-[8px] px-1 rounded-sm text-amber-700 font-bold border border-amber-200 shadow-sm z-20">
-                                                PARZ.
+                                                {{ trans('gestionale.piani_rate.show.table.partial_short') }}
                                             </div>
                                             
                                             <div v-if="item.rateMap[col.numero].dettaglio_quote" 
