@@ -86,7 +86,7 @@ function deleteImmobile() {
           class="flex items-center gap-2"
         >
           <UserPlus class="w-4 h-4 text-xs" />
-          Anagrafiche
+          {{ trans('gestionale.immobile_layout.tabs.registry') }}
         </Link>
       </DropdownMenuItem>
 
