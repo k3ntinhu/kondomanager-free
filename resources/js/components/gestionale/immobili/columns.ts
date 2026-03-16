@@ -100,7 +100,7 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
         const piano = immobile.piano ?? '-'
         const superficie = immobile.superficie ? immobile.superficie + ' m²' : '-'
         
-        const dettagli = `Interno: ${interno} | Piano: ${piano} | Sup: ${superficie}`
+        const dettagli = `Interno: ${interno} | Andar: ${piano} | Sup: ${superficie}`
 
         return h('div', { class: 'flex space-x-2' }, [
           h('span', dettagli),
