@@ -440,6 +440,7 @@ return [
         'esercizi' => [
             'head_title' => 'Lista de exercícios',
             'page_title' => 'Exercícios contabilísticos',
+            'menu_title' => 'Exercícios',
             'page_subtitle' => 'Gira os anos contabilísticos do condomínio. Abra novos exercícios ou feche os anteriores para consolidar saldos.',
             'breadcrumbs' => [
                 'management' => 'Gestão',
@@ -465,6 +466,29 @@ return [
             'head_title' => 'Lista de gestões',
             'page_title' => 'Lista de gestões',
             'page_subtitle' => 'Crie e administre os centros de despesa (ordinária, extraordinária, aquecimento) para estruturar a contabilidade do condomínio.',
+            'breadcrumbs' => [
+                'management' => 'Gestão',
+                'list' => 'Lista de gestões',
+            ],
+            'guides' => [
+                'flexible_hierarchy_title' => 'Hierarquia flexível',
+                'flexible_hierarchy_description' => 'Um único exercício pode conter múltiplas gestões. A gestão ordinária funciona como contentor principal do ano em curso.',
+                'expense_types_title' => 'Tipos de despesa',
+                'expense_types_description' => 'Separe os fundos de forma clara. Crie gestões distintas para obras extraordinárias ou aquecimento.',
+                'unlimited_duration_title' => 'Duração sem limites',
+                'unlimited_duration_description' => 'As gestões extraordinárias podem ter apenas data de início e permanecer abertas por vários exercícios contabilísticos.',
+            ],
+            'table' => [
+                'name' => 'Designação',
+                'description' => 'Descrição',
+                'start' => 'Início',
+                'end' => 'Fim',
+                'type' => 'Tipologia',
+            ],
+            'type_values' => [
+                'ordinary' => 'Ordinária',
+                'extraordinary' => 'Extraordinária',
+            ],
         ],
         'immobili' => [
             'head_title' => 'Lista de imóveis',
@@ -554,6 +578,20 @@ return [
         ],
         'placeholders' => [
             'status' => 'Estado do exercício',
+        ],
+    ],
+    'gestioni_form' => [
+        'create' => [
+            'breadcrumb_create' => 'Criar gestão',
+            'heading_title' => 'Criar nova gestão para o exercício - :esercizio',
+            'heading_description' => 'Preencha o seguinte formulário para criar uma nova gestão para o exercício aberto atual - :esercizio',
+            'type_options' => [
+                'ordinary' => 'Ordinária',
+                'extraordinary' => 'Extraordinária',
+            ],
+            'placeholders' => [
+                'type' => 'Tipologia da gestão',
+            ],
         ],
     ],
     'tabelle_form' => [

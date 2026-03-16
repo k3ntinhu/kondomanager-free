@@ -440,6 +440,7 @@ return [
         'esercizi' => [
             'head_title' => 'Elenco esercizi',
             'page_title' => 'Esercizi contabili',
+            'menu_title' => 'Esercizi',
             'page_subtitle' => 'Gestisci gli anni contabili del condominio. Apri nuovi esercizi o chiudi quelli passati per consolidare i saldi.',
             'breadcrumbs' => [
                 'management' => 'Gestionale',
@@ -465,6 +466,29 @@ return [
             'head_title' => 'Elenco gestioni',
             'page_title' => 'Elenco gestioni',
             'page_subtitle' => 'Crea e amministra i contenitori di spesa (ordinaria, straordinaria, riscaldamento) per strutturare la contabilità del condominio.',
+            'breadcrumbs' => [
+                'management' => 'Gestionale',
+                'list' => 'Elenco gestioni',
+            ],
+            'guides' => [
+                'flexible_hierarchy_title' => 'Gerarchia flessibile',
+                'flexible_hierarchy_description' => 'Un singolo esercizio può contenere più gestioni. L\'ordinaria funge da contenitore principale per l\'anno in corso.',
+                'expense_types_title' => 'Tipologie di spesa',
+                'expense_types_description' => 'Separa i fondi in modo netto. Crea gestioni dedicate per lavori straordinari o riscaldamento.',
+                'unlimited_duration_title' => 'Durata senza limiti',
+                'unlimited_duration_description' => 'Le gestioni straordinarie possono avere solo una data di inizio e rimanere aperte su più esercizi contabili.',
+            ],
+            'table' => [
+                'name' => 'Denominazione',
+                'description' => 'Descrizione',
+                'start' => 'Inizio',
+                'end' => 'Fine',
+                'type' => 'Tipologia',
+            ],
+            'type_values' => [
+                'ordinary' => 'Ordinaria',
+                'extraordinary' => 'Straordinaria',
+            ],
         ],
         'immobili' => [
             'head_title' => 'Elenco immobili',
@@ -554,6 +578,20 @@ return [
         ],
         'placeholders' => [
             'status' => 'Stato esercizio',
+        ],
+    ],
+    'gestioni_form' => [
+        'create' => [
+            'breadcrumb_create' => 'Crea gestione',
+            'heading_title' => 'Crea nuova gestione per l\'esercizio - :esercizio',
+            'heading_description' => 'Compila il seguente modulo per la creazione di una nuova gestione per il corrente esercizio aperto - :esercizio',
+            'type_options' => [
+                'ordinary' => 'Ordinaria',
+                'extraordinary' => 'Straordinaria',
+            ],
+            'placeholders' => [
+                'type' => 'Tipologia gestione',
+            ],
         ],
     ],
     'tabelle_form' => [

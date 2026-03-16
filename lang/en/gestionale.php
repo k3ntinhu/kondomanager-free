@@ -440,6 +440,7 @@ return [
         'esercizi' => [
             'head_title' => 'Fiscal years list',
             'page_title' => 'Fiscal years',
+            'menu_title' => 'Fiscal years',
             'page_subtitle' => 'Manage condominium accounting years. Open new fiscal years or close previous ones to consolidate balances.',
             'breadcrumbs' => [
                 'management' => 'Management',
@@ -465,6 +466,29 @@ return [
             'head_title' => 'Management periods list',
             'page_title' => 'Management periods list',
             'page_subtitle' => 'Create and manage expense containers (ordinary, extraordinary, heating) to structure condominium accounting.',
+            'breadcrumbs' => [
+                'management' => 'Management',
+                'list' => 'Management periods list',
+            ],
+            'guides' => [
+                'flexible_hierarchy_title' => 'Flexible hierarchy',
+                'flexible_hierarchy_description' => 'A single fiscal year can include multiple management periods. Ordinary management acts as the main container for the current year.',
+                'expense_types_title' => 'Expense types',
+                'expense_types_description' => 'Separate funds clearly. Create dedicated management periods for extraordinary works or heating.',
+                'unlimited_duration_title' => 'Unlimited duration',
+                'unlimited_duration_description' => 'Extraordinary management periods can have only a start date and remain open across multiple fiscal years.',
+            ],
+            'table' => [
+                'name' => 'Name',
+                'description' => 'Description',
+                'start' => 'Start',
+                'end' => 'End',
+                'type' => 'Type',
+            ],
+            'type_values' => [
+                'ordinary' => 'Ordinary',
+                'extraordinary' => 'Extraordinary',
+            ],
         ],
         'immobili' => [
             'head_title' => 'Units list',
@@ -554,6 +578,20 @@ return [
         ],
         'placeholders' => [
             'status' => 'Fiscal year status',
+        ],
+    ],
+    'gestioni_form' => [
+        'create' => [
+            'breadcrumb_create' => 'Create management period',
+            'heading_title' => 'Create new management period for fiscal year - :esercizio',
+            'heading_description' => 'Fill out the form below to create a new management period for the current open fiscal year - :esercizio',
+            'type_options' => [
+                'ordinary' => 'Ordinary',
+                'extraordinary' => 'Extraordinary',
+            ],
+            'placeholders' => [
+                'type' => 'Management period type',
+            ],
         ],
     ],
     'tabelle_form' => [
