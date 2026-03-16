@@ -615,6 +615,18 @@ return [
             ],
         ],
     ],
+    'piani_conti_form' => [
+        'create' => [
+            'head_title' => 'Crea nuovo piano dei conti',
+            'breadcrumb_create' => 'Crea piano dei conti',
+            'labels' => [
+                'management' => 'Gestione',
+            ],
+            'placeholders' => [
+                'management' => 'Seleziona gestione',
+            ],
+        ],
+    ],
     'tabelle_form' => [
         'create' => [
             'head_title' => 'Crea nuova tabella',

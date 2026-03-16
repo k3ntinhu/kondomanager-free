@@ -615,6 +615,18 @@ return [
             ],
         ],
     ],
+    'piani_conti_form' => [
+        'create' => [
+            'head_title' => 'Create new chart of accounts',
+            'breadcrumb_create' => 'Create chart of accounts',
+            'labels' => [
+                'management' => 'Management period',
+            ],
+            'placeholders' => [
+                'management' => 'Select management period',
+            ],
+        ],
+    ],
     'tabelle_form' => [
         'create' => [
             'head_title' => 'Create new table',

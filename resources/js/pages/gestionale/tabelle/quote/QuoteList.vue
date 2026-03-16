@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { Head, useForm, Link } from "@inertiajs/vue3";
+import { trans } from "laravel-vue-i18n";
 import GestionaleLayout from "@/layouts/GestionaleLayout.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,7 +172,7 @@ const submit = () => {
               class="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-sm font-medium text-primary-foreground px-3 py-1.5 h-8 w-full lg:w-auto hover:bg-primary/90"
             >
               <List class="w-4 h-4" />
-              <span>Tabelle</span>
+              <span>{{ trans('gestionale.list_pages.tabelle.menu_title') }}</span>
             </Link>
           </div>
 

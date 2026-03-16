@@ -615,6 +615,18 @@ return [
             ],
         ],
     ],
+    'piani_conti_form' => [
+        'create' => [
+            'head_title' => 'Criar novo plano de contas',
+            'breadcrumb_create' => 'Criar plano de contas',
+            'labels' => [
+                'management' => 'Gestão',
+            ],
+            'placeholders' => [
+                'management' => 'Selecionar gestão',
+            ],
+        ],
+    ],
     'tabelle_form' => [
         'create' => [
             'head_title' => 'Criar nova tabela',

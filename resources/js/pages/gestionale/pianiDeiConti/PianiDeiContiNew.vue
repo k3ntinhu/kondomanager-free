@@ -31,10 +31,10 @@ const props = defineProps<{
 const { generatePath, generateRoute } = usePermission();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.piani_conti.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, component: "condominio-dropdown" } as any,
   { title: props.esercizio?.nome, component: "esercizio-dropdown" } as any,
-  { title: 'crea piano conti', href: '#' },
+  { title: trans('gestionale.piani_conti_form.create.breadcrumb_create'), href: '#' },
 ]);
 
 const form = useForm({
@@ -58,7 +58,7 @@ const submit = () => {
 
 <template>
 
-    <Head title="Crea nuovo piano conti" />
+    <Head :title="trans('gestionale.piani_conti_form.create.head_title')" />
 
     <GestionaleLayout :breadcrumbs="breadcrumbs">
 
@@ -93,7 +93,7 @@ const submit = () => {
                             class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                         >
                             <List class="w-4 h-4" />
-                            <span>Piani dei conti</span>
+                            <span>{{ trans('gestionale.list_pages.piani_conti.page_title') }}</span>
                         </Link>
                         </div>
 
@@ -117,17 +117,21 @@ const submit = () => {
                             </div>
 
                               <div class="sm:col-span-3">
-                                 <Label for="gestione">Gestione</Label>
+                                 <Label for="gestione">{{ trans('gestionale.piani_conti_form.create.labels.management') }}</Label>
 
                                 <v-select 
                                     :options="gestioni" 
                                     label="nome" 
                                      class="mt-1 block w-full"
                                     v-model="form.gestione_id"
-                                    :placeholder="trans('gestionale.form_common.placeholders.select_one')"
+                                    :placeholder="trans('gestionale.piani_conti_form.create.placeholders.management')"
                                     @update:modelValue="form.clearErrors('gestione_id')" 
                                     :reduce="(gestioni: Gestione) => gestioni.id"
-                                />
+                                >
+                                    <template #no-options>
+                                        {{ trans('gestionale.form_common.messages.no_matching_options') }}
+                                    </template>
+                                </v-select>
 
                                 <InputError :message="form.errors.gestione_id" />
                             </div>

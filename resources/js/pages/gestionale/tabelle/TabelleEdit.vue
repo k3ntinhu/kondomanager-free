@@ -104,7 +104,7 @@ const submit = () => {
                 class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 <List class="w-4 h-4" />
-                <span>Tabelle</span>
+                <span>{{ trans('gestionale.list_pages.tabelle.menu_title') }}</span>
               </Link>
             </div>
 
