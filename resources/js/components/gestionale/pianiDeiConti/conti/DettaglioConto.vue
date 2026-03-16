@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
 import { computed } from 'vue'
+import { trans } from 'laravel-vue-i18n'
 import { Percent, Edit, Trash2, FileText, Link, Plus, PieChart, Info, TrendingUp, ArrowDownCircle, ArrowUpCircle, Folder, CheckCircle, AlertCircle, CircleDashed, CornerDownRight, Target, GitMerge } from 'lucide-vue-next'
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter'
 import { Button } from '@/components/ui/button'
@@ -42,7 +43,7 @@ const isCapitolo = (conto: Conto) => {
 
 const getTabelleAssociate = () => props.conto?.tabelle_millesimali?.map(tm => ({
     id: tm.tabella_id,
-    nome: tm.tabella?.nome ?? 'Tabella non trovata',
+    nome: tm.tabella?.nome ?? trans('gestionale.list_pages.piani_conti.show.details.missing_table_name'),
     coefficiente: tm.coefficiente,
     ripartizioni: tm.ripartizioni || []
 })) || []
@@ -84,9 +85,9 @@ const statusColorClass = computed(() => {
           <EmptyMedia variant="icon">
             <FileText class="w-10 h-10 text-muted-foreground" />
           </EmptyMedia>
-          <EmptyTitle>Nessuna voce selezionata</EmptyTitle>
+          <EmptyTitle>{{ trans('gestionale.list_pages.piani_conti.show.details.no_item_selected_title') }}</EmptyTitle>
           <EmptyDescription>
-            Seleziona una voce di spesa dall'elenco per visualizzarne i dettagli
+            {{ trans('gestionale.list_pages.piani_conti.show.details.no_item_selected_description') }}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -107,16 +108,16 @@ const statusColorClass = computed(() => {
             </div>
             
             <div class="flex flex-wrap gap-2 pt-1">
-              <Badge v-if="!isCapitolo(props.conto)" variant="outline" 
+                <Badge v-if="!isCapitolo(props.conto)" variant="outline" 
                 class="gap-1.5 rounded-md px-2.5"
                 :class="props.conto.tipo === 'spesa' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'">
                 <ArrowDownCircle v-if="props.conto.tipo === 'spesa'" class="w-3.5 h-3.5" />
                 <ArrowUpCircle v-else class="w-3.5 h-3.5" />
-                {{ props.conto.tipo === 'spesa' ? 'Spesa' : 'Entrata' }}
+                {{ props.conto.tipo === 'spesa' ? trans('gestionale.list_pages.piani_conti.show.details.type_expense') : trans('gestionale.list_pages.piani_conti.show.details.type_income') }}
               </Badge>
 
               <Badge v-if="isCapitolo(props.conto)" variant="secondary" class="gap-1.5 rounded-md px-2.5">
-                <Folder class="w-3.5 h-3.5" /> Capitolo
+                <Folder class="w-3.5 h-3.5" /> {{ trans('gestionale.list_pages.piani_conti.show.details.chapter') }}
               </Badge>
 
               <Badge v-if="!isCapitolo(props.conto) && props.conto.stato_copertura" variant="outline" 
@@ -129,14 +130,14 @@ const statusColorClass = computed(() => {
                 <CheckCircle v-if="props.conto.stato_copertura === 'full'" class="w-3.5 h-3.5" />
                 <AlertCircle v-else-if="props.conto.stato_copertura === 'over'" class="w-3.5 h-3.5" />
                 <CircleDashed v-else class="w-3.5 h-3.5" />
-                Copertura {{ props.conto.percentuale_copertura }}%
+                {{ trans('gestionale.list_pages.piani_conti.show.details.coverage_label') }} {{ props.conto.percentuale_copertura }}%
               </Badge>
             </div>
           </div>
 
           <div class="flex gap-2 ml-4">
             <Button variant="outline" size="sm" @click="modificaConto">
-              <Edit class="w-4 h-4 mr-2" /> Modifica
+              <Edit class="w-4 h-4 mr-2" /> {{ trans('gestionale.list_pages.piani_conti.show.details.edit') }}
             </Button>
             <Button variant="ghost" size="icon" class="text-destructive hover:text-destructive hover:bg-destructive/10" @click="eliminaConto">
               <Trash2 class="w-4 h-4" />
@@ -148,32 +149,32 @@ const statusColorClass = computed(() => {
       <Card>
         <CardHeader class="p-3">
           <CardTitle class="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <Info class="w-4 h-4" /> Informazioni
+            <Info class="w-4 h-4" /> {{ trans('gestionale.list_pages.piani_conti.show.details.section_info') }}
           </CardTitle>
         </CardHeader>
         <CardContent class="grid gap-4 p-3">
           <div v-if="!isCapitolo(props.conto)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1">
-              <label class="text-xs font-medium text-muted-foreground uppercase">Importo</label>
+              <label class="text-xs font-medium text-muted-foreground uppercase">{{ trans('gestionale.list_pages.piani_conti.show.details.amount') }}</label>
               <p class="text-lg font-bold text-foreground">{{ props.conto.importo }}</p>
             </div>
             <div v-if="props.conto.fornitore_nome" class="space-y-1">
-              <label class="text-xs font-medium text-muted-foreground uppercase">Fornitore suggerito</label>
+              <label class="text-xs font-medium text-muted-foreground uppercase">{{ trans('gestionale.list_pages.piani_conti.show.details.suggested_supplier') }}</label>
               <p class="text-sm font-medium">{{ props.conto.fornitore_nome }}</p>
             </div>
           </div>
           
           <div class="space-y-1">
-            <label class="text-xs font-medium text-muted-foreground uppercase">Descrizione</label>
+            <label class="text-xs font-medium text-muted-foreground uppercase">{{ trans('gestionale.list_pages.piani_conti.show.details.description') }}</label>
             <p class="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
-              {{ props.conto.descrizione || 'Nessuna descrizione disponibile' }}
+              {{ props.conto.descrizione || trans('gestionale.list_pages.piani_conti.show.details.no_description') }}
             </p>
           </div>
           
           <div class="space-y-1">
-            <label class="text-xs font-medium text-muted-foreground uppercase">Note</label>
+            <label class="text-xs font-medium text-muted-foreground uppercase">{{ trans('gestionale.list_pages.piani_conti.show.details.notes') }}</label>
             <p class="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-              {{ props.conto.note || 'Nessuna nota disponibile' }}
+              {{ props.conto.note || trans('gestionale.list_pages.piani_conti.show.details.no_notes') }}
             </p>
           </div>
         </CardContent>
@@ -182,14 +183,14 @@ const statusColorClass = computed(() => {
       <Card v-if="!isCapitolo(props.conto) && props.conto.importo_raw">
         <CardHeader class="p-3">
           <CardTitle class="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            <PieChart class="w-4 h-4" /> Analisi copertura
+            <PieChart class="w-4 h-4" /> {{ trans('gestionale.list_pages.piani_conti.show.details.section_coverage_analysis') }}
           </CardTitle>
         </CardHeader>
         <CardContent class="p-2">
           
           <div class="space-y-2 mb-4">
             <div class="flex justify-between text-sm">
-              <span class="font-medium text-muted-foreground">Impegnato / Preventivato</span>
+              <span class="font-medium text-muted-foreground">{{ trans('gestionale.list_pages.piani_conti.show.details.committed_vs_budgeted') }}</span>
               <span class="font-bold">
                 {{ euro(props.conto.impegnato || 0) }} 
                 <span class="text-muted-foreground font-normal">/ {{ props.conto.importo }}</span>
@@ -207,19 +208,19 @@ const statusColorClass = computed(() => {
           <div class="flex flex-wrap items-center gap-3 mb-6 px-1">
             <div class="flex items-center gap-1.5">
               <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-              <span class="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Parziale</span>
+              <span class="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">{{ trans('gestionale.list_pages.piani_conti.show.details.legend_partial') }}</span>
             </div>
             <div class="flex items-center gap-1.5">
               <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-              <span class="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Coperto</span>
+              <span class="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">{{ trans('gestionale.list_pages.piani_conti.show.details.legend_covered') }}</span>
             </div>
             <div class="flex items-center gap-1.5">
               <div class="w-2.5 h-2.5 rounded-full bg-purple-600"></div>
-              <span class="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Extra Budget (Spostamento)</span>
+              <span class="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">{{ trans('gestionale.list_pages.piani_conti.show.details.legend_extra_budget') }}</span>
             </div>
             <div class="flex items-center gap-1.5">
               <div class="w-2.5 h-2.5 rounded-full bg-red-600"></div>
-              <span class="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">Eccedenza</span>
+              <span class="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">{{ trans('gestionale.list_pages.piani_conti.show.details.legend_overrun') }}</span>
             </div>
           </div>
 
@@ -227,9 +228,9 @@ const statusColorClass = computed(() => {
              <Table>
               <TableHeader>
                 <TableRow class="hover:bg-transparent">
-                  <TableHead class="h-9">Piano Rate</TableHead>
-                  <TableHead class="h-9">Fonte</TableHead>
-                  <TableHead class="h-9 text-right">Quota</TableHead>
+                  <TableHead class="h-9">{{ trans('gestionale.list_pages.piani_conti.show.details.table_installment_plan') }}</TableHead>
+                  <TableHead class="h-9">{{ trans('gestionale.list_pages.piani_conti.show.details.table_source') }}</TableHead>
+                  <TableHead class="h-9 text-right">{{ trans('gestionale.list_pages.piani_conti.show.details.table_share') }}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -242,16 +243,16 @@ const statusColorClass = computed(() => {
                   </TableCell>
                   <TableCell class="py-3">
                     <Badge v-if="item.is_shifted" variant="outline" class="bg-purple-50 text-purple-700 border-purple-200 rounded-md gap-1">
-                      <TrendingUp class="w-3 h-3" /> Spostamento
+                      <TrendingUp class="w-3 h-3" /> {{ trans('gestionale.list_pages.piani_conti.show.details.source_shift') }}
                     </Badge>
                     <Badge v-else-if="item.fonte === 'indiretta'" variant="outline" class="bg-amber-50 text-amber-700 border-amber-200 rounded-md gap-1">
-                      <CornerDownRight class="w-3 h-3" /> Da Capitolo
+                      <CornerDownRight class="w-3 h-3" /> {{ trans('gestionale.list_pages.piani_conti.show.details.source_chapter') }}
                     </Badge>
                     <Badge v-else-if="item.fonte === 'mista'" variant="outline" class="bg-blue-50 text-blue-700 border-blue-200 rounded-md gap-1">
-                      <GitMerge class="w-3 h-3" /> Mista
+                      <GitMerge class="w-3 h-3" /> {{ trans('gestionale.list_pages.piani_conti.show.details.source_mixed') }}
                     </Badge>
                     <Badge v-else variant="secondary" class="rounded-md gap-1 text-gray-700">
-                      <Target class="w-3 h-3" /> Diretta
+                      <Target class="w-3 h-3" /> {{ trans('gestionale.list_pages.piani_conti.show.details.source_direct') }}
                     </Badge>
                   </TableCell>
                   <TableCell class="text-right py-3">
@@ -264,7 +265,7 @@ const statusColorClass = computed(() => {
           
           <div v-else class="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
             <Info class="w-4 h-4" />
-            Nessun piano rate sta finanziando questa spesa al momento.
+            {{ trans('gestionale.list_pages.piani_conti.show.details.no_plan_financing') }}
           </div>
         </CardContent>
       </Card>
@@ -272,30 +273,30 @@ const statusColorClass = computed(() => {
         <CardHeader class="flex flex-row items-center justify-between space-y-0 p-3">
           <CardTitle class="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
             <Percent class="w-4 h-4" />
-            Ripartizione
+            {{ trans('gestionale.list_pages.piani_conti.show.details.section_allocation') }}
             <Badge variant="secondary" class="ml-2 px-1.5 h-5 rounded-md">
               {{ getTabelleAssociate().length }}
             </Badge>
           </CardTitle>
           <Button variant="outline" size="sm" class="h-7 text-xs" @click="aggiungiTabella">
-            <Plus class="w-3.5 h-3.5 mr-1" /> Aggiungi
+            <Plus class="w-3.5 h-3.5 mr-1" /> {{ trans('gestionale.list_pages.piani_conti.show.details.add') }}
           </Button>
         </CardHeader>
         <CardContent class="p-2">
           <div v-if="getTabelleAssociate().length === 0" class="text-center py-6 text-muted-foreground border border-dashed rounded-md">
             <Link class="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p class="text-sm">Nessuna tabella associata</p>
+            <p class="text-sm">{{ trans('gestionale.list_pages.piani_conti.show.details.no_linked_table') }}</p>
           </div>
 
           <div v-else class="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow class="hover:bg-transparent">
-                  <TableHead class="h-9">Nome</TableHead>
-                  <TableHead class="h-9 text-center">Coeff.</TableHead>
-                  <TableHead class="h-9 text-center">Prop.</TableHead>
-                  <TableHead class="h-9 text-center">Inq.</TableHead>
-                  <TableHead class="h-9 text-center">Usuf.</TableHead>
+                  <TableHead class="h-9">{{ trans('gestionale.list_pages.piani_conti.show.details.table_name') }}</TableHead>
+                  <TableHead class="h-9 text-center">{{ trans('gestionale.list_pages.piani_conti.show.details.table_coeff') }}</TableHead>
+                  <TableHead class="h-9 text-center">{{ trans('gestionale.list_pages.piani_conti.show.details.table_owner') }}</TableHead>
+                  <TableHead class="h-9 text-center">{{ trans('gestionale.list_pages.piani_conti.show.details.table_tenant') }}</TableHead>
+                  <TableHead class="h-9 text-center">{{ trans('gestionale.list_pages.piani_conti.show.details.table_usufruct') }}</TableHead>
                   <TableHead class="h-9 w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -335,7 +336,7 @@ const statusColorClass = computed(() => {
       <Card v-if="props.conto.sottoconti && props.conto.sottoconti.length > 0">
         <CardHeader class="pb-3">
           <CardTitle class="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-            Sottoconti
+            {{ trans('gestionale.list_pages.piani_conti.show.details.subaccounts') }}
             <Badge variant="secondary" class="ml-2 px-1.5 h-5 rounded-md">{{ props.conto.sottoconti.length }}</Badge>
           </CardTitle>
         </CardHeader>

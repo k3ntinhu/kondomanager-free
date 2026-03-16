@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Folder, FolderOpen, FileText, Lock } from 'lucide-vue-next'
+import { trans } from 'laravel-vue-i18n'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter'
 import type { Conto } from '@/types/gestionale/conti'
@@ -72,9 +73,9 @@ const getTextColor = (conto: Conto) => {
           <EmptyMedia variant="icon">
             <FolderOpen/>
           </EmptyMedia>
-          <EmptyTitle>Nessuna voce di spesa creata</EmptyTitle>
+          <EmptyTitle>{{ trans('gestionale.list_pages.piani_conti.show.tree.empty_title') }}</EmptyTitle>
           <EmptyDescription>
-            Crea la prima voce di spesa per iniziare a creare il tuo piano dei conti.
+            {{ trans('gestionale.list_pages.piani_conti.show.tree.empty_description') }}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -102,7 +103,7 @@ const getTextColor = (conto: Conto) => {
             </div>
 
             <div class="flex items-center gap-1.5">
-              <Lock v-if="conto.has_rate_emesse" class="w-3 h-3 text-amber-500" title="Bloccato da rate emesse" />
+              <Lock v-if="conto.has_rate_emesse" class="w-3 h-3 text-amber-500" :title="trans('gestionale.list_pages.piani_conti.show.tree.locked_by_installments')" />
               
               <span 
                 v-if="!isCapitolo(conto)" 
@@ -128,7 +129,7 @@ const getTextColor = (conto: Conto) => {
 
               <div class="flex justify-between items-center mt-0.5">
                 <span class="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">
-                  Copertura
+                  {{ trans('gestionale.list_pages.piani_conti.show.tree.coverage') }}
                 </span>
                 <div class="flex items-center gap-0.5 text-[10px]">
                   
@@ -145,7 +146,7 @@ const getTextColor = (conto: Conto) => {
               </div>
 
               <div v-if="conto.stato_copertura === 'partial' && (conto.impegnato || 0) == 0" class="text-[9px] text-amber-600 mt-0.5">
-                ⚠ Nessun fondo diretto. Verifica capitolo padre.
+                {{ trans('gestionale.list_pages.piani_conti.show.tree.no_direct_fund') }}
               </div>
 
           </div>
