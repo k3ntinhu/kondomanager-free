@@ -215,6 +215,7 @@ return [
                 'available_title' => 'Saldos iniciais das fichas disponíveis',
                 'available_zero_note' => 'Foram detetados saldos de débito/crédito nas fichas que serão aplicados.',
                 'unavailable_title' => 'Saldos das fichas não disponíveis',
+                'select_management_to_check_balances' => 'Selecione uma gestão para verificar os saldos.',
             ],
             'form' => [
                 'plan_name_label' => 'Nome do plano de prestações',

@@ -215,6 +215,7 @@ return [
                 'available_title' => 'Saldi anagrafiche iniziali disponibili',
                 'available_zero_note' => 'Rilevati saldi a debito/credito nelle anagrafiche che verranno applicati.',
                 'unavailable_title' => 'Saldi anagrafiche non disponibili',
+                'select_management_to_check_balances' => 'Seleziona una gestione per verificare i saldi.',
             ],
             'form' => [
                 'plan_name_label' => 'Nome piano rate',

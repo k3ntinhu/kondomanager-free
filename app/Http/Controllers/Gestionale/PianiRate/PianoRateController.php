@@ -122,13 +122,13 @@ class PianoRateController extends Controller
 
         } else {
             // Comportamento di default (al primo caricamento della pagina)
-            $saldoInfo = [
-                'saldo' => 0,
-                'has_movimenti' => false,
-                'applicabile' => false,
-                'motivo' => 'Seleziona una gestione per verificare i saldi.',
-                'is_primo_anno' => false
-            ];
+                $saldoInfo = [
+                    'saldo' => 0,
+                    'has_movimenti' => false,
+                    'applicabile' => false,
+                    'motivo' => __('gestionale.piani_rate.new.balances.select_management_to_check_balances'),
+                    'is_primo_anno' => false
+                ];
         }
         // -------------------------------------------------------------------
 

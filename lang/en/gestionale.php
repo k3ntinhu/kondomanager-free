@@ -215,6 +215,7 @@ return [
                 'available_title' => 'Initial registry balances available',
                 'available_zero_note' => 'Debit/credit balances were detected in registries and will be applied.',
                 'unavailable_title' => 'Registry balances not available',
+                'select_management_to_check_balances' => 'Select a management period to check balances.',
             ],
             'form' => [
                 'plan_name_label' => 'Rate plan name',
