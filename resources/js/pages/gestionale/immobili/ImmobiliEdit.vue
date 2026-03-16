@@ -30,6 +30,27 @@ const props = defineProps<{
 
 const { generatePath, generateRoute } = usePermission();
 
+const localizeTipologia = (tipologia: TipologiaImmobile): string => {
+  const slug = tipologia.nome
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  const key = `gestionale.immobili_form.property_types.${slug}`;
+  const translated = trans(key);
+
+  return translated === key ? (tipologia.localized_name || tipologia.nome) : translated;
+};
+
+const tipologieOptions = computed(() =>
+  props.tipologie.map((tipologia) => ({
+    ...tipologia,
+    label: localizeTipologia(tipologia),
+  }))
+);
+
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
   { title: trans('gestionale.list_pages.immobili.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, href: '#' },
@@ -137,14 +158,18 @@ const submit = () => {
                   <div class="sm:col-span-2">
                     <Label for="tipologia">{{ trans('gestionale.form_common.labels.type') }}</Label>
                     <v-select 
-                        :options="tipologie" 
-                        label="localized_name" 
+                        :options="tipologieOptions" 
+                        label="label" 
                         class="mt-1 block w-full"
                         v-model="form.tipologia_id"
                         :placeholder="trans('gestionale.immobili_form.create.placeholders.type')"
                         @update:modelValue="form.clearErrors('tipologia_id')" 
                         :reduce="(tipologia: TipologiaImmobile) => tipologia.id"
-                    />
+                    >
+                      <template #no-options>
+                        {{ trans('gestionale.form_common.messages.no_matching_options') }}
+                      </template>
+                    </v-select>
                     <InputError :message="form.errors.tipologia_id" />
                   </div>
 
@@ -158,7 +183,11 @@ const submit = () => {
                           :placeholder="trans('gestionale.immobili_form.create.placeholders.building')"
                           @update:modelValue="form.clearErrors('palazzina_id')" 
                           :reduce="(palazzina: Palazzina) => palazzina.id"
-                      />
+                      >
+                        <template #no-options>
+                          {{ trans('gestionale.form_common.messages.no_matching_options') }}
+                        </template>
+                      </v-select>
                     <InputError :message="form.errors.palazzina_id" />
                   </div>
 
@@ -172,7 +201,11 @@ const submit = () => {
                         :placeholder="trans('gestionale.immobili_form.create.placeholders.stair')"
                         @update:modelValue="form.clearErrors('scala_id')" 
                         :reduce="(scala: Scala) => scala.id"
-                    />
+                    >
+                      <template #no-options>
+                        {{ trans('gestionale.form_common.messages.no_matching_options') }}
+                      </template>
+                    </v-select>
                     <InputError :message="form.errors.scala_id" />
                   </div>
                   
