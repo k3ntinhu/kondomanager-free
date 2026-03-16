@@ -34,30 +34,30 @@ type TabellaType = {
 };
 
 const tipologieTabelle = [
-  { label: 'Standard', id: 'standard' },
-  { label: "Ascensore", id: 'ascensore' },
-  { label: "Riscaldamento", id: 'riscaldamento' },
-  { label: "Acqua", id: 'acqua' },
-  { label: "Lastrico", id: 'lastrico' },
-  { label: "Speciale", id: 'speciale' },
-  { label: "Altro", id: 'altro' }
+  { label: trans('gestionale.tabelle_form.create.type_options.standard'), id: 'standard' },
+  { label: trans('gestionale.tabelle_form.create.type_options.elevator'), id: 'ascensore' },
+  { label: trans('gestionale.tabelle_form.create.type_options.heating'), id: 'riscaldamento' },
+  { label: trans('gestionale.tabelle_form.create.type_options.water'), id: 'acqua' },
+  { label: trans('gestionale.tabelle_form.create.type_options.roof'), id: 'lastrico' },
+  { label: trans('gestionale.tabelle_form.create.type_options.special'), id: 'speciale' },
+  { label: trans('gestionale.tabelle_form.create.type_options.other'), id: 'altro' }
 ];
 
 const unitaMisura = [
-  { label: 'Millesimi', id: 'millesimi' },
-  { label: "Persone", id: 'persone' },
-  { label: "Quote", id: 'quote' },
-  { label: "Kilowatt", id: 'kwatt' },
-  { label: "Metri cubi", id: 'mtcubi' },
+  { label: trans('gestionale.tabelle_form.create.unit_options.thousandths'), id: 'millesimi' },
+  { label: trans('gestionale.tabelle_form.create.unit_options.people'), id: 'persone' },
+  { label: trans('gestionale.tabelle_form.create.unit_options.shares'), id: 'quote' },
+  { label: trans('gestionale.tabelle_form.create.unit_options.kilowatt'), id: 'kwatt' },
+  { label: trans('gestionale.tabelle_form.create.unit_options.cubic_meters'), id: 'mtcubi' },
 ];
 
 const { generatePath, generateRoute } = usePermission();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.tabelle.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, component: "condominio-dropdown" } as any,
-  { title: 'tabelle', href: generatePath('gestionale/:condominio/tabelle', { condominio: props.condominio.id }) },
-  { title: 'crea tabella', href: '#' },
+  { title: trans('gestionale.list_pages.tabelle.breadcrumbs.list'), href: generatePath('gestionale/:condominio/tabelle', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.tabelle_form.create.breadcrumb_create'), href: '#' },
 ]);
 
 const form = useForm({
@@ -80,7 +80,7 @@ const submit = () => {
 </script>
 
 <template>
-  <Head title="Crea nuova tabella" />
+  <Head :title="trans('gestionale.tabelle_form.create.head_title')" />
 
   <GestionaleLayout :breadcrumbs="breadcrumbs">
 
@@ -106,7 +106,7 @@ const submit = () => {
                 class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 <List class="w-4 h-4" />
-                <span>Tabelle</span>
+                <span>{{ trans('gestionale.list_pages.tabelle.menu_title') }}</span>
               </Link>
             </div>
 
@@ -115,13 +115,13 @@ const submit = () => {
             <div class="col-span-1 mt-3">
               <div class="grid grid-cols-1 sm:grid-cols-6 gap-4">
                 <div class="sm:col-span-4">
-                  <Label for="nome">Nome tabella</Label>
+                  <Label for="nome">{{ trans('gestionale.tabelle_form.create.labels.name') }}</Label>
                   <Input
                     id="nome"
                     class="mt-1 block w-full"
                     v-model="form.nome"
                     @focus="form.clearErrors('nome')"
-                    placeholder="Nome tabella"
+                    :placeholder="trans('gestionale.tabelle_form.create.placeholders.name')"
                   />
                   <InputError :message="form.errors.nome" />
                 </div>
@@ -129,13 +129,13 @@ const submit = () => {
 
               <div class="mt-6 grid grid-cols-1 sm:grid-cols-6 gap-4">
                 <div class="sm:col-span-2">
-                  <Label for="palazzina">Palazzina</Label>
+                  <Label for="palazzina">{{ trans('gestionale.list_pages.tabelle.table.building') }}</Label>
                     <v-select 
                         :options="palazzine" 
                         label="name" 
                         class="mt-1 block w-full"
                         v-model="form.palazzina_id"
-                        placeholder="Associa ad una palazzina"
+                        :placeholder="trans('gestionale.tabelle_form.create.placeholders.select_building')"
                         @update:modelValue="form.clearErrors('palazzina_id')" 
                         :reduce="(palazzina: Palazzina) => palazzina.id"
                     />
@@ -143,13 +143,13 @@ const submit = () => {
                 </div>
 
                 <div class="sm:col-span-2">
-                  <Label for="scala">Scala</Label>
+                  <Label for="scala">{{ trans('gestionale.list_pages.tabelle.table.stair') }}</Label>
                   <v-select 
                       :options="scale" 
                       label="name" 
                       class="mt-1 block w-full"
                       v-model="form.scala_id"
-                      placeholder="Associa ad una scala"
+                      :placeholder="trans('gestionale.tabelle_form.create.placeholders.select_stair')"
                       @update:modelValue="form.clearErrors('scala_id')" 
                       :reduce="(scala: Scala) => scala.id"
                   />
@@ -167,33 +167,33 @@ const submit = () => {
                     label="label"
                     v-model="form.tipologia"
                     :reduce="(d: TabellaType) => d.id"
-                    placeholder="Seleziona tipologia tabella"
+                    :placeholder="trans('gestionale.tabelle_form.create.placeholders.select_type')"
                   />
                   <InputError :message="form.errors.tipologia" />
                 </div>
 
                 <div class="sm:col-span-2">
-                  <Label for="unit">Unità di misura</Label>
+                  <Label for="unit">{{ trans('gestionale.tabelle_form.create.labels.unit') }}</Label>
                   <v-select
                     class="w-full mt-1"
                     :options="unitaMisura"
                     label="label"
                     v-model="form.quota"
                     :reduce="(d: TabellaType) => d.id"
-                    placeholder="Seleziona unità di misura"
+                    :placeholder="trans('gestionale.tabelle_form.create.placeholders.select_unit')"
                   />
    
                   <InputError :message="form.errors.quota" />
                 </div>
 
                 <div class="sm:col-span-2">
-                  <Label for="numero_decimali">Numero decimali</Label>
+                  <Label for="numero_decimali">{{ trans('gestionale.tabelle_form.create.labels.decimals') }}</Label>
                   <v-select
                     id="numero_decimali"
                     class="w-full mt-1"
                     :options="[0,1,2,3,4,5]"
                     v-model="form.numero_decimali"
-                    placeholder="Seleziona numero di decimali"
+                    :placeholder="trans('gestionale.tabelle_form.create.placeholders.select_decimals')"
                   />
                   <InputError :message="form.errors.numero_decimali" />
                 </div>
@@ -206,7 +206,7 @@ const submit = () => {
                     id="descrizione"
                     class="mt-1 block w-full"
                     v-model="form.descrizione"
-                    placeholder="Descrizione tabella"
+                    :placeholder="trans('gestionale.tabelle_form.create.placeholders.description')"
                   />
                   <InputError :message="form.errors.descrizione" />
                 </div>
@@ -237,7 +237,7 @@ const submit = () => {
                     for="all_flats"
                     class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    Associa tutti gli immobili
+                    {{ trans('gestionale.tabelle_form.create.labels.associate_all_units') }}
                   </label>
 
                   <HoverCard>
@@ -249,9 +249,9 @@ const submit = () => {
                     <HoverCardContent class="w-80 z-50">
                       <div class="flex justify-between space-x-4">
                         <div class="space-y-1">
-                          <h4 class="text-sm font-semibold">Associa tutti gli immobili</h4>
+                          <h4 class="text-sm font-semibold">{{ trans('gestionale.tabelle_form.create.help.associate_all_title') }}</h4>
                           <p class="text-sm">
-                            Quando viene selezionata questa opzione, tutti gli immobili registrati verranno associati alla tabella in automatico.
+                            {{ trans('gestionale.tabelle_form.create.help.associate_all_description') }}
                           </p>
                         </div>
                       </div>

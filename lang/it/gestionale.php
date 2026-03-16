@@ -536,6 +536,62 @@ return [
             'no_notes' => 'Nessuna nota inserita per questo condominio.',
         ],
     ],
+    'esercizi_form' => [
+        'create' => [
+            'breadcrumb_create' => 'Crea esercizio',
+        ],
+        'edit' => [
+            'breadcrumb_edit' => 'Modifica esercizio',
+        ],
+        'status_options' => [
+            'open' => 'Aperto',
+            'closed' => 'Chiuso',
+        ],
+        'placeholders' => [
+            'status' => 'Stato esercizio',
+        ],
+    ],
+    'tabelle_form' => [
+        'create' => [
+            'head_title' => 'Crea nuova tabella',
+            'breadcrumb_create' => 'Crea tabella',
+            'labels' => [
+                'name' => 'Nome tabella',
+                'unit' => 'Unità di misura',
+                'decimals' => 'Numero decimali',
+                'associate_all_units' => 'Associa tutti gli immobili',
+            ],
+            'placeholders' => [
+                'name' => 'Nome tabella',
+                'select_building' => 'Associa a una palazzina',
+                'select_stair' => 'Associa a una scala',
+                'select_type' => 'Seleziona tipologia tabella',
+                'select_unit' => 'Seleziona unità di misura',
+                'select_decimals' => 'Seleziona numero di decimali',
+                'description' => 'Descrizione tabella',
+            ],
+            'type_options' => [
+                'standard' => 'Standard',
+                'elevator' => 'Ascensore',
+                'heating' => 'Riscaldamento',
+                'water' => 'Acqua',
+                'roof' => 'Lastrico',
+                'special' => 'Speciale',
+                'other' => 'Altro',
+            ],
+            'unit_options' => [
+                'thousandths' => 'Millesimi',
+                'people' => 'Persone',
+                'shares' => 'Quote',
+                'kilowatt' => 'Kilowatt',
+                'cubic_meters' => 'Metri cubi',
+            ],
+            'help' => [
+                'associate_all_title' => 'Associa tutti gli immobili',
+                'associate_all_description' => 'Quando selezioni questa opzione, tutti gli immobili registrati verranno associati automaticamente alla tabella.',
+            ],
+        ],
+    ],
     'casse_form' => [
         'create' => [
             'head_title' => 'Crea risorsa',
@@ -759,6 +815,7 @@ return [
             'loading_data' => 'Caricamento dati...',
             'no_email' => 'Nessuna email',
             'no_data' => 'Nessun dato disponibile',
+            'no_matching_options' => 'Nessuna opzione corrispondente.',
         ],
     ],
 

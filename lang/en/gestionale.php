@@ -536,6 +536,62 @@ return [
             'no_notes' => 'No notes provided for this condominium.',
         ],
     ],
+    'esercizi_form' => [
+        'create' => [
+            'breadcrumb_create' => 'Create fiscal year',
+        ],
+        'edit' => [
+            'breadcrumb_edit' => 'Edit fiscal year',
+        ],
+        'status_options' => [
+            'open' => 'Open',
+            'closed' => 'Closed',
+        ],
+        'placeholders' => [
+            'status' => 'Fiscal year status',
+        ],
+    ],
+    'tabelle_form' => [
+        'create' => [
+            'head_title' => 'Create new table',
+            'breadcrumb_create' => 'Create table',
+            'labels' => [
+                'name' => 'Table name',
+                'unit' => 'Unit of measure',
+                'decimals' => 'Decimal places',
+                'associate_all_units' => 'Associate all units',
+            ],
+            'placeholders' => [
+                'name' => 'Table name',
+                'select_building' => 'Link to a building',
+                'select_stair' => 'Link to a stairwell',
+                'select_type' => 'Select table type',
+                'select_unit' => 'Select unit of measure',
+                'select_decimals' => 'Select number of decimal places',
+                'description' => 'Table description',
+            ],
+            'type_options' => [
+                'standard' => 'Standard',
+                'elevator' => 'Elevator',
+                'heating' => 'Heating',
+                'water' => 'Water',
+                'roof' => 'Roof',
+                'special' => 'Special',
+                'other' => 'Other',
+            ],
+            'unit_options' => [
+                'thousandths' => 'Thousandths',
+                'people' => 'People',
+                'shares' => 'Shares',
+                'kilowatt' => 'Kilowatt',
+                'cubic_meters' => 'Cubic meters',
+            ],
+            'help' => [
+                'associate_all_title' => 'Associate all units',
+                'associate_all_description' => 'When this option is selected, all registered units are automatically associated with the table.',
+            ],
+        ],
+    ],
     'casse_form' => [
         'create' => [
             'head_title' => 'Create resource',
@@ -759,6 +815,7 @@ return [
             'loading_data' => 'Loading data...',
             'no_email' => 'No email',
             'no_data' => 'No data available',
+            'no_matching_options' => 'No matching options.',
         ],
     ],
 ];

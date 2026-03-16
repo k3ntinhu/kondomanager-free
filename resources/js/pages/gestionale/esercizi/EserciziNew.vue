@@ -29,10 +29,10 @@ const { generatePath, generateRoute } = usePermission();
 const { toBackend } = useDateConverter();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.esercizi.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, component: "condominio-dropdown" } as any,
-  { title: 'esercizi', href: generatePath('gestionale/:condominio/esercizi', { condominio: props.condominio.id }) },
-  { title: 'crea esercizio', href: '#' },
+  { title: trans('gestionale.list_pages.esercizi.breadcrumbs.list'), href: generatePath('gestionale/:condominio/esercizi', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.esercizi_form.create.breadcrumb_create'), href: '#' },
 ]);
 
 type DocumentType = {
@@ -42,11 +42,11 @@ type DocumentType = {
 
 const stati = [
   {
-      label: 'Aperto',
+      label: trans('gestionale.esercizi_form.status_options.open'),
       id: 'aperto',
   },
   {
-      label: "Chiuso",
+      label: trans('gestionale.esercizi_form.status_options.closed'),
       id: 'chiuso',
   }
 ];
@@ -147,16 +147,20 @@ const submit = () => {
                         <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
             
                             <div class="sm:col-span-2">
-                            <Label for="tipologia">Stato</Label>
+                            <Label for="tipologia">{{ trans('gestionale.form_common.labels.status') }}</Label>
                             <v-select 
                                 :options="stati" 
                                 label="label" 
                                 class="block w-full"
                                 v-model="form.stato"
-                                placeholder="Stato dell'esercizio"
+                                :placeholder="trans('gestionale.esercizi_form.placeholders.status')"
                                 @update:modelValue="form.clearErrors('stato')" 
                                 :reduce="(d: DocumentType) => d.id"
-                            />
+                            >
+                                <template #no-options>
+                                    {{ trans('gestionale.form_common.messages.no_matching_options') }}
+                                </template>
+                            </v-select>
                             <InputError :message="form.errors.stato" />
                             </div>
 

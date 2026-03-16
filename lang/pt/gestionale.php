@@ -536,6 +536,62 @@ return [
             'no_notes' => 'Sem notas para este condomínio.',
         ],
     ],
+    'esercizi_form' => [
+        'create' => [
+            'breadcrumb_create' => 'Criar exercício',
+        ],
+        'edit' => [
+            'breadcrumb_edit' => 'Editar exercício',
+        ],
+        'status_options' => [
+            'open' => 'Aberto',
+            'closed' => 'Fechado',
+        ],
+        'placeholders' => [
+            'status' => 'Estado do exercício',
+        ],
+    ],
+    'tabelle_form' => [
+        'create' => [
+            'head_title' => 'Criar nova tabela',
+            'breadcrumb_create' => 'Criar tabela',
+            'labels' => [
+                'name' => 'Nome da tabela',
+                'unit' => 'Unidade de medida',
+                'decimals' => 'Número de casas decimais',
+                'associate_all_units' => 'Associar todos os imóveis',
+            ],
+            'placeholders' => [
+                'name' => 'Nome da tabela',
+                'select_building' => 'Associar a um bloco',
+                'select_stair' => 'Associar a uma escada',
+                'select_type' => 'Selecionar tipologia da tabela',
+                'select_unit' => 'Selecionar unidade de medida',
+                'select_decimals' => 'Selecionar número de casas decimais',
+                'description' => 'Descrição da tabela',
+            ],
+            'type_options' => [
+                'standard' => 'Padrão',
+                'elevator' => 'Elevador',
+                'heating' => 'Aquecimento',
+                'water' => 'Água',
+                'roof' => 'Cobertura',
+                'special' => 'Especial',
+                'other' => 'Outro',
+            ],
+            'unit_options' => [
+                'thousandths' => 'Permilagem',
+                'people' => 'Pessoas',
+                'shares' => 'Quotas',
+                'kilowatt' => 'Quilowatt',
+                'cubic_meters' => 'Metros cúbicos',
+            ],
+            'help' => [
+                'associate_all_title' => 'Associar todos os imóveis',
+                'associate_all_description' => 'Ao selecionar esta opção, todos os imóveis registados serão associados automaticamente à tabela.',
+            ],
+        ],
+    ],
     'casse_form' => [
         'create' => [
             'head_title' => 'Criar recurso',
@@ -759,6 +815,7 @@ return [
             'loading_data' => 'A carregar dados...',
             'no_email' => 'Sem email',
             'no_data' => 'Sem dados disponíveis',
+            'no_matching_options' => 'Sem opções correspondentes.',
         ],
     ],
 ];
