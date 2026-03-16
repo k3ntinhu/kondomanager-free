@@ -1,17 +1,17 @@
 <script setup lang="ts">
 
 import { computed, onMounted, watch } from "vue";
-import { usePage } from "@inertiajs/vue3";
-import DataTable from '@/components/fornitori/DataTable.vue';
+import { usePage, Head } from "@inertiajs/vue3";
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
 import PageHeaderGuide from '@/components/PageHeaderGuide.vue';
+import DataTable from '@/components/fornitori/DataTable.vue';
 import { columns } from '@/components/fornitori/columns';
 import Alert from "@/components/Alert.vue";
 import { trans } from 'laravel-vue-i18n';
-import type { BreadcrumbItem } from '@/types';
+import { Truck, ShieldCheck, PlusCircle } from 'lucide-vue-next';
 import type { Flash } from '@/types/flash';
 import type { Fornitore } from '@/types/fornitori';
+import type { BreadcrumbItem } from '@/types';
 
 defineProps<{ 
   fornitori: Fornitore[],
@@ -23,55 +23,60 @@ defineProps<{
   } 
 }>()
 
-// Extract `$page` props with proper typing
 const page = usePage<{ flash: { message?: Flash } }>();
-
-// Computed property to safely access flash messages
 const flashMessage = computed(() => page.props.flash.message);
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: trans('fornitori.header.list_title'),
-        href: '/fornitori',
-    },
-];
+const breadcrumbs: BreadcrumbItem[] = [];
 
-// Scroll to top when flashMessage exists
+const pageGuides = computed(() => [
+  {
+    title: trans('fornitori.guides.portfolio_title'),
+    description: trans('fornitori.guides.portfolio_desc'),
+    icon: Truck,
+    colorVariant: 'blue' as const
+  },
+  {
+    title: trans('fornitori.guides.compliance_title'),
+    description: trans('fornitori.guides.compliance_desc'),
+    icon: ShieldCheck,
+    colorVariant: 'amber' as const
+  },
+  {
+    title: trans('fornitori.guides.management_title'),
+    description: trans('fornitori.guides.management_desc'),
+    icon: PlusCircle,
+    colorVariant: 'emerald' as const
+  }
+]);
+
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-// Scroll on mount and watch for flash message changes
 onMounted(() => {
-  if (flashMessage.value) {
-    scrollToTop();
-  }
+  if (flashMessage.value) scrollToTop();
 });
 
-// Optional: Watch for flashMessage changes (e.g., after Inertia navigation)
 watch(flashMessage, (newValue) => {
-  if (newValue) {
-    scrollToTop();
-  }
+  if (newValue) scrollToTop();
 });
-
 </script>
 
 <template>
-
-  <Head :title="trans('fornitori.header.list_title')" />
+  <Head :title="trans('fornitori.header.list_fornitori_title')" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-
-    <div class="px-4 py-6">
+    <div class="px-6 py-8 space-y-6">
       
-      <Heading :title="trans('fornitori.header.list_title')" :description="trans('fornitori.header.list_description')" />
+      <PageHeaderGuide
+        :page-title="trans('fornitori.header.list_fornitori_title')"
+        :page-subtitle="trans('fornitori.header.list_fornitori_description')"
+        :guides="pageGuides"
+        :breadcrumbs="breadcrumbs"
+        :video-url="null"
+      />
     
-      <div v-if="flashMessage" class="py-4"> 
-        <Alert :message="flashMessage.message" :type="flashMessage.type" />
-      </div>
-
       <div class="w-full">
         <section class="w-full">
-          <div v-if="flashMessage" class="py-3">
+          <div v-if="flashMessage" class="py-3"> 
             <Alert :message="flashMessage.message" :type="flashMessage.type" />
           </div>
 
@@ -80,7 +85,7 @@ watch(flashMessage, (newValue) => {
           </div>
         </section>
       </div>
+
     </div>
   </AppLayout> 
-
 </template>
