@@ -2,6 +2,7 @@
 
 import { ref, reactive, computed, watch } from "vue";
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { trans } from "laravel-vue-i18n";
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import { usePermission } from "@/composables/permissions";
 import { useDateConverter } from '@/composables/useDateConverter';
@@ -82,7 +83,7 @@ const isDisallineato = computed(() => {
 
 const confirmDetachItem = (capitolo: any) => {
     if (aggregates.value.totaleVersato > 0) {
-        showFeedback('Azione bloccata', 'Non puoi rimuovere voci se ci sono incassi registrati.', true);
+        showFeedback(trans('gestionale.piani_rate.show.feedback.blocked_action_title'), trans('gestionale.piani_rate.show.feedback.cannot_remove_with_collections'), true);
         return;
     }
 
@@ -93,15 +94,15 @@ const confirmDetachItem = (capitolo: any) => {
     const isSource = movimenti.some((m: any) => Number(m.source_conto_id) === capId);
 
     if (isDestination || isSource) {
-        let msg = `Il capitolo "${capitolo.nome}" è vincolato. `;
+        let msg = trans('gestionale.piani_rate.show.feedback.chapter_locked_prefix', { chapter: capitolo.nome });
         if (isDestination) {
-            msg += `Ha RICEVUTO fondi extra da altre voci. `;
+            msg += trans('gestionale.piani_rate.show.feedback.chapter_received_funds');
         } else {
-            msg += `Ha FINANZIATO altre voci (Sposta Spesa). `;
+            msg += trans('gestionale.piani_rate.show.feedback.chapter_financed_others');
         }
-        msg += `Per mantenere la coerenza contabile, devi annullare questi movimenti (restituendo i fondi) prima di eliminare la voce.`;
+        msg += trans('gestionale.piani_rate.show.feedback.chapter_locked_suffix');
 
-        showFeedback('Voce bloccata da movimenti', msg, true);
+        showFeedback(trans('gestionale.piani_rate.show.feedback.item_locked_by_movements'), msg, true);
         return; 
     }
 
@@ -140,12 +141,12 @@ const executeDetachItem = () => {
         onSuccess: () => {
             isDeleteItemModalOpen.value = false;
             itemToDelete.value = null;
-            showFeedback('Voce rimossa', 'Il piano è stato ricalcolato senza la voce selezionata.', false);
+            showFeedback(trans('gestionale.piani_rate.show.feedback.item_removed_title'), trans('gestionale.piani_rate.show.feedback.item_removed_description'), false);
         },
         onError: (errors) => {
             isDeleteItemModalOpen.value = false;
-            const msg = page.props.flash.message?.message || Object.values(errors)[0] || "Errore durante la rimozione.";
-            showFeedback('Impossibile rimuovere', msg, true);
+            const msg = page.props.flash.message?.message || Object.values(errors)[0] || trans('gestionale.piani_rate.show.feedback.remove_error_generic');
+            showFeedback(trans('gestionale.piani_rate.show.feedback.cannot_remove_title'), msg, true);
         }
     });
 };
@@ -194,11 +195,11 @@ const executeMigration = () => {
         preserveScroll: true,
         onSuccess: () => {
             isMigrationDialogOpen.value = false;
-            showFeedback('Aggiornamento completato', 'Il piano rate è stato aggiornato alla nuova versione contabile (v1.8).', false);
+            showFeedback(trans('gestionale.piani_rate.show.feedback.update_completed_title'), trans('gestionale.piani_rate.show.feedback.update_completed_description'), false);
         },
         onError: () => {
              isMigrationDialogOpen.value = false; 
-             showFeedback('Attenzione', 'Impossibile aggiornare automaticamente il piano rate (probabilmente ci sono rate emesse). Il piano resterà nella versione precedente.', true);
+             showFeedback(trans('gestionale.piani_rate.show.feedback.warning'), trans('gestionale.piani_rate.show.feedback.migration_failed_description'), true);
         }
     });
 };
@@ -224,7 +225,7 @@ const toggleStatoPiano = (newValue: boolean) => {
             onError: (err) => {
                 console.error("Errore cambio stato:", err);
                 switchState.value = !newValue;
-                showFeedback('Errore', 'Impossibile cambiare lo stato del piano. Controlla che non ci siano rate emesse.', true);
+                showFeedback(trans('gestionale.piani_rate.show.feedback.error'), trans('gestionale.piani_rate.show.feedback.cannot_change_status'), true);
             },
             onFinish: () => {
                 isProcessingStatus.value = false;
@@ -280,13 +281,13 @@ const submitEmissione = () => {
         onSuccess: () => {
             isEmissionModalOpen.value = false;
             selectedRateIds.value = [];
-            showFeedback('Emissione completata', `Sono state emesse correttamente ${formEmissione.rate_ids.length} rate.`, false);
+            showFeedback(trans('gestionale.piani_rate.show.feedback.emission_completed_title'), trans('gestionale.piani_rate.show.feedback.emission_completed_description', { count: formEmissione.rate_ids.length }), false);
         },
         onError: (errors) => {
             console.error("Errore emissione:", errors);
             const flashError = page.props.flash.message?.type === 'error' ? page.props.flash.message.message : null;
-            const msg = flashError || Object.values(errors)[0] || "Si è verificato un errore imprevisto.";
-            showFeedback('Errore emissione', msg, true); 
+            const msg = flashError || Object.values(errors)[0] || trans('gestionale.piani_rate.show.feedback.unexpected_error');
+            showFeedback(trans('gestionale.piani_rate.show.feedback.emission_error_title'), msg, true); 
         },
     });
 };
@@ -313,18 +314,18 @@ const executeAnnullamento = () => {
             // (Inertia tratta i redirect con errors/flash come un 'success' HTTP)
             const flash = (page.props.flash as any).message;
             if (flash && flash.type === 'error') {
-                showFeedback('Impossibile annullare', flash.message, true);
+                showFeedback(trans('gestionale.piani_rate.show.feedback.cannot_cancel_title'), flash.message, true);
                 return; // Fermiamo l'esecuzione per non mostrare il messaggio verde!
             }
 
             // Altrimenti, mostriamo il vero successo
-            showFeedback('Emissione annullata', 'La rata è tornata in stato di bozza.', false);
+            showFeedback(trans('gestionale.piani_rate.show.feedback.emission_cancelled_title'), trans('gestionale.piani_rate.show.feedback.emission_cancelled_description'), false);
         },
         onError: (errors) => {
             // Qui entra solo se c'è un VERO errore HTTP (es. 500 Server Error)
             isAlertOpen.value = false;
-            const msg = Object.values(errors)[0] || 'Si è verificato un errore tecnico.';
-            showFeedback('Errore di sistema', msg, true);
+            const msg = Object.values(errors)[0] || trans('gestionale.piani_rate.show.feedback.technical_error');
+            showFeedback(trans('gestionale.piani_rate.show.feedback.system_error_title'), msg, true);
         }
     });
 };
@@ -334,8 +335,8 @@ const confirmRecalculate = () => {
 
     if (haRateEmesse) {
         showFeedback(
-            'Impossibile ricalcolare', 
-            'Ci sono rate già emesse in contabilità. Per sicurezza, devi prima annullare le emissioni usando il tasto "Annulla" nella tabella.', 
+            trans('gestionale.piani_rate.show.feedback.cannot_recalculate_title'), 
+            trans('gestionale.piani_rate.show.feedback.cannot_recalculate_emitted_rates'), 
             true 
         );
         return; 
@@ -365,27 +366,27 @@ const executeRecalculate = () => {
         preserveScroll: true,
         onSuccess: () => {
             isRecalculateAlertOpen.value = false;
-            showFeedback('Operazione Completata', 'Il piano rate è stato aggiornato.', false);
+            showFeedback(trans('gestionale.piani_rate.show.feedback.operation_completed_title'), trans('gestionale.piani_rate.show.feedback.plan_updated'), false);
         }
     });
 };
 
 const getRataStyle = (rata: any) => {
   const scaduta = new Date(rata.scadenza) < new Date() && rata.stato === 'da_pagare';
-  if (rata.stato === 'annullata') return { container: 'bg-gray-50 border-gray-200 text-gray-400 opacity-60', text: 'line-through decoration-gray-400', icon: Ban, label: 'Annullata' };
-  if (rata.importo < 0 || rata.stato === 'credito') return { container: 'bg-blue-50 border-blue-200 text-blue-700', text: 'font-bold', icon: Coins, label: 'Credito' };
-  if (rata.stato === 'pagata') return { container: 'bg-emerald-50 border-emerald-200 text-emerald-700', text: 'font-bold', icon: CheckCircle2, label: 'Saldata' };
-  if (rata.stato === 'parzialmente_pagata') return { container: 'bg-amber-50 border-amber-300 text-amber-800 ring-1 ring-amber-100/50', text: 'font-bold', icon: PieChart, label: 'Parziale' };
-  if (scaduta) return { container: 'bg-white border-red-300 text-red-700 shadow-sm', text: 'font-bold', icon: AlertCircle, label: 'Scaduta' };
-  return { container: 'bg-white border-gray-200 text-gray-500 hover:border-gray-300', text: '', icon: Clock, label: 'In attesa' };
+  if (rata.stato === 'annullata') return { container: 'bg-gray-50 border-gray-200 text-gray-400 opacity-60', text: 'line-through decoration-gray-400', icon: Ban, label: trans('gestionale.piani_rate.show.rate_status.cancelled') };
+  if (rata.importo < 0 || rata.stato === 'credito') return { container: 'bg-blue-50 border-blue-200 text-blue-700', text: 'font-bold', icon: Coins, label: trans('gestionale.piani_rate.show.rate_status.credit') };
+  if (rata.stato === 'pagata') return { container: 'bg-emerald-50 border-emerald-200 text-emerald-700', text: 'font-bold', icon: CheckCircle2, label: trans('gestionale.piani_rate.show.rate_status.paid') };
+  if (rata.stato === 'parzialmente_pagata') return { container: 'bg-amber-50 border-amber-300 text-amber-800 ring-1 ring-amber-100/50', text: 'font-bold', icon: PieChart, label: trans('gestionale.piani_rate.show.rate_status.partial') };
+  if (scaduta) return { container: 'bg-white border-red-300 text-red-700 shadow-sm', text: 'font-bold', icon: AlertCircle, label: trans('gestionale.piani_rate.show.rate_status.overdue') };
+  return { container: 'bg-white border-gray-200 text-gray-500 hover:border-gray-300', text: '', icon: Clock, label: trans('gestionale.piani_rate.show.rate_status.pending') };
 };
 
 const getResiduoTooltip = (rata: any) => {
-    if(rata.stato === 'pagata') return `Pagato il ${rata.data_pagamento ? toItalian(rata.data_pagamento) : '-'}`;
+    if(rata.stato === 'pagata') return trans('gestionale.piani_rate.show.tooltips.paid_on', { date: rata.data_pagamento ? toItalian(rata.data_pagamento) : '-' });
     if(rata.stato === 'parzialmente_pagata') {
         const pagato = rata.importo_pagato ?? 0; 
         const residuo = (rata.importo ?? 0) - pagato;
-        return `Versati: ${euro(pagato)} | Restano: ${euro(residuo)}`;
+        return trans('gestionale.piani_rate.show.tooltips.paid_remaining', { paid: euro(pagato), remaining: euro(residuo) });
     }
     return null;
 }
@@ -394,7 +395,7 @@ const immobileDettagli = (immobile: any) => {
   if (!immobile) return "";
   const interno = immobile.interno ?? "-";
   const piano = immobile.piano ?? "-";
-  return `Int. ${interno} • Piano ${piano}`;
+  return `${trans('gestionale.piani_rate.show.labels.unit_short')} ${interno} • ${trans('gestionale.piani_rate.show.labels.floor')} ${piano}`;
 };
 
 const isVoceRicevente = (capitoloId: number) => {
@@ -499,10 +500,10 @@ const aggregates = computed(() => {
 });
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.piani_rate.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, href: '#' },
-  { title: 'Piani Rate', href: generatePath('gestionale/:condominio/esercizi/:esercizio/piani-rate', { condominio: props.condominio.id, esercizio: props.esercizio.id }) },
-  { title: 'Dettaglio', href: '#' },
+  { title: trans('gestionale.piani_rate.page_title'), href: generatePath('gestionale/:condominio/esercizi/:esercizio/piani-rate', { condominio: props.condominio.id, esercizio: props.esercizio.id }) },
+  { title: trans('gestionale.piani_rate.show.breadcrumb_detail'), href: '#' },
 ]);
 
 // --- HELPER ESTRAZIONE SALDI PER UI V1.9 ---
@@ -548,7 +549,7 @@ const executePublishSilent = () => {
     }), {}, {
         preserveScroll: true,
         onSuccess: () => {
-            showFeedback('Pubblicazione completata', 'Le rate sono ora visibili ai condòmini e le notifiche sono state inviate.', false);
+            showFeedback(trans('gestionale.piani_rate.show.feedback.publish_completed_title'), trans('gestionale.piani_rate.show.feedback.publish_completed_description'), false);
         }
     });
 };
@@ -557,7 +558,7 @@ const executePublishSilent = () => {
 
 <template>   
 
-  <Head title="Dettaglio piano rate" />
+  <Head :title="trans('gestionale.piani_rate.show.head_title')" />
 
   <GestionaleLayout :breadcrumbs="breadcrumbs">
     <div class="px-4 py-6">
@@ -565,8 +566,8 @@ const executePublishSilent = () => {
         <section class="w-full space-y-6">
 
           <Heading 
-            :title="`Piano rate: ${props.pianoRate.nome}`" 
-            description="Situazione aggiornata delle rate e dei pagamenti."
+            :title="`${trans('gestionale.piani_rate.show.plan_title_prefix')}: ${props.pianoRate.nome}`" 
+            :description="trans('gestionale.piani_rate.show.subtitle')"
           />
           <div v-if="flashMessage" class="animate-in fade-in slide-in-from-top-4 duration-300">
               <Alert :message="flashMessage.message" :type="flashMessage.type" />
@@ -579,8 +580,8 @@ const executePublishSilent = () => {
               </div>
               <div class="ml-3 flex-1 md:flex md:justify-between">
                 <p class="text-sm text-amber-800">
-                  <strong>Stato Bozza:</strong> Il piano è attualmente modificabile e non ha generato movimenti contabili.
-                  <span class="block sm:inline mt-1 sm:mt-0">Controlla i dati, poi passa allo stato <strong>Approvato</strong> per rendere esecutive le rate ed emetterle.</span>
+                  <strong>{{ trans('gestionale.piani_rate.show.draft_state.title') }}</strong> {{ trans('gestionale.piani_rate.show.draft_state.description') }}
+                  <span class="block sm:inline mt-1 sm:mt-0">{{ trans('gestionale.piani_rate.show.draft_state.cta') }}</span>
                 </p>
               </div>
             </div>
@@ -591,8 +592,8 @@ const executePublishSilent = () => {
             <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 w-full">
               
                 <TabsList class="grid w-full xl:w-[350px] grid-cols-2 bg-muted p-1 rounded-lg shrink-0">
-                    <TabsTrigger value="anagrafica">Per anagrafica</TabsTrigger>
-                    <TabsTrigger value="immobile">Per immobile</TabsTrigger>
+                    <TabsTrigger value="anagrafica">{{ trans('gestionale.piani_rate.show.tabs.by_registry') }}</TabsTrigger>
+                    <TabsTrigger value="immobile">{{ trans('gestionale.piani_rate.show.tabs.by_property') }}</TabsTrigger>
                 </TabsList>
 
                 <div class="flex flex-wrap items-center justify-start xl:justify-end gap-3 w-full">
@@ -613,7 +614,7 @@ const executePublishSilent = () => {
                                       role="switch"
                                       :aria-checked="switchState"
                                   >
-                                      <span class="sr-only">Cambia stato piano</span>
+                                      <span class="sr-only">{{ trans('gestionale.piani_rate.show.labels.change_plan_status') }}</span>
                                       <span 
                                           aria-hidden="true" 
                                           class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
@@ -637,7 +638,7 @@ const executePublishSilent = () => {
                                       :class="{'opacity-50 cursor-not-allowed': isProcessingStatus || (switchState && props.ratePure.some(r => r.is_emessa))}"
                                       @click="!(isProcessingStatus || (switchState && props.ratePure.some(r => r.is_emessa))) && toggleStatoPiano(!switchState)"
                                   >
-                                      {{ switchState ? 'Approvato' : 'Bozza' }}
+                                      {{ switchState ? trans('gestionale.piani_rate.show.status.approved') : trans('gestionale.piani_rate.show.status.draft') }}
                                   </Label>
                               </div>
                           </HoverCardTrigger>
@@ -645,42 +646,42 @@ const executePublishSilent = () => {
                               
                               <div v-if="switchState && props.ratePure.some(r => r.is_emessa)" class="space-y-3">
                                   <h4 class="text-sm font-semibold flex items-center gap-2 text-amber-700">
-                                      <Lock class="w-4 h-4 text-amber-600" /> Azione Bloccata
+                                      <Lock class="w-4 h-4 text-amber-600" /> {{ trans('gestionale.piani_rate.show.hover.blocked_action') }}
                                   </h4>
                                   <div class="text-sm space-y-2 text-slate-600">
                                       <p>
-                                          Non puoi tornare in stato <strong>Bozza</strong> perché ci sono rate già emesse in contabilità.
+                                          {{ trans('gestionale.piani_rate.show.hover.cannot_back_to_draft') }}
                                       </p>
                                       <p class="text-[11px] text-slate-500">
-                                          Per sbloccare l'interruttore, annulla prima le emissioni usando il tasto con la freccia circolare nella tabella qui sotto.
+                                          {{ trans('gestionale.piani_rate.show.hover.unlock_instruction') }}
                                       </p>
                                   </div>
                               </div>
 
                               <div v-else-if="switchState" class="space-y-3">
                                   <h4 class="text-sm font-semibold flex items-center gap-2 text-emerald-700">
-                                      <CheckCircle2 class="w-4 h-4 text-emerald-600" /> Stato: Approvato
+                                      <CheckCircle2 class="w-4 h-4 text-emerald-600" /> {{ trans('gestionale.piani_rate.show.hover.status_approved') }}
                                   </h4>
                                   <div class="text-sm space-y-2 text-slate-600">
                                       <p>
-                                          Il piano rate è protetto da modifiche strutturali (es. aggiunta/rimozione capitoli).
+                                          {{ trans('gestionale.piani_rate.show.hover.approved_description') }}
                                       </p>
                                       <p class="text-[11px] text-slate-500">
-                                          Puoi procedere con l'emissione delle rate, oppure tornare in Bozza se devi ricalcolare gli importi.
+                                          {{ trans('gestionale.piani_rate.show.hover.approved_hint') }}
                                       </p>
                                   </div>
                               </div>
 
                               <div v-else class="space-y-3">
                                   <h4 class="text-sm font-semibold flex items-center gap-2 text-slate-700">
-                                      <History class="w-4 h-4 text-slate-500" /> Stato: Bozza
+                                      <History class="w-4 h-4 text-slate-500" /> {{ trans('gestionale.piani_rate.show.hover.status_draft') }}
                                   </h4>
                                   <div class="text-sm space-y-2 text-slate-600">
                                       <p>
-                                          Il piano rate è in fase di costruzione. Le rate non sono ancora state generate nel Libro Giornale.
+                                          {{ trans('gestionale.piani_rate.show.hover.draft_description') }}
                                       </p>
                                       <p class="text-[11px] text-slate-500 font-medium">
-                                          Clicca l'interruttore per passare ad Approvato e sbloccare i tasti di emissione.
+                                          {{ trans('gestionale.piani_rate.show.hover.draft_hint') }}
                                       </p>
                                   </div>
                               </div>
@@ -701,21 +702,21 @@ const executePublishSilent = () => {
                                           :class="{'pointer-events-none': selectedRateIds.length === 0}"
                                           @click="openEmissionModal"
                                       >
-                                          <Wallet class="w-4 h-4 mr-2" /> Emetti ({{ selectedRateIds.length }})
+                                          <Wallet class="w-4 h-4 mr-2" /> {{ trans('gestionale.piani_rate.show.actions.emit') }} ({{ selectedRateIds.length }})
                                       </Button>
                                   </span>
                               </HoverCardTrigger>
                               <HoverCardContent class="w-80 z-50">
                                   <div class="space-y-3">
                                       <h4 class="text-sm font-semibold flex items-center gap-2 text-emerald-800">
-                                          <Wallet class="w-4 h-4 text-emerald-600" /> Emissione rate
+                                          <Wallet class="w-4 h-4 text-emerald-600" /> {{ trans('gestionale.piani_rate.show.hover.installments_emission') }}
                                       </h4>
                                       <div class="text-sm space-y-2 text-slate-600">
                                           <p v-if="selectedRateIds.length === 0">
-                                              Usa le <strong>spunte nella tabella</strong> qui sotto per selezionare le rate che vuoi emettere in contabilità.
+                                              {{ trans('gestionale.piani_rate.show.hover.select_rows_to_emit') }}
                                           </p>
                                           <p v-else>
-                                              Stai per emettere <strong>{{ selectedRateIds.length }}</strong> rate. Verranno generate le scritture contabili in Prima Nota.
+                                              {{ trans('gestionale.piani_rate.show.hover.emit_count', { count: selectedRateIds.length }) }}
                                           </p>
                                       </div>
                                   </div>
@@ -726,21 +727,21 @@ const executePublishSilent = () => {
                               <HoverCardTrigger as-child>
                                   <span class="inline-block" tabindex="0">
                                       <Button disabled variant="secondary" class="h-8 px-3 opacity-70 w-full pointer-events-none">
-                                          <Lock class="w-4 h-4 mr-2" /> Approva per emettere
+                                          <Lock class="w-4 h-4 mr-2" /> {{ trans('gestionale.piani_rate.show.actions.approve_to_emit') }}
                                       </Button>
                                   </span>
                               </HoverCardTrigger>
                               <HoverCardContent class="w-80 z-50">
                                   <div class="space-y-3">
                                       <h4 class="text-sm font-semibold flex items-center gap-2 text-slate-800">
-                                          <Lock class="w-4 h-4 text-slate-500" /> Emissione bloccata
+                                          <Lock class="w-4 h-4 text-slate-500" /> {{ trans('gestionale.piani_rate.show.hover.emission_blocked') }}
                                       </h4>
                                       <div class="text-sm space-y-2 text-slate-600">
                                           <p>
-                                              Il piano rate è attualmente in stato <strong>Bozza</strong>.
+                                              {{ trans('gestionale.piani_rate.show.hover.plan_is_draft') }}
                                           </p>
                                           <p>
-                                              Usa l'interruttore a sinistra per passare allo stato <strong>Approvato</strong>. Solo in quel momento potrai procedere con l'emissione.
+                                              {{ trans('gestionale.piani_rate.show.hover.switch_to_approved') }}
                                           </p>
                                       </div>
                                   </div>
@@ -750,15 +751,15 @@ const executePublishSilent = () => {
                           <HoverCard v-if="props.has_unpublished_rates">
                               <HoverCardTrigger as-child>
                                   <Button variant="outline" class="h-8 px-3 border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 hover:text-amber-800 shadow-sm transition-all" @click="executePublishSilent">
-                                      <BellRing class="w-4 h-4 sm:mr-2" /> <span class="hidden sm:inline">Pubblica nascoste</span>
+                                      <BellRing class="w-4 h-4 sm:mr-2" /> <span class="hidden sm:inline">{{ trans('gestionale.piani_rate.show.actions.publish_hidden') }}</span>
                                   </Button>
                               </HoverCardTrigger>
                               <HoverCardContent class="w-80 z-50">
                                   <div class="space-y-3">
-                                      <h4 class="text-sm font-semibold flex items-center gap-2 text-amber-700"><BellRing class="w-4 h-4" /> Rate in Sospeso</h4>
+                                      <h4 class="text-sm font-semibold flex items-center gap-2 text-amber-700"><BellRing class="w-4 h-4" /> {{ trans('gestionale.piani_rate.show.hover.pending_installments') }}</h4>
                                       <div class="text-sm space-y-2 text-slate-600">
-                                          <p>Ci sono rate emesse contabilmente ma attualmente <strong>nascoste</strong> ai condòmini.</p>
-                                          <p>Clicca questo pulsante per sbloccarne la visibilità nell'App e <strong>inviare le notifiche</strong> (Push/Email).</p>
+                                          <p>{{ trans('gestionale.piani_rate.show.hover.hidden_installments_description') }}</p>
+                                          <p>{{ trans('gestionale.piani_rate.show.hover.publish_and_notify') }}</p>
                                       </div>
                                   </div>
                               </HoverCardContent>
@@ -778,24 +779,24 @@ const executePublishSilent = () => {
                               >
                                   <RotateCw class="w-4 h-4" :class="{'text-amber-600': (copertura?.scoperto_count ?? 0) > 0}" />
                                   <span :class="{'text-amber-700 font-bold': (copertura?.scoperto_count ?? 0) > 0}">
-                                      {{ (copertura?.scoperto_count ?? 0) > 0 ? 'Sincronizza' : 'Ricalcola' }}
+                                      {{ (copertura?.scoperto_count ?? 0) > 0 ? trans('gestionale.piani_rate.show.actions.sync') : trans('gestionale.piani_rate.show.actions.recalculate') }}
                                   </span>
                               </Button>
                           </HoverCardTrigger>
                           <HoverCardContent class="w-80 z-50">
                               <div class="space-y-3">
                                   <h4 class="text-sm font-semibold flex items-center gap-2 text-slate-800">
-                                      <RotateCw class="w-4 h-4 text-primary" /> Ricalcolo piano rate
+                                      <RotateCw class="w-4 h-4 text-primary" /> {{ trans('gestionale.piani_rate.show.hover.recalculate_title') }}
                                   </h4>
                                   <div class="text-sm space-y-2 text-slate-600">
                                       <p>
-                                          Rigenera le quote del piano rate in base ai millesimi attuali e ai preventivi di spesa aggiornati.
+                                          {{ trans('gestionale.piani_rate.show.hover.recalculate_description') }}
                                       </p>
                                       <div v-if="(copertura?.scoperto_count ?? 0) > 0" class="p-2 bg-amber-50 rounded-md border border-amber-200 text-amber-800 text-xs">
-                                          <strong>Sincronizzazione necessaria:</strong> Ci sono voci di spesa scoperte che possono essere incluse in questo piano.
+                                          <strong>{{ trans('gestionale.piani_rate.show.hover.sync_required_title') }}</strong> {{ trans('gestionale.piani_rate.show.hover.sync_required_description') }}
                                       </div>
                                       <p v-if="aggregates.totaleVersato > 0" class="text-red-500 font-medium text-xs mt-1">
-                                          <Lock class="w-3 h-3 inline mr-1"/> Disabilitato: ci sono incassi registrati.
+                                          <Lock class="w-3 h-3 inline mr-1"/> {{ trans('gestionale.piani_rate.show.hover.disabled_with_collections') }}
                                       </p>
                                   </div>
                               </div>
@@ -805,20 +806,20 @@ const executePublishSilent = () => {
                       <HoverCard>
                           <HoverCardTrigger as-child>
                               <Button variant="outline" class="h-9 px-3 border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 bg-white" @click="isSpostaSpesaOpen = true">
-                                  <ArrowRightLeft class="w-4 h-4 sm:mr-2" /> <span class="hidden sm:inline">Sposta spesa</span>
+                                  <ArrowRightLeft class="w-4 h-4 sm:mr-2" /> <span class="hidden sm:inline">{{ trans('gestionale.piani_rate.show.actions.move_expense') }}</span>
                               </Button>
                           </HoverCardTrigger>
                           <HoverCardContent class="w-80 z-50">
                               <div class="space-y-3">
                                   <h4 class="text-sm font-semibold flex items-center gap-2 text-indigo-800">
-                                      <ArrowRightLeft class="w-4 h-4 text-indigo-500" /> Sposta spesa
+                                      <ArrowRightLeft class="w-4 h-4 text-indigo-500" /> {{ trans('gestionale.piani_rate.show.actions.move_expense') }}
                                   </h4>
                                   <div class="text-sm space-y-2 text-slate-600">
                                       <p>
-                                          Trasferisci fondi da un capitolo di spesa all'altro all'interno di questo piano rate, o verso altri capitoli della gestione.
+                                          {{ trans('gestionale.piani_rate.show.hover.move_expense_description') }}
                                       </p>
                                       <p class="text-xs italic text-slate-500">
-                                          Utile per compensare spese impreviste senza dover ricalcolare l'intero piano o emettere nuove rate.
+                                          {{ trans('gestionale.piani_rate.show.hover.move_expense_hint') }}
                                       </p>
                                   </div>
                               </div>
@@ -830,7 +831,7 @@ const executePublishSilent = () => {
                           class="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-sm font-medium text-white h-9 px-3 hover:bg-primary/90 transition-colors shadow-sm whitespace-nowrap"
                       >
                           <List class="w-4 h-4 sm:mr-1" />
-                          <span class="hidden sm:inline">Lista</span>
+                          <span class="hidden sm:inline">{{ trans('gestionale.form_common.actions.list') }}</span>
                       </Link>
                   </div>
                 </div>
@@ -848,16 +849,16 @@ const executePublishSilent = () => {
                   for="select-all"
                   class="text-xs cursor-pointer text-muted-foreground uppercase font-semibold tracking-wider select-none"
                 >
-                  Seleziona tutte le rate non emesse per l'emissione
+                  {{ trans('gestionale.piani_rate.show.labels.select_all_unemitted') }}
                 </Label>
             </div>
 
             <div v-if="isReady" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                <Card class="bg-white shadow-sm border"><CardHeader class="p-4 pb-2"><CardTitle class="text-xs uppercase text-gray-400 tracking-wider">Totale Piano</CardTitle></CardHeader><CardContent class="p-4 pt-0 text-xl font-bold text-gray-900">{{ euro(aggregates.totaleTeorico) }}</CardContent></Card>
-                <Card class="bg-red-50/40 shadow-sm border-red-100 relative group"><CardHeader class="p-4 pb-2 flex flex-row items-center justify-between space-y-0"><CardTitle class="text-xs uppercase text-red-400 tracking-wider">Da Incassare</CardTitle><TooltipProvider><Tooltip><TooltipTrigger><Info class="w-3 h-3 text-red-300 hover:text-red-500 transition-colors cursor-help" /></TooltipTrigger><TooltipContent><p class="text-xs">Include rate scadute e <strong>debiti pregressi</strong>.</p><p class="text-xs text-muted-foreground">Non sottrae i crediti.</p></TooltipContent></Tooltip></TooltipProvider></CardHeader><CardContent class="p-4 pt-0 text-xl font-bold text-red-600">{{ euro(aggregates.totaleRateScadute) }}</CardContent></Card>
-                <Card class="bg-emerald-50/40 shadow-sm border-emerald-100"><CardHeader class="p-4 pb-2"><CardTitle class="text-xs uppercase text-emerald-400 tracking-wider">Incassato</CardTitle></CardHeader><CardContent class="p-4 pt-0 text-xl font-bold text-emerald-600">{{ euro(aggregates.totaleVersato) }}</CardContent></Card>
-                <Card class="bg-blue-50/40 shadow-sm border-blue-100"><CardHeader class="p-4 pb-2"><CardTitle class="text-xs uppercase text-blue-400 tracking-wider">Crediti (Anticipi)</CardTitle></CardHeader><CardContent class="p-4 pt-0 text-xl font-bold text-blue-600">{{ aggregates.creditiTotali > 0 ? euro(aggregates.creditiTotali) : "—" }}</CardContent></Card>
-                <Card class="bg-gray-50 shadow-sm border"><CardHeader class="p-4 pb-2"><CardTitle class="text-xs uppercase text-gray-500 tracking-wider">Saldo Netto</CardTitle></CardHeader><CardContent class="p-4 pt-0 text-xl font-bold" :class="aggregates.totaleGenerale > 0.01 ? 'text-red-600' : (aggregates.totaleGenerale < -0.01 ? 'text-blue-600' : 'text-emerald-600')">{{ euro(aggregates.totaleGenerale) }}</CardContent></Card>
+                <Card class="bg-white shadow-sm border"><CardHeader class="p-4 pb-2"><CardTitle class="text-xs uppercase text-gray-400 tracking-wider">{{ trans('gestionale.piani_rate.show.cards.total_plan') }}</CardTitle></CardHeader><CardContent class="p-4 pt-0 text-xl font-bold text-gray-900">{{ euro(aggregates.totaleTeorico) }}</CardContent></Card>
+                <Card class="bg-red-50/40 shadow-sm border-red-100 relative group"><CardHeader class="p-4 pb-2 flex flex-row items-center justify-between space-y-0"><CardTitle class="text-xs uppercase text-red-400 tracking-wider">{{ trans('gestionale.piani_rate.show.cards.to_collect') }}</CardTitle><TooltipProvider><Tooltip><TooltipTrigger><Info class="w-3 h-3 text-red-300 hover:text-red-500 transition-colors cursor-help" /></TooltipTrigger><TooltipContent><p class="text-xs">{{ trans('gestionale.piani_rate.show.cards.to_collect_tip_1') }}</p><p class="text-xs text-muted-foreground">{{ trans('gestionale.piani_rate.show.cards.to_collect_tip_2') }}</p></TooltipContent></Tooltip></TooltipProvider></CardHeader><CardContent class="p-4 pt-0 text-xl font-bold text-red-600">{{ euro(aggregates.totaleRateScadute) }}</CardContent></Card>
+                <Card class="bg-emerald-50/40 shadow-sm border-emerald-100"><CardHeader class="p-4 pb-2"><CardTitle class="text-xs uppercase text-emerald-400 tracking-wider">{{ trans('gestionale.piani_rate.show.cards.collected') }}</CardTitle></CardHeader><CardContent class="p-4 pt-0 text-xl font-bold text-emerald-600">{{ euro(aggregates.totaleVersato) }}</CardContent></Card>
+                <Card class="bg-blue-50/40 shadow-sm border-blue-100"><CardHeader class="p-4 pb-2"><CardTitle class="text-xs uppercase text-blue-400 tracking-wider">{{ trans('gestionale.piani_rate.show.cards.credits') }}</CardTitle></CardHeader><CardContent class="p-4 pt-0 text-xl font-bold text-blue-600">{{ aggregates.creditiTotali > 0 ? euro(aggregates.creditiTotali) : "—" }}</CardContent></Card>
+                <Card class="bg-gray-50 shadow-sm border"><CardHeader class="p-4 pb-2"><CardTitle class="text-xs uppercase text-gray-500 tracking-wider">{{ trans('gestionale.piani_rate.show.cards.net_balance') }}</CardTitle></CardHeader><CardContent class="p-4 pt-0 text-xl font-bold" :class="aggregates.totaleGenerale > 0.01 ? 'text-red-600' : (aggregates.totaleGenerale < -0.01 ? 'text-blue-600' : 'text-emerald-600')">{{ euro(aggregates.totaleGenerale) }}</CardContent></Card>
             </div>
 
             <div v-if="isReady" class="mt-6 border rounded-lg bg-white shadow-sm transition-all duration-200">
@@ -873,21 +874,21 @@ const executePublishSilent = () => {
                         </div>
                     <div class="text-left">
                             <h3 class="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                Copertura spese
+                                {{ trans('gestionale.piani_rate.show.coverage.title') }}
                                 
                                 <Badge 
                                     v-if="isDisallineato" 
                                     variant="destructive" 
                                     class="text-[10px] py-0 px-1.5"
                                 >
-                                    <AlertTriangle class="w-3 h-3 mr-1" /> Disallineato: ricalcola!
+                                    <AlertTriangle class="w-3 h-3 mr-1" /> {{ trans('gestionale.piani_rate.show.coverage.misaligned') }}
                                 </Badge>
                             </h3>
                             
                             <p class="text-[10px] text-gray-500">
-                                {{ props.pianoRate.capitoli?.length ?? 0 }} voci incluse • 
+                                {{ trans('gestionale.piani_rate.show.coverage.included_entries', { count: props.pianoRate.capitoli?.length ?? 0 }) }} • 
                                 <span :class="{'text-red-600 font-bold': isDisallineato}">
-                                    totale preventivo: {{ euro(props.pianoRate.totale_capitoli) }}
+                                    {{ trans('gestionale.piani_rate.show.coverage.total_budget') }}: {{ euro(props.pianoRate.totale_capitoli) }}
                                 </span>
                             </p>
                         </div>
@@ -895,7 +896,7 @@ const executePublishSilent = () => {
                     
                     <div class="flex items-center gap-2">
                         <span class="text-xs text-primary font-medium" v-if="!isCapitoliExpanded">
-                            {{ isProcessingStatus ? 'Aggiornamento...' : 'Mostra dettagli' }}
+                            {{ isProcessingStatus ? trans('gestionale.piani_rate.show.coverage.updating') : trans('gestionale.piani_rate.show.coverage.show_details') }}
                         </span>
                         <component :is="isCapitoliExpanded ? ChevronUp : ChevronDown" class="w-4 h-4 text-gray-400" />
                     </div>
@@ -909,7 +910,7 @@ const executePublishSilent = () => {
                                     <span class="text-sm font-semibold text-gray-800">{{ capitolo.nome }}</span>
                                     
                                     <span v-if="capitolo.is_parent" class="text-[9px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1">
-                                        <Layers class="w-3 h-3" /> Gruppo
+                                        <Layers class="w-3 h-3" /> {{ trans('gestionale.piani_rate.show.coverage.group') }}
                                     </span>
 
                                     <span 
@@ -917,21 +918,21 @@ const executePublishSilent = () => {
                                         class="text-[9px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1"
                                         title="Questa voce ha ricevuto budget da un altro capitolo"
                                     >
-                                        <ArrowRightLeft class="w-3 h-3" /> Integra
+                                        <ArrowRightLeft class="w-3 h-3" /> {{ trans('gestionale.piani_rate.show.coverage.integrated') }}
                                     </span>
 
                                     <TooltipProvider v-if="capitolo.is_frazionato && !isVoceRicevente(capitolo.id)">
                                         <Tooltip :delayDuration="300">
                                             <TooltipTrigger as-child>
                                                 <span class="text-[9px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1 cursor-help">
-                                                    <PieChart class="w-3 h-3" /> Parziale
+                                                    <PieChart class="w-3 h-3" /> {{ trans('gestionale.piani_rate.show.coverage.partial') }}
                                                 </span>
                                             </TooltipTrigger>
                                             <TooltipContent class="bg-slate-900 text-white border-slate-800 text-xs">
-                                                <p v-if="capitolo.is_parent">Questo gruppo è incluso parzialmente.</p>
-                                                <p v-else>Importo ridotto rispetto al preventivo originale.</p>
+                                                <p v-if="capitolo.is_parent">{{ trans('gestionale.piani_rate.show.coverage.partial_group_tooltip') }}</p>
+                                                <p v-else>{{ trans('gestionale.piani_rate.show.coverage.partial_amount_tooltip') }}</p>
                                                 <p class="font-mono mt-1 opacity-80">
-                                                    Totale originale: {{ euro(capitolo.importo_originale) }}
+                                                    {{ trans('gestionale.piani_rate.show.coverage.original_total') }}: {{ euro(capitolo.importo_originale) }}
                                                 </p>
                                             </TooltipContent>
                                         </Tooltip>
@@ -941,7 +942,7 @@ const executePublishSilent = () => {
                                         v-if="!capitolo.is_parent && !capitolo.is_frazionato && !isVoceRicevente(capitolo.id)" 
                                         class="text-[9px] bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1"
                                     >
-                                        <CheckCircle2 class="w-3 h-3" /> Standard
+                                        <CheckCircle2 class="w-3 h-3" /> {{ trans('gestionale.piani_rate.show.coverage.standard') }}
                                     </span>
                                 </div>
                                 
@@ -950,7 +951,7 @@ const executePublishSilent = () => {
                                 </p>
                                 
                                 <p v-if="isVoceRicevente(capitolo.id)" class="text-[10px] text-amber-600 leading-tight flex items-center gap-1">
-                                    Include fondi spostati da altre voci 
+                                    {{ trans('gestionale.piani_rate.show.coverage.includes_moved_funds') }}
                                     <span class="inline-flex items-center gap-0.5 whitespace-nowrap opacity-80">
                                         (vedi storico <History class="w-2.5 h-2.5" />)
                                     </span>
@@ -972,7 +973,7 @@ const executePublishSilent = () => {
                                     :disabled="switchState || aggregates.totaleVersato > 0"
                                     class="p-1.5 rounded-md text-gray-300 hover:text-red-600 transition-colors"
                                     :class="{ 'opacity-50 cursor-not-allowed': switchState || aggregates.totaleVersato > 0, 'hover:bg-red-50': !(switchState || aggregates.totaleVersato > 0) }"
-                                    title="Rimuovi voce e ricalcola"
+                                    :title="trans('gestionale.piani_rate.show.coverage.remove_and_recalculate')"
                                 >
                                     <Trash2 class="w-4 h-4" />
                                 </button>
@@ -980,7 +981,7 @@ const executePublishSilent = () => {
                         </div>
                     </div>
                     <div v-else class="p-6 text-center text-sm text-gray-400 italic">
-                        Nessuna voce di spesa associata. Usa il tasto "Sincronizza" per aggiungerne.
+                        {{ trans('gestionale.piani_rate.show.coverage.no_entries') }}
                     </div>
                 </div>
             </div>
@@ -992,7 +993,7 @@ const executePublishSilent = () => {
                     <thead class="sticky top-0 bg-white z-20 shadow-sm">
                       <tr class="border-b bg-gray-50/80 text-gray-500">
                         <th class="text-left px-6 py-3 sticky left-0 bg-gray-50 z-50 min-w-[250px] font-semibold uppercase text-xs tracking-wider shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                          {{ tab === "anagrafica" ? "Anagrafica" : "Immobile" }}
+                          {{ tab === "anagrafica" ? trans('gestionale.piani_rate.show.table.registry') : trans('gestionale.piani_rate.show.table.property') }}
                         </th>
                         
                         <th v-for="col in rateColumns" :key="col.numero" class="text-center px-4 py-3 min-w-[100px] relative group/header">
@@ -1012,7 +1013,7 @@ const executePublishSilent = () => {
 
                               <div class="flex flex-col items-center relative z-20 pointer-events-none">
                                   <div class="font-semibold text-gray-700 flex items-center gap-1">
-                                       {{ col.numero === 0 ? 'Saldi Iniziali' : 'Rata ' + col.numero }}
+                                       {{ col.numero === 0 ? trans('gestionale.piani_rate.show.table.initial_balances') : `${trans('gestionale.piani_rate.show.table.installment')} ${col.numero}` }}
                                       
                                        <TooltipProvider v-if="col.is_emessa" :delayDuration="100">
                                             <Tooltip>
@@ -1024,12 +1025,12 @@ const executePublishSilent = () => {
                                                 </TooltipTrigger>
                                                 <TooltipContent class="pointer-events-none z-[100] text-xs">
                                                     <div v-if="col.is_published" class="flex flex-col">
-                                                        <span class="font-bold text-emerald-500">Emessa e pubblicata</span>
-                                                        <span class="text-slate-400">Visibile ai condòmini.</span>
+                                                        <span class="font-bold text-emerald-500">{{ trans('gestionale.piani_rate.show.table.emitted_published') }}</span>
+                                                        <span class="text-slate-400">{{ trans('gestionale.piani_rate.show.table.visible_to_residents') }}</span>
                                                     </div>
                                                     <div v-else class="flex flex-col">
-                                                        <span class="font-bold text-amber-500">Emessa ma nascosta</span>
-                                                        <span class="text-slate-400">Non visibile ai condòmini. Usa il tasto "Pubblica".</span>
+                                                        <span class="font-bold text-amber-500">{{ trans('gestionale.piani_rate.show.table.emitted_hidden') }}</span>
+                                                        <span class="text-slate-400">{{ trans('gestionale.piani_rate.show.table.not_visible_use_publish') }}</span>
                                                     </div>
                                                 </TooltipContent>
                                             </Tooltip>
@@ -1050,7 +1051,7 @@ const executePublishSilent = () => {
                                           </button>
                                       </TooltipTrigger>
                                       <TooltipContent side="top" class="bg-slate-900 text-white text-xs border-slate-800">
-                                          Annulla emissione
+                                          {{ trans('gestionale.piani_rate.show.actions.cancel_emission') }}
                                       </TooltipContent>
                                   </Tooltip>
                               </TooltipProvider>
@@ -1058,11 +1059,11 @@ const executePublishSilent = () => {
                           </div>
                         </th>
 
-                        <th class="text-right px-4 py-3 bg-red-50/20 text-red-600 border-l border-red-100 min-w-[100px]">Scadute</th>
-                        <th class="text-right px-4 py-3 bg-emerald-50/20 text-emerald-600 min-w-[100px]">Versato</th>
-                        <th class="text-right px-4 py-3 min-w-[100px]">Crediti</th>
-                        <th class="text-right px-4 py-3 min-w-[100px] text-xs">Tot. Rate</th>
-                        <th class="text-right px-6 py-3 sticky right-0 bg-gray-50 z-40 text-xs shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">Saldo</th>
+                        <th class="text-right px-4 py-3 bg-red-50/20 text-red-600 border-l border-red-100 min-w-[100px]">{{ trans('gestionale.piani_rate.show.table.overdue') }}</th>
+                        <th class="text-right px-4 py-3 bg-emerald-50/20 text-emerald-600 min-w-[100px]">{{ trans('gestionale.piani_rate.show.table.paid') }}</th>
+                        <th class="text-right px-4 py-3 min-w-[100px]">{{ trans('gestionale.piani_rate.show.table.credits') }}</th>
+                        <th class="text-right px-4 py-3 min-w-[100px] text-xs">{{ trans('gestionale.piani_rate.show.table.total_installments') }}</th>
+                        <th class="text-right px-6 py-3 sticky right-0 bg-gray-50 z-40 text-xs shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">{{ trans('gestionale.piani_rate.show.table.balance') }}</th>
                       </tr>
                     </thead>
 
@@ -1108,7 +1109,7 @@ const executePublishSilent = () => {
                                             
                                             <div class="mt-0.5 w-full flex justify-center">
                                                 <div v-if="!col.is_emessa" class="text-[9px] font-bold text-gray-400 uppercase tracking-wide bg-gray-100 px-1.5 rounded-sm inline-block">
-                                                    BOZZA
+                                                    {{ trans('gestionale.piani_rate.show.status.draft').toUpperCase() }}
                                                 </div>
                                                 <div v-else class="text-[10px] opacity-75">
                                                     {{ toItalian(item.rateMap[col.numero].scadenza) }}
@@ -1144,29 +1145,29 @@ const executePublishSilent = () => {
                                                 <div v-for="dettaglio in [getRateStats(item.rateMap[col.numero].dettaglio_quote)]" :key="'dettaglio-' + col.numero" class="space-y-1">
                                                 
                                                     <div v-if="dettaglio.spesa !== 0" class="flex justify-between gap-4 text-slate-300">
-                                                        <span>Quota ordinaria:</span>
+                                                        <span>{{ trans('gestionale.piani_rate.show.table.ordinary_share') }}</span>
                                                         <span class="font-mono">{{ euro(dettaglio.spesa) }}</span>
                                                     </div>
                                                     
                                                     <template v-if="dettaglio.totale_debiti > 0 || dettaglio.totale_crediti < 0">
                                                         <div v-if="dettaglio.totale_debiti > 0" class="flex justify-between gap-4 text-red-300">
-                                                            <span>Debiti pregressi:</span>
+                                                            <span>{{ trans('gestionale.piani_rate.show.table.previous_debts') }}</span>
                                                             <span class="font-mono">{{ euro(dettaglio.totale_debiti) }}</span>
                                                         </div>
                                                         <div v-if="dettaglio.totale_crediti < 0" class="flex justify-between gap-4 text-blue-300">
-                                                            <span>Crediti pregressi:</span>
+                                                            <span>{{ trans('gestionale.piani_rate.show.table.previous_credits') }}</span>
                                                             <span class="font-mono">{{ euro(Math.abs(dettaglio.totale_crediti)) }}</span>
                                                         </div>
 
                                                         <div v-if="dettaglio.totale_debiti > 0 && dettaglio.totale_crediti < 0" class="text-[10px] opacity-80 mt-1 text-center font-medium pt-1">
-                                                            <span v-if="dettaglio.saldo_netto === 0" class="text-emerald-300">Compensazione totale (0€)</span>
-                                                            <span v-else-if="dettaglio.saldo_netto > 0" class="text-red-200">Residuo debito: {{ euro(dettaglio.saldo_netto) }}</span>
-                                                            <span v-else class="text-blue-200">Residuo credito: {{ euro(Math.abs(dettaglio.saldo_netto)) }}</span>
+                                                            <span v-if="dettaglio.saldo_netto === 0" class="text-emerald-300">{{ trans('gestionale.piani_rate.show.table.total_compensation') }}</span>
+                                                            <span v-else-if="dettaglio.saldo_netto > 0" class="text-red-200">{{ trans('gestionale.piani_rate.show.table.remaining_debt', { amount: euro(dettaglio.saldo_netto) }) }}</span>
+                                                            <span v-else class="text-blue-200">{{ trans('gestionale.piani_rate.show.table.remaining_credit', { amount: euro(Math.abs(dettaglio.saldo_netto)) }) }}</span>
                                                         </div>
                                                     </template>
                                                     
                                                     <div v-if="dettaglio.spesa !== 0 && (dettaglio.totale_debiti > 0 || dettaglio.totale_crediti < 0)" class="flex justify-between gap-4 text-[10px] font-bold pt-1 border-t border-white/10 mt-1">
-                                                        <span>Totale rata:</span>
+                                                        <span>{{ trans('gestionale.piani_rate.show.table.installment_total') }}:</span>
                                                         <span class="font-mono">{{ euro(dettaglio.spesa + dettaglio.saldo_netto) }}</span>
                                                     </div>
 
@@ -1174,7 +1175,7 @@ const executePublishSilent = () => {
                                             </div>
 
                                             <p v-if="getResiduoTooltip(item.rateMap[col.numero])">{{ getResiduoTooltip(item.rateMap[col.numero]) }}</p>
-                                            <p class="text-[10px] text-gray-400 mt-1">Scadenza: {{ toItalian(item.rateMap[col.numero].scadenza) }}</p>
+                                            <p class="text-[10px] text-gray-400 mt-1">{{ trans('gestionale.piani_rate.show.table.due_date') }}: {{ toItalian(item.rateMap[col.numero].scadenza) }}</p>
                                         </div>
                                     </TooltipContent>
                                 </Tooltip>
@@ -1197,9 +1198,9 @@ const executePublishSilent = () => {
                         >
                           <div class="flex flex-col items-end">
                               <span>{{ euro(Math.abs(item.totale)) }}</span>
-                              <span v-if="item.totale > 0.01" class="text-[9px] uppercase opacity-70">Deve</span>
-                              <span v-else-if="item.totale < -0.01" class="text-[9px] uppercase opacity-70">Credito</span>
-                              <span v-else class="text-[9px] uppercase opacity-70">Ok</span>
+                              <span v-if="item.totale > 0.01" class="text-[9px] uppercase opacity-70">{{ trans('gestionale.piani_rate.show.table.debt') }}</span>
+                              <span v-else-if="item.totale < -0.01" class="text-[9px] uppercase opacity-70">{{ trans('gestionale.piani_rate.show.table.credit') }}</span>
+                              <span v-else class="text-[9px] uppercase opacity-70">{{ trans('gestionale.piani_rate.show.table.ok') }}</span>
                           </div>
                         </td>
                       </tr>
@@ -1207,7 +1208,7 @@ const executePublishSilent = () => {
 
                     <tfoot class="sticky bottom-0 bg-white z-40 shadow-[0_-2px_5px_rgba(0,0,0,0.05)]">
                       <tr class="border-t-2 border-muted bg-gray-50 font-bold text-gray-700">
-                        <td class="px-6 py-3 sticky left-0 bg-gray-50 z-40 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">TOTALE</td>
+                        <td class="px-6 py-3 sticky left-0 bg-gray-50 z-40 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">{{ trans('gestionale.piani_rate.show.table.total').toUpperCase() }}</td>
                         <td v-for="col in rateColumns" :key="col.numero" class="text-center px-3 py-3">
                             {{ euro(aggregates.totaliPerRata[col.numero] ?? 0) }}
                         </td>
@@ -1225,7 +1226,7 @@ const executePublishSilent = () => {
                         >
                           {{ euro(Math.abs(aggregates.totaleGenerale)) }}
                           <div class="text-[9px] font-normal opacity-75">
-                              {{ aggregates.totaleGenerale > 0.01 ? 'DEBITO TOT.' : (aggregates.totaleGenerale < -0.01 ? 'CREDITO TOT.' : 'PAREGGIO') }}
+                              {{ aggregates.totaleGenerale > 0.01 ? trans('gestionale.piani_rate.show.table.total_debt') : (aggregates.totaleGenerale < -0.01 ? trans('gestionale.piani_rate.show.table.total_credit') : trans('gestionale.piani_rate.show.table.balanced')) }}
                           </div>
                         </td>
                       </tr>
@@ -1235,8 +1236,8 @@ const executePublishSilent = () => {
               </template>
 
               <div v-else class="text-center py-12 text-muted-foreground bg-gray-50 rounded-lg border border-dashed">
-                <p v-if="!props.pianoRate">Caricamento dati...</p>
-                <p v-else>{{ showOnlyCredits ? "Nessun credito da rimborsare." : "Nessuna quota trovata." }}</p>
+                <p v-if="!props.pianoRate">{{ trans('gestionale.common.loading') }}</p>
+                <p v-else>{{ showOnlyCredits ? trans('gestionale.piani_rate.show.empty.no_credits') : trans('gestionale.piani_rate.show.empty.no_quotes') }}</p>
               </div>
             </TabsContent>
 
@@ -1248,27 +1249,27 @@ const executePublishSilent = () => {
 
     <ConfirmDialog 
         v-model="isEmissionModalOpen"
-        title="Conferma emissione"
-        confirm-text="Emetti ora"
+        :title="trans('gestionale.piani_rate.show.dialogs.confirm_emission_title')"
+        :confirm-text="trans('gestionale.piani_rate.show.dialogs.emit_now')"
         variant="default"
         :loading="formEmissione.processing"
         @confirm="submitEmissione"
     >
         <div class="grid gap-4 py-4">
             <DialogDescription>
-                Stai per emettere <strong>{{ selectedRateIds.length }} rate</strong>.
+                {{ trans('gestionale.piani_rate.show.dialogs.about_to_emit', { count: selectedRateIds.length }) }}
             </DialogDescription>
 
             <div class="grid gap-2 mb-2">
-                <Label>Data registrazione</Label>
+                <Label>{{ trans('gestionale.piani_rate.show.dialogs.registration_date') }}</Label>
                 <Input type="date" v-model="formEmissione.data_emissione" />
             </div>
 
             <div class="grid gap-2 mb-3">
-                <Label>Causale contabile (Opzionale)</Label>
-                <Input type="text" v-model="formEmissione.descrizione_personalizzata" placeholder="Es. Emissione rata conguaglio..." />
+                <Label>{{ trans('gestionale.piani_rate.show.dialogs.accounting_reason_optional') }}</Label>
+                <Input type="text" v-model="formEmissione.descrizione_personalizzata" :placeholder="trans('gestionale.piani_rate.show.dialogs.accounting_reason_placeholder')" />
                 <p class="text-[10px] text-slate-500 leading-tight">
-                    Se lasciato vuoto, il sistema userà la dicitura standard (es. "Emissione Rata 1").
+                    {{ trans('gestionale.piani_rate.show.dialogs.accounting_reason_help') }}
                 </p>
             </div>
 
@@ -1283,7 +1284,7 @@ const executePublishSilent = () => {
                         for="invia-notifiche"
                         class="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
                     >
-                        Rendi visibile e invia notifiche
+                        {{ trans('gestionale.piani_rate.show.dialogs.publish_and_notify') }}
                         
                         <HoverCard>
                             <HoverCardTrigger as-child>
@@ -1294,18 +1295,18 @@ const executePublishSilent = () => {
                             <HoverCardContent class="w-80 z-[100]">
                                 <div class="space-y-3">
                                     <h4 class="text-sm font-semibold flex items-center gap-2 text-slate-800">
-                                        <Info class="w-4 h-4 text-indigo-500" /> Emissione silenziosa
+                                        <Info class="w-4 h-4 text-indigo-500" /> {{ trans('gestionale.piani_rate.show.dialogs.silent_emission') }}
                                     </h4>
                                     <div class="text-sm space-y-2 text-slate-600">
                                         <p>
-                                            Disabilita questa opzione se devi prima <strong>caricare manualmente dei pagamenti pregressi</strong> (es. allineamento da Excel).
+                                            {{ trans('gestionale.piani_rate.show.dialogs.silent_emission_line_1') }}
                                         </p>
                                         <p>
-                                            Le rate verranno generate contabilmente, ma i condòmini <strong>non riceveranno notifiche</strong> e non le vedranno nella loro area privata.
+                                            {{ trans('gestionale.piani_rate.show.dialogs.silent_emission_line_2') }}
                                         </p>
                                         <Separator class="my-2"/>
                                         <div class="text-xs text-amber-600 italic font-medium">
-                                            Ricordati di pubblicarle successivamente usando il tasto "Pubblica" in tabella.
+                                            {{ trans('gestionale.piani_rate.show.dialogs.silent_emission_hint') }}
                                         </div>
                                     </div>
                                 </div>
@@ -1313,7 +1314,7 @@ const executePublishSilent = () => {
                         </HoverCard>
                     </label>
                     <p class="text-xs text-muted-foreground">
-                        Se disattivato, i condòmini non vedranno la scadenza finché non la pubblichi manualmente.
+                        {{ trans('gestionale.piani_rate.show.dialogs.silent_emission_footer') }}
                     </p>
                 </div>
             </div>
@@ -1322,16 +1323,16 @@ const executePublishSilent = () => {
 
     <ConfirmDialog 
         v-model="isAlertOpen"
-        title="Sei assolutamente sicuro?"
-        confirm-text="Sì, annulla emissione"
-        cancel-text="Indietro"
+        :title="trans('gestionale.piani_rate.show.dialogs.cancel_emission_title')"
+        :confirm-text="trans('gestionale.piani_rate.show.dialogs.cancel_emission_confirm')"
+        :cancel-text="trans('gestionale.form_common.actions.back')"
         variant="destructive"
         @confirm="executeAnnullamento"
     >
-        Stai per annullare l'emissione contabile di questa rata. 
-        Questa azione cancellerà la scrittura contabile associata.
+        {{ trans('gestionale.piani_rate.show.dialogs.cancel_emission_body_1') }}
+        {{ trans('gestionale.piani_rate.show.dialogs.cancel_emission_body_2') }}
         <br><br>
-        <strong>Nota:</strong> Se sono già presenti incassi, l'operazione verrà bloccata.
+        <strong>{{ trans('gestionale.piani_rate.show.dialogs.note') }}:</strong> {{ trans('gestionale.piani_rate.show.dialogs.cancel_emission_note') }}
     </ConfirmDialog>
 
     <Dialog :open="feedbackDialog.open" @update:open="feedbackDialog.open = $event">
@@ -1356,7 +1357,7 @@ const executePublishSilent = () => {
                 <Button type="button" class="w-full sm:w-auto min-w-[120px]" 
                     :class="feedbackDialog.isError ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'"
                     @click="feedbackDialog.open = false">
-                    {{ feedbackDialog.isError ? 'Chiudi' : 'Ottimo, prosegui' }}
+                    {{ feedbackDialog.isError ? trans('gestionale.form_common.actions.close') : trans('gestionale.piani_rate.show.dialogs.great_continue') }}
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -1364,29 +1365,28 @@ const executePublishSilent = () => {
 
     <ConfirmDialog 
         v-model="isMigrationDialogOpen"
-        title="Aggiornamento necessario"
-        confirm-text="Aggiorna piano rate ora"
+        :title="trans('gestionale.piani_rate.show.dialogs.update_required')"
+        :confirm-text="trans('gestionale.piani_rate.show.dialogs.update_now')"
         variant="default"
         @confirm="executeMigration"
     >
         <div class="flex flex-col gap-3 text-base text-gray-700">
             <div class="flex items-center gap-2 text-amber-600 font-bold">
-                <AlertTriangle class="h-5 w-5" /> Attenzione
+                <AlertTriangle class="h-5 w-5" /> {{ trans('gestionale.piani_rate.show.feedback.warning') }}
             </div>
             <p>
-                Abbiamo rilevato che questo Piano Rate è stato generato con una versione precedente.
-                Per garantire la <strong>tracciabilità contabile</strong> e abilitare l'emissione, è necessario rigenerare i calcoli.
+                {{ trans('gestionale.piani_rate.show.dialogs.migration_body') }}
             </p>
             <span class="text-xs text-gray-500 bg-gray-100 p-2 rounded block">
-                Nessun importo verrà modificato, verranno solo aggiunti i dettagli per la trasparenza.
+                {{ trans('gestionale.piani_rate.show.dialogs.migration_note') }}
             </span>
         </div>
     </ConfirmDialog>
     
     <ConfirmDialog 
         v-model="isRecalculateAlertOpen"
-        title="Manutenzione piano rate"
-        :confirm-text="(selectedOrphanIds.length > 0) ? `Sincronizza (${selectedOrphanIds.length}) e ricalcola` : 'Ricalcola (Senza aggiunte)'"
+        :title="trans('gestionale.piani_rate.show.dialogs.maintenance_title')"
+        :confirm-text="(selectedOrphanIds.length > 0) ? trans('gestionale.piani_rate.show.dialogs.sync_and_recalculate', { count: selectedOrphanIds.length }) : trans('gestionale.piani_rate.show.dialogs.recalculate_without_additions')"
         :variant="(selectedOrphanIds.length > 0) ? 'warning' : 'default'"
         @confirm="executeRecalculate"
     >
@@ -1394,9 +1394,9 @@ const executePublishSilent = () => {
             <div class="bg-amber-50 p-3 border border-amber-200 rounded-lg text-amber-800 text-sm">
                 <p class="font-bold flex items-center gap-2">
                     <AlertTriangle class="w-4 h-4" /> 
-                    Attenzione: Voci scoperte rilevate
+                    {{ trans('gestionale.piani_rate.show.dialogs.uncovered_entries_title') }}
                 </p>
-                <p class="mt-1 mb-2">Seleziona le voci da includere in questo piano:</p>
+                <p class="mt-1 mb-2">{{ trans('gestionale.piani_rate.show.dialogs.select_entries_to_include') }}</p>
                 
                 <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
                     <div v-for="o in copertura?.orfani" :key="o.id" class="flex items-start space-x-2">
@@ -1411,33 +1411,33 @@ const executePublishSilent = () => {
                 </div>
             </div>
             <p class="text-[11px] text-slate-500 italic">
-                Se queste voci appartengono a un altro piano (es. Piano Scale), deseleziona la casella sopra.
+                {{ trans('gestionale.piani_rate.show.dialogs.other_plan_hint') }}
             </p>
         </div>
         <div v-else>
-            Il piano verrà ricalcolato in base ai millesimi attuali. Le rate non emesse saranno rigenerate.
+            {{ trans('gestionale.piani_rate.show.dialogs.recalculate_body') }}
         </div>
     </ConfirmDialog>
 
     <ConfirmDialog 
         v-model="isDeleteItemModalOpen"
-        title="Rimuovere voce dal piano?"
-        confirm-text="Sì, rimuovi e ricalcola"
+        :title="trans('gestionale.piani_rate.show.dialogs.remove_entry_title')"
+        :confirm-text="trans('gestionale.piani_rate.show.dialogs.remove_and_recalculate')"
         variant="destructive"
         @confirm="executeDetachItem"
     >
         <div v-if="itemToDelete?.is_parent" class="bg-amber-50 p-3 rounded-md border border-amber-200 text-amber-800 mb-3 mt-2">
             <p class="font-bold flex items-center gap-2 mb-1 text-xs uppercase">
-                <AlertTriangle class="w-3 h-3" /> Attenzione: voce raggruppata
+                <AlertTriangle class="w-3 h-3" /> {{ trans('gestionale.piani_rate.show.dialogs.grouped_entry_warning') }}
             </p>
             <p class="text-xs">
-                Stai rimuovendo il gruppo <strong>{{ itemToDelete.nome }}</strong>.<br>
-                Questa azione <strong>eliminerà anche tutti i sottoconti</strong> collegati.
+                {{ trans('gestionale.piani_rate.show.dialogs.grouped_entry_body', { name: itemToDelete.nome }) }}<br>
+                {{ trans('gestionale.piani_rate.show.dialogs.grouped_entry_note') }}
             </p>
         </div>
 
         <div v-else class="text-sm text-gray-700">
-            Stai per eliminare la voce di spesa:
+            {{ trans('gestionale.piani_rate.show.dialogs.about_to_delete_entry') }}
             <div class="mt-2 p-2 bg-slate-50 border rounded font-medium flex justify-between items-center">
                 <span>{{ itemToDelete?.nome }}</span>
                 <span class="font-bold text-slate-900">{{ itemToDelete?.importo ? euro(itemToDelete.importo) : '' }}</span>
@@ -1447,15 +1447,15 @@ const executePublishSilent = () => {
         <div class="mt-4 space-y-3">
             <div class="flex items-start gap-2 text-xs text-slate-600">
                 <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>La voce tornerà tra gli "Orfani" e potrà essere riaggiunta in futuro.</span>
+                <span>{{ trans('gestionale.piani_rate.show.dialogs.entry_will_return_orphans') }}</span>
             </div>
             <div class="flex items-start gap-2 text-xs text-slate-600">
                 <PieChart class="w-4 h-4 text-blue-600 shrink-0" />
-                <span>Il <strong>totale del piano diminuirà</strong> dell'importo indicato.</span>
+                <span>{{ trans('gestionale.piani_rate.show.dialogs.plan_total_will_decrease') }}</span>
             </div>
             <div class="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-100">
                 <RotateCw class="w-4 h-4 shrink-0 mt-0.5" />
-                <span><strong>Importante:</strong> Tutte le rate dei condomini verranno ricalcolate immediatamente.</span>
+                <span><strong>{{ trans('gestionale.piani_rate.show.dialogs.important') }}:</strong> {{ trans('gestionale.piani_rate.show.dialogs.all_installments_recalculated') }}</span>
             </div>
         </div>
     </ConfirmDialog>
@@ -1466,7 +1466,7 @@ const executePublishSilent = () => {
         :condominio-id="props.condominio.id"
         :sources="props.sources"
         :destinations="props.destinations"
-        @success="showFeedback('Budget Spostato', 'Operazione completata con successo. Il residuo è stato aggiornato.', false)"
+        @success="showFeedback(trans('gestionale.piani_rate.show.feedback.budget_moved_title'), trans('gestionale.piani_rate.show.feedback.budget_moved_description'), false)"
     />
 
   </GestionaleLayout>
