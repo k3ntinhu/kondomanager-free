@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import { computed } from "vue";
-import { Head, usePage, Link } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import DataTable from '@/components/gestionale/gestioni/DataTable.vue'; 
 import { createColumns } from '@/components/gestionale/gestioni/columns'
@@ -31,26 +31,26 @@ const flashMessage = computed(() => page.props.flash.message);
 
 // Breadcrumbs testuali per il componente Header
 const headerBreadcrumbs = computed(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
-  { title: 'Elenco Gestioni' }
+  { title: trans('gestionale.list_pages.gestioni.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.gestioni.breadcrumbs.list') }
 ]);
 
 const pageGuides = [
   {
-    title: 'Gerarchia Flessibile',
-    description: 'Un singolo Esercizio può contenere infinite Gestioni. L\'Ordinaria funge da contenitore principale per l\'anno in corso.',
+    title: trans('gestionale.list_pages.gestioni.guides.flexible_hierarchy_title'),
+    description: trans('gestionale.list_pages.gestioni.guides.flexible_hierarchy_description'),
     icon: Network,
     colorVariant: 'blue' as const
   },
   {
-    title: 'Tipologie di Spesa',
-    description: 'Separa i fondi in modo netto. Crea gestioni separate per Lavori Straordinari o Riscaldamento.',
+    title: trans('gestionale.list_pages.gestioni.guides.expense_types_title'),
+    description: trans('gestionale.list_pages.gestioni.guides.expense_types_description'),
     icon: Split,
     colorVariant: 'emerald' as const
   },
   {
-    title: 'Durata Senza Limiti',
-    description: 'Le gestioni Straordinarie possono avere solo una data di inizio e rimanere aperte su più esercizi contabili.',
+    title: trans('gestionale.list_pages.gestioni.guides.unlimited_duration_title'),
+    description: trans('gestionale.list_pages.gestioni.guides.unlimited_duration_description'),
     icon: Infinity,
     colorVariant: 'amber' as const
   }

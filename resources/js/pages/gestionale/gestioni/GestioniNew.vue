@@ -6,7 +6,6 @@ import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import { usePermission } from "@/composables/permissions";
 import CondominioDropdown from '@/components/CondominioDropdown.vue';
-import EsercizioDropdown from '@/components/EsercizioDropdown.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { List, Plus, LoaderCircle} from 'lucide-vue-next';
@@ -22,7 +21,7 @@ import '@vuepic/vue-datepicker/dist/main.css';
 import type { Building } from '@/types/buildings';
 import type { BreadcrumbItem } from '@/types';
 import type { DropdownType } from '@/types/dropdown';
-import { Esercizio } from '@/types/gestionale/esercizi';
+import type { Esercizio } from '@/types/gestionale/esercizi';
 
 const props = defineProps<{
   condominio: Building;
@@ -34,19 +33,19 @@ const { generatePath, generateRoute } = usePermission();
 const { toBackend } = useDateConverter();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.esercizi.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, component: "condominio-dropdown" } as any,
-  { title: 'gestioni', href: generatePath('gestionale/:condominio/esercizi/:esercizio/gestioni', { condominio: props.condominio.id, esercizio: props.esercizio.id }) },
-  { title: 'crea gestione', href: '#' },
+  { title: trans('gestionale.list_pages.gestioni.page_title'), href: generatePath('gestionale/:condominio/esercizi/:esercizio/gestioni', { condominio: props.condominio.id, esercizio: props.esercizio.id }) },
+  { title: trans('gestionale.gestioni_form.create.breadcrumb_create'), href: '#' },
 ]);
 
 const tipologie = [
   {
-      label: 'Ordinaria',
+      label: trans('gestionale.gestioni_form.create.type_options.ordinary'),
       id: 'ordinaria',
   },
   {
-      label: "Straordinaria",
+      label: trans('gestionale.gestioni_form.create.type_options.extraordinary'),
       id: 'straordinaria',
   }
 ];
@@ -88,8 +87,8 @@ const submit = () => {
         <div class="px-4 py-6">
 
             <Heading 
-                :title="`Crea nuova gestione per l'esercizio - ${props.esercizio.nome.toLowerCase()}`" 
-                :description="`Compila il seguente modulo per la creazione di una nuova gestione per il corrente esercizio aperto - ${props.esercizio.nome.toLowerCase()}`"
+                :title="trans('gestionale.gestioni_form.create.heading_title', { esercizio: props.esercizio.nome.toLowerCase() })" 
+                :description="trans('gestionale.gestioni_form.create.heading_description', { esercizio: props.esercizio.nome.toLowerCase() })"
             />
 
             <div class="w-full shadow ring-1 ring-black/5 md:rounded-lg p-4">
@@ -158,10 +157,14 @@ const submit = () => {
                                 label="label" 
                                 class="block w-full"
                                 v-model="form.tipo"
-                                placeholder="Tipologia gestione"
+                                :placeholder="trans('gestionale.gestioni_form.create.placeholders.type')"
                                 @update:modelValue="form.clearErrors('tipo')" 
                                 :reduce="(d: DropdownType) => d.id"
-                            />
+                            >
+                                <template #no-options>
+                                    {{ trans('gestionale.form_common.messages.no_matching_options') }}
+                                </template>
+                            </v-select>
                             <InputError :message="form.errors.tipo" />
                             </div>
 

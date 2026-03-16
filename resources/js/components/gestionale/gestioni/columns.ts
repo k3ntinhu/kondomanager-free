@@ -4,6 +4,7 @@ import DropdownAction from '@/components/gestionale/gestioni/DataTableRowActions
 import DataTableColumnHeader from '@/components/gestionale/gestioni/DataTableColumnHeader.vue'
 import { typeConstants } from '@/lib/gestionale/gestioni/constants';
 import { useDateConverter } from '@/composables/useDateConverter';
+import { trans } from 'laravel-vue-i18n';
 import type { ColumnDef } from '@tanstack/vue-table'
 import type { Gestione } from '@/types/gestionale/gestioni'
 import type { Building } from '@/types/buildings'
@@ -14,31 +15,31 @@ const { toItalian } = useDateConverter();
 export const createColumns = (condominio: Building, esercizio: Esercizio): ColumnDef<Gestione>[] => [
   {
     accessorKey: 'nome',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Denominazione' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.gestioni.table.name') }),
     cell: ({ row }) => h('div', { class: 'font-bold' }, row.getValue('nome')),
 
   },
   {
       accessorKey: 'descrizione',
-      header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Descrizione' }),
+      header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.gestioni.table.description') }),
       cell: ({ row }) => h('div', row.getValue('descrizione')),
 
   },
   {
     accessorKey: 'data_inizio',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Inizio' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.gestioni.table.start') }),
     cell: ({ row }) => h('div', toItalian(row.getValue('data_inizio'))),
 
   },
   {
     accessorKey: 'data_fine',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Fine' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.gestioni.table.end') }),
     cell: ({ row }) => h('div', toItalian(row.getValue('data_fine'))),
 
   },
   {
     accessorKey: 'tipo',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Tipologia' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.gestioni.table.type') }),
     cell: ({ row }) => {
 
       const value = row.getValue('tipo');

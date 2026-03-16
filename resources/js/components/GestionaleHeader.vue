@@ -96,7 +96,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         type: 'link',
-        title: 'Esercizi',
+        title: trans('gestionale.list_pages.esercizi.menu_title'),
         href: generatePath('gestionale/:condominio/esercizi', { condominio: condominio.value.id }),
         icon: Library,
        
