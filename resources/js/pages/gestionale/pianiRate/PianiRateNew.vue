@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm, Link } from '@inertiajs/vue3'
+import { Head, useForm, Link, router } from '@inertiajs/vue3'
 import { trans } from 'laravel-vue-i18n';
 import { ref, watch, computed } from 'vue'
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
@@ -152,6 +152,14 @@ watch(() => form.gestione_id, async (newGestioneId) => {
   } finally {
     isLoadingCapitoli.value = false;
   }
+
+  router.reload({
+    only: ['saldoInfo'],
+    data: { gestione_id: newGestioneId },
+    preserveState: true,
+    preserveScroll: true,
+    replace: true,
+  });
 });
 
 watch(showRecurrence, (enabled) => {
@@ -200,6 +208,10 @@ watch(() => form.capitoli_ids, (newIds) => {
 });
 
 const submit = () => {
+  if (!form.metodo_distribuzione) {
+    form.metodo_distribuzione = 'prima_rata';
+  }
+
   form.capitoli_config = capitoliDettaglio.value.map(c => ({
     id: c.id,
     importo: c.importo_da_usare,
