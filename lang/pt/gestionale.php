@@ -198,6 +198,11 @@ return [
             'previous_balances_title' => 'Gestão de saldos transitados',
             'previous_balances_description' => 'Recomendamos isolar o saldo inicial do ano anterior numa prestação separada para melhor transparência e gestão de subentradas.',
         ],
+        'empty_state' => [
+            'title' => 'Nenhum plano de prestações encontrado',
+            'description' => 'Ainda não foram gerados planos de prestações para este exercício.',
+            'hint' => 'Se já criou um plano de contas, comece por clicar em "Criar plano de prestações" para definir os vencimentos e respetivos valores.',
+        ],
         'new' => [
             'head_title' => 'Criar novo plano de prestações',
             'title' => 'Novo plano de prestações',

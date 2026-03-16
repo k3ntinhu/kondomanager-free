@@ -198,6 +198,11 @@ return [
             'previous_balances_title' => 'Previous balances management',
             'previous_balances_description' => 'We recommend isolating the previous year opening balance in a separate installment for better transparency and move-in/out management.',
         ],
+        'empty_state' => [
+            'title' => 'No rate plan found',
+            'description' => 'No rate plans have been generated for this fiscal year yet.',
+            'hint' => 'If you already created a chart of accounts, click "Create rate plan" to define installment due dates and amounts.',
+        ],
         'new' => [
             'head_title' => 'Create new rate plan',
             'title' => 'New rate plan',

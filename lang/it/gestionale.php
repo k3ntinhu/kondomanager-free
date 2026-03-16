@@ -198,6 +198,11 @@ return [
             'previous_balances_title' => 'Gestione saldi pregressi',
             'previous_balances_description' => 'Consigliamo di isolare il saldo iniziale dell\'anno precedente in una rata separata per la massima trasparenza e una corretta gestione dei subentri.',
         ],
+        'empty_state' => [
+            'title' => 'Nessun piano rate trovato',
+            'description' => 'Non sono ancora stati generati piani rate per questo esercizio.',
+            'hint' => 'Se hai già creato un piano dei conti, inizia cliccando su "Crea piano rate" per definire le scadenze delle rate e i relativi importi.',
+        ],
         'new' => [
             'head_title' => 'Crea nuovo piano rate',
             'title' => 'Nuovo piano rate',
