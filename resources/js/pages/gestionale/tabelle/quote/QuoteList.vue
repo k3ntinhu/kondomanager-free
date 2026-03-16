@@ -68,10 +68,10 @@ const form = useForm({
 const { generatePath, generateRoute } = usePermission();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.list_pages.tabelle.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, href: '#' },
-  { title: 'tabelle', href: generatePath('gestionale/:condominio/tabelle', { condominio: props.condominio.id }) },
-  { title: 'millesimi', href: '#' },
+  { title: trans('gestionale.list_pages.tabelle.menu_title'), href: generatePath('gestionale/:condominio/tabelle', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.tabelle_quote.breadcrumb_quotes'), href: '#' },
   { title: props.tabella.nome, href: '#' },
 ]);
 
@@ -85,7 +85,7 @@ const addImmobile = () => {
   const maxRows = rawImmobili.length;
 
   if (form.quote.length >= maxRows) {
-    alertMessage.value = "Hai già raggiunto il numero massimo di righe consentite.";
+    alertMessage.value = trans('gestionale.tabelle_quote.max_rows_reached');
     showNoImmobiliDialog.value = true;
     return;
   }
@@ -143,7 +143,7 @@ const submit = () => {
 </script>
 
 <template>
-  <Head title="Millesimi tabella" />
+  <Head :title="trans('gestionale.tabelle_quote.head_title')" />
 
   <GestionaleLayout :breadcrumbs="breadcrumbs">
     <div class="px-4 py-6">
@@ -151,20 +151,20 @@ const submit = () => {
         <section class="w-full">
 
           <Heading 
-            title="Associa immobli alla tabella millesimale" 
-            :description="`Di seguito puoi specificare i millesimi per ogni immobile associato alla tabella - ${props.tabella.nome}`"
+            :title="trans('gestionale.tabelle_quote.heading_title')"
+            :description="trans('gestionale.tabelle_quote.heading_description', { table: props.tabella.nome })"
           />
 
           <div class="flex flex-wrap flex-col lg:flex-row lg:justify-end gap-2 items-start lg:items-center mb-4">
             <Button :disabled="form.processing" class="h-8 w-full lg:w-auto" @click="submit">
               <Plus class="w-4 h-4" v-if="!form.processing" />
               <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-              Salva
+              {{ trans('gestionale.form_common.actions.save') }}
             </Button>
 
             <Button class="h-8 w-full lg:w-auto" @click="addImmobile">
               <Plus class="w-4 h-4" />
-              Aggiungi immobile
+              {{ trans('gestionale.tabelle_quote.actions.add_property') }}
             </Button>
 
             <Link 
@@ -184,19 +184,19 @@ const submit = () => {
                   
                   <TableHeader>
                     <TableRow>
-                      <TableHead class="w-[500px]">Immobile</TableHead>
+                      <TableHead class="w-[500px]">{{ trans('gestionale.tabelle_quote.table.property') }}</TableHead>
                       <TableHead>{{ props.tabella.quota.charAt(0).toUpperCase() + props.tabella.quota.slice(1) }}</TableHead>
 
                       <!-- Acqua -->
-                      <TableHead v-if="props.tabella.tipo === 'acqua'" class="text-center">Contatore?</TableHead>
-                      <TableHead v-if="props.tabella.tipo === 'acqua'">Ultima lettura (m³)</TableHead>
+                      <TableHead v-if="props.tabella.tipo === 'acqua'" class="text-center">{{ trans('gestionale.tabelle_quote.table.meter') }}</TableHead>
+                      <TableHead v-if="props.tabella.tipo === 'acqua'">{{ trans('gestionale.tabelle_quote.table.last_reading') }}</TableHead>
 
                       <!-- Riscaldamento -->
-                      <TableHead v-if="props.tabella.tipo === 'riscaldamento'">Quota fissa (%)</TableHead>
-                      <TableHead v-if="props.tabella.tipo === 'riscaldamento'">Quota variabile (%)</TableHead>
-                      <TableHead v-if="props.tabella.tipo === 'riscaldamento'">Coeff. dispersione</TableHead>
+                      <TableHead v-if="props.tabella.tipo === 'riscaldamento'">{{ trans('gestionale.tabelle_quote.table.fixed_share') }}</TableHead>
+                      <TableHead v-if="props.tabella.tipo === 'riscaldamento'">{{ trans('gestionale.tabelle_quote.table.variable_share') }}</TableHead>
+                      <TableHead v-if="props.tabella.tipo === 'riscaldamento'">{{ trans('gestionale.tabelle_quote.table.dispersion_coeff') }}</TableHead>
 
-                      <TableHead class="text-center w-[80px]">Azioni</TableHead>
+                      <TableHead class="text-center w-[80px]">{{ trans('gestionale.common.actions.menu') }}</TableHead>
                     </TableRow>
                   </TableHeader>
 
@@ -209,11 +209,11 @@ const submit = () => {
                         <div v-if="q.id && q.immobile">
                           <div class="font-medium">{{ q.immobile?.nome ?? '—' }}</div>
                           <div class="text-xs text-gray-400">
-                            Palazzina: {{ q.immobile?.palazzina?.name ?? "—" }} |
-                            Scala: {{ q.immobile?.scala?.name ?? "—" }} |
-                            Interno: {{ q.immobile?.interno ?? "—" }} |
-                            Piano: {{ q.immobile?.piano ?? "—" }} |
-                            Sup: {{ q.immobile?.superficie ?? "—" }} m²
+                            {{ trans('gestionale.tabelle_quote.labels.building') }}: {{ q.immobile?.palazzina?.name ?? "—" }} |
+                            {{ trans('gestionale.tabelle_quote.labels.stair') }}: {{ q.immobile?.scala?.name ?? "—" }} |
+                            {{ trans('gestionale.tabelle_quote.labels.unit') }}: {{ q.immobile?.interno ?? "—" }} |
+                            {{ trans('gestionale.tabelle_quote.labels.floor') }}: {{ q.immobile?.piano ?? "—" }} |
+                            {{ trans('gestionale.tabelle_quote.labels.surface') }}: {{ q.immobile?.superficie ?? "—" }} m²
                           </div>
                         </div>
                         
@@ -224,7 +224,7 @@ const submit = () => {
                             :options="immobiliDisponibili"
                             v-model="q.immobile"
                             append-to-body
-                            placeholder="Seleziona immobile"
+                            :placeholder="trans('gestionale.tabelle_quote.placeholders.select_property')"
                             :reduce="(i: Immobile) => i"
                             :value="q.immobile"
                             @input="(value: Immobile) => { q.immobile = value }"
@@ -234,13 +234,13 @@ const submit = () => {
                             <!-- Template per le opzioni nel dropdown -->
                             <template #option="option">
                               <div class="flex flex-col py-2">
-                                <span class="font-medium">{{ option.nome }}</span>
-                                <span class="text-xs text-gray-500 mt-1">
-                                  Palazzina: {{ option.palazzina?.name ?? "—" }} |
-                                  Scala: {{ option.scala?.name ?? "—" }} |
-                                  Interno: {{ option.interno ?? "—" }} |
-                                  Piano: {{ option.piano ?? "—" }} |
-                                  Sup: {{ option.superficie ?? "—" }} m²
+                                  <span class="font-medium">{{ option.nome }}</span>
+                                  <span class="text-xs text-gray-500 mt-1">
+                                  {{ trans('gestionale.tabelle_quote.labels.building') }}: {{ option.palazzina?.name ?? "—" }} |
+                                  {{ trans('gestionale.tabelle_quote.labels.stair') }}: {{ option.scala?.name ?? "—" }} |
+                                  {{ trans('gestionale.tabelle_quote.labels.unit') }}: {{ option.interno ?? "—" }} |
+                                  {{ trans('gestionale.tabelle_quote.labels.floor') }}: {{ option.piano ?? "—" }} |
+                                  {{ trans('gestionale.tabelle_quote.labels.surface') }}: {{ option.superficie ?? "—" }} m²
                                 </span>
                               </div>
                             </template>
@@ -250,7 +250,7 @@ const submit = () => {
                               <div v-if="option" class="flex flex-col">
                                 <span class="font-medium">{{ option.nome }}</span>
                               </div>
-                              <div v-else class="text-gray-400">Seleziona immobile</div>
+                              <div v-else class="text-gray-400">{{ trans('gestionale.tabelle_quote.placeholders.select_property') }}</div>
                             </template>
                           </v-select>
                           <InputError :message="form.errors[`quote.${idx}.immobile.id`]" />
@@ -272,7 +272,7 @@ const submit = () => {
                         <input type="checkbox" v-model="q.has_contatore" class="h-4 w-4" />
                       </TableCell>
                       <TableCell v-if="props.tabella.tipo === 'acqua'">
-                        <Input v-if="q.has_contatore" v-model="q.ultima_lettura" class="w-28" placeholder="m³" />
+                        <Input v-if="q.has_contatore" v-model="q.ultima_lettura" class="w-28" :placeholder="trans('gestionale.tabelle_quote.placeholders.cubic_meters')" />
                         <Input v-else class="w-28 text-gray-400" value="—" disabled />
                       </TableCell>
 
@@ -284,7 +284,7 @@ const submit = () => {
                         <Input v-model="q.quota_variabile" class="w-28" placeholder="%" />
                       </TableCell>
                       <TableCell v-if="props.tabella.tipo === 'riscaldamento'">
-                        <Input v-model="q.coeff_dispersione" class="w-28" placeholder="Coeff." />
+                        <Input v-model="q.coeff_dispersione" class="w-28" :placeholder="trans('gestionale.tabelle_quote.placeholders.coeff')" />
                       </TableCell>
 
                       <!-- Azioni -->
@@ -309,13 +309,13 @@ const submit = () => {
   <AlertDialog v-model:open="showNoImmobiliDialog">
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle>Attenzione</AlertDialogTitle>
+        <AlertDialogTitle>{{ trans('gestionale.tabelle_quote.dialogs.warning_title') }}</AlertDialogTitle>
         <AlertDialogDescription>
           {{ alertMessage }}
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel>Chiudi</AlertDialogCancel>
+        <AlertDialogCancel>{{ trans('gestionale.form_common.actions.close') }}</AlertDialogCancel>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

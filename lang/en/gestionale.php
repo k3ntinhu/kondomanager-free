@@ -729,6 +729,39 @@ return [
             ],
         ],
     ],
+    'tabelle_quote' => [
+        'head_title' => 'Table shares',
+        'breadcrumb_quotes' => 'Shares',
+        'heading_title' => 'Associate units to the allocation table',
+        'heading_description' => 'Below you can define shares for each unit associated with table - :table',
+        'max_rows_reached' => 'You have already reached the maximum number of allowed rows.',
+        'actions' => [
+            'add_property' => 'Add unit',
+        ],
+        'table' => [
+            'property' => 'Unit',
+            'meter' => 'Meter?',
+            'last_reading' => 'Last reading (m³)',
+            'fixed_share' => 'Fixed share (%)',
+            'variable_share' => 'Variable share (%)',
+            'dispersion_coeff' => 'Dispersion coeff.',
+        ],
+        'labels' => [
+            'building' => 'Building',
+            'stair' => 'Stair',
+            'unit' => 'Unit',
+            'floor' => 'Floor',
+            'surface' => 'Area',
+        ],
+        'placeholders' => [
+            'select_property' => 'Select unit',
+            'cubic_meters' => 'm³',
+            'coeff' => 'Coeff.',
+        ],
+        'dialogs' => [
+            'warning_title' => 'Warning',
+        ],
+    ],
     'casse_form' => [
         'create' => [
             'head_title' => 'Create resource',

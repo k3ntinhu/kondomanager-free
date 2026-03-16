@@ -729,6 +729,39 @@ return [
             ],
         ],
     ],
+    'tabelle_quote' => [
+        'head_title' => 'Millesimi tabella',
+        'breadcrumb_quotes' => 'Millesimi',
+        'heading_title' => 'Associa immobili alla tabella millesimale',
+        'heading_description' => 'Di seguito puoi specificare i millesimi per ogni immobile associato alla tabella - :table',
+        'max_rows_reached' => 'Hai già raggiunto il numero massimo di righe consentite.',
+        'actions' => [
+            'add_property' => 'Aggiungi immobile',
+        ],
+        'table' => [
+            'property' => 'Immobile',
+            'meter' => 'Contatore?',
+            'last_reading' => 'Ultima lettura (m³)',
+            'fixed_share' => 'Quota fissa (%)',
+            'variable_share' => 'Quota variabile (%)',
+            'dispersion_coeff' => 'Coeff. dispersione',
+        ],
+        'labels' => [
+            'building' => 'Palazzina',
+            'stair' => 'Scala',
+            'unit' => 'Interno',
+            'floor' => 'Piano',
+            'surface' => 'Sup',
+        ],
+        'placeholders' => [
+            'select_property' => 'Seleziona immobile',
+            'cubic_meters' => 'm³',
+            'coeff' => 'Coeff.',
+        ],
+        'dialogs' => [
+            'warning_title' => 'Attenzione',
+        ],
+    ],
     'casse_form' => [
         'create' => [
             'head_title' => 'Crea risorsa',

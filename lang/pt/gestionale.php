@@ -942,6 +942,39 @@ return [
             ],
         ],
     ],
+    'tabelle_quote' => [
+        'head_title' => 'Permilagens da tabela',
+        'breadcrumb_quotes' => 'Permilagens',
+        'heading_title' => 'Associar imóveis à tabela de permilagens',
+        'heading_description' => 'Abaixo pode definir as permilagens de cada imóvel associado à tabela - :table',
+        'max_rows_reached' => 'Já atingiu o número máximo de linhas permitidas.',
+        'actions' => [
+            'add_property' => 'Adicionar imóvel',
+        ],
+        'table' => [
+            'property' => 'Imóvel',
+            'meter' => 'Contador?',
+            'last_reading' => 'Última leitura (m³)',
+            'fixed_share' => 'Quota fixa (%)',
+            'variable_share' => 'Quota variável (%)',
+            'dispersion_coeff' => 'Coef. dispersão',
+        ],
+        'labels' => [
+            'building' => 'Bloco',
+            'stair' => 'Escada',
+            'unit' => 'Interior',
+            'floor' => 'Piso',
+            'surface' => 'Área',
+        ],
+        'placeholders' => [
+            'select_property' => 'Selecionar imóvel',
+            'cubic_meters' => 'm³',
+            'coeff' => 'Coef.',
+        ],
+        'dialogs' => [
+            'warning_title' => 'Atenção',
+        ],
+    ],
     'casse_form' => [
         'create' => [
             'head_title' => 'Criar recurso',
