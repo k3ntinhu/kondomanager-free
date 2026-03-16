@@ -11,6 +11,26 @@ import type { Building } from '@/types/buildings'
 
 const { generateRoute } = usePermission();
 
+const localizeTipologia = (immobile: Immobile): string => {
+  if (!immobile.tipologia) return '-';
+
+  if (immobile.tipologia.localized_name) {
+    return immobile.tipologia.localized_name;
+  }
+
+  const slug = immobile.tipologia.nome
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  const key = `gestionale.immobili_form.property_types.${slug}`;
+  const translated = trans(key);
+
+  return translated === key ? immobile.tipologia.nome : translated;
+};
+
 export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
   return [
     {
@@ -34,7 +54,7 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
       header: ({ column }) =>  h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.immobili.table.type') }),
       cell: ({ row }) => {
         const immobile = row.original as Immobile
-        const tipologia = immobile.tipologia ? immobile.tipologia.nome : '-'
+        const tipologia = localizeTipologia(immobile)
         return h('div', { class: 'flex space-x-2' }, [
           h('span', { class: 'capitalize' }, tipologia),
         ])
