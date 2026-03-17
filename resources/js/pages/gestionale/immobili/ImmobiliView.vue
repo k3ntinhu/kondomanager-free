@@ -34,6 +34,26 @@ const truncate = (text: string, length: number = 120) => {
   return text.length > length ? `${text.slice(0, length)}...` : text;
 };
 
+const localizeTipologia = (immobile: Immobile): string => {
+  if (!immobile.tipologia) return '-';
+
+  if (immobile.tipologia.localized_name) {
+    return immobile.tipologia.localized_name;
+  }
+
+  const slug = immobile.tipologia.nome
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  const key = `gestionale.immobili_form.property_types.${slug}`;
+  const translated = trans(key);
+
+  return translated === key ? immobile.tipologia.nome : translated;
+};
+
 </script>
 
 <template>
@@ -85,7 +105,7 @@ const truncate = (text: string, length: number = 120) => {
                 <div class="flex items-center gap-2">
                   <span class="text-muted-foreground font-semibold w-24">{{ trans('gestionale.list_pages.immobili.table.type') }}:</span>
                   <div class="inline-flex items-center rounded-md border px-2.5 py-0.5 font-medium shadow-sm text-xs">
-                    {{ immobile.tipologia.nome }}
+                    {{ localizeTipologia(immobile) }}
                   </div>
                 </div>
 
