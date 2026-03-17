@@ -323,7 +323,7 @@ class DocumentoController extends Controller
                 );
             }
 
-            return Storage::download($documento->path, $documento->name);
+            return Storage::download($documento->path, $this->resolveDownloadFileName($documento));
 
         } catch (\Exception $e) {
 
@@ -337,5 +337,38 @@ class DocumentoController extends Controller
             );
 
         }
+    }
+
+    private function resolveDownloadFileName(Documento $documento): string
+    {
+        $baseName = trim((string) $documento->name);
+
+        if ($baseName === '') {
+            $baseName = pathinfo((string) $documento->path, PATHINFO_FILENAME) ?: 'documento';
+        }
+
+        if (pathinfo($baseName, PATHINFO_EXTENSION) !== '') {
+            return $baseName;
+        }
+
+        $extension = pathinfo((string) $documento->path, PATHINFO_EXTENSION);
+
+        if ($extension === '') {
+            $extension = $this->extensionFromMimeType((string) $documento->mime_type);
+        }
+
+        return $extension !== '' ? "{$baseName}.{$extension}" : $baseName;
+    }
+
+    private function extensionFromMimeType(string $mimeType): string
+    {
+        return match (strtolower($mimeType)) {
+            'application/pdf' => 'pdf',
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'application/msword' => 'doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+            default => '',
+        };
     }
 }
