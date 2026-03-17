@@ -195,6 +195,12 @@ return [
             'delete_category' => 'Eliminar',
         ],
     ],
+    'categories' => [
+        'bilanci' => 'Balanços',
+        'verbali' => 'Atas',
+        'avvisi' => 'Avisos',
+        'contratti' => 'Contratos',
+    ],
     'user' => [
         'latest_documents_title' => 'Últimos documentos carregados',
         'latest_documents_description' => 'Lista dos últimos documentos no arquivo.',

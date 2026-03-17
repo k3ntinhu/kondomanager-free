@@ -478,7 +478,7 @@ const submit = (): void => {
                   <div class="flex items-center gap-2">
                     <v-select
                       :options="localCategories"
-                      label="name"
+                      label="localized_name"
                       v-model="form.category_id"
                       :reduce="(option: Categoria) => option.id"
                       :placeholder="trans('documenti.placeholder.category')"
