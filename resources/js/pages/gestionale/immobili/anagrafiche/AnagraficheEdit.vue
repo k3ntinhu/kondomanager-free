@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Link, Head, useForm } from '@inertiajs/vue3';
+import { Link, Head, useForm, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import ImmobileLayout from '@/layouts/gestionale/ImmobileLayout.vue';
@@ -34,6 +34,14 @@ const props = defineProps<{
 
 const { generatePath, generateRoute } = usePermission();
 const { toBackend } = useDateConverter();
+const page = usePage<{ locale?: string }>();
+
+const datePickerLocale = computed(() => {
+  const raw = (page.props.locale || 'en').toString().toLowerCase();
+  if (raw.startsWith('pt')) return 'pt-PT';
+  if (raw.startsWith('it')) return 'it-IT';
+  return 'en-US';
+});
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
   { title: trans('gestionale.list_pages.immobili.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
@@ -201,7 +209,7 @@ const submit = () => {
                       v-model="form.data_inizio"
                       class="w-full"
                       format="dd/MM/yyyy"
-                      locale="it"
+                      :locale="datePickerLocale"
                       :enable-time-picker="false"
                       auto-apply
                     />
@@ -227,7 +235,7 @@ const submit = () => {
                       v-model="form.data_fine"
                       class="w-full"
                       format="dd/MM/yyyy"
-                      locale="it"
+                      :locale="datePickerLocale"
                       :enable-time-picker="false"
                       auto-apply
                     />
