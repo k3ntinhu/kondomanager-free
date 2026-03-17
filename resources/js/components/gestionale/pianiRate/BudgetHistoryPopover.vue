@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { History, ArrowRight, ArrowLeft, User } from 'lucide-vue-next';
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter';
 import { Badge } from '@/components/ui/badge';
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   capitoloId: number;
@@ -49,7 +50,7 @@ const hasHistory = computed(() => relevantMovements.value.length > 0);
       <PopoverTrigger as-child>
         <button 
             class="text-slate-400 hover:text-indigo-600 transition-colors p-1 rounded-full"
-            title="Vedi storico modifiche budget"
+            :title="trans('gestionale.piani_rate.budget_history.view_tooltip')"
         >
           <History class="w-3.5 h-3.5" />
         </button>
@@ -57,9 +58,9 @@ const hasHistory = computed(() => relevantMovements.value.length > 0);
       <PopoverContent :side-offset="8" side="left" align="center" class="w-80 p-0 shadow-lg border-slate-200" >
         
         <div class="bg-slate-50 p-3 border-b border-slate-100 flex justify-between items-center">
-            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Storia Budget</span>
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">{{ trans('gestionale.piani_rate.budget_history.title') }}</span>
             <Badge variant="outline" class="text-[10px] bg-white text-slate-500">
-                Orig: {{ euro(originalAmount) }}
+                {{ trans('gestionale.piani_rate.budget_history.original') }}: {{ euro(originalAmount) }}
             </Badge>
         </div>
 
@@ -67,9 +68,9 @@ const hasHistory = computed(() => relevantMovements.value.length > 0);
             <div v-for="move in relevantMovements" :key="move.id" class="text-xs p-2 rounded-md border border-slate-100 bg-white shadow-sm">
                 
                 <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1.5">
-                    <span>{{ new Date(move.created_at).toLocaleDateString('it-IT') }}</span>
+                    <span>{{ new Date(move.created_at).toLocaleDateString() }}</span>
                     <span class="flex items-center gap-1 bg-slate-50 px-1.5 py-0.5 rounded text-slate-600">
-                        <User class="w-2.5 h-2.5" /> {{ move.user?.name ?? 'Sistema' }}
+                        <User class="w-2.5 h-2.5" /> {{ move.user?.name ?? trans('gestionale.piani_rate.budget_history.system') }}
                     </span>
                 </div>
 
@@ -77,7 +78,7 @@ const hasHistory = computed(() => relevantMovements.value.length > 0);
                     <template v-if="Number(move.source_conto_id) === targetId">
                         <div class="flex items-center gap-1.5 text-amber-700">
                             <ArrowRight class="w-3.5 h-3.5" />
-                            <span>A: {{ move.destination_conto?.nome }}</span>
+                            <span>{{ trans('gestionale.piani_rate.budget_history.to') }}: {{ move.destination_conto?.nome }}</span>
                         </div>
                         <span class="text-red-600 font-bold">- {{ euro(move.amount) }}</span>
                     </template>
@@ -85,7 +86,7 @@ const hasHistory = computed(() => relevantMovements.value.length > 0);
                     <template v-else>
                         <div class="flex items-center gap-1.5 text-emerald-700">
                             <ArrowLeft class="w-3.5 h-3.5" />
-                            <span>Da: {{ move.source_conto?.nome }}</span>
+                            <span>{{ trans('gestionale.piani_rate.budget_history.from') }}: {{ move.source_conto?.nome }}</span>
                         </div>
                         <span class="text-emerald-600 font-bold">+ {{ euro(move.amount) }}</span>
                     </template>
@@ -98,7 +99,7 @@ const hasHistory = computed(() => relevantMovements.value.length > 0);
         </div>
 
         <div class="bg-slate-50 p-2 border-t border-slate-100 text-center">
-            <span class="text-[10px] text-slate-500 font-medium">Attuale: <span class="text-slate-800 font-bold text-xs">{{ euro(currentAmount) }}</span></span>
+            <span class="text-[10px] text-slate-500 font-medium">{{ trans('gestionale.piani_rate.budget_history.current') }}: <span class="text-slate-800 font-bold text-xs">{{ euro(currentAmount) }}</span></span>
         </div>
 
       </PopoverContent>

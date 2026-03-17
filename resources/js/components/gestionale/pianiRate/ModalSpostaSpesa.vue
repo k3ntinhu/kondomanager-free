@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle, ArrowRightLeft, Wallet, Lightbulb, Info } from 'lucide-vue-next';
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter';
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   show: boolean;
@@ -76,10 +77,10 @@ watch(() => props.show, (val) => {
     <DialogContent class="sm:max-w-[600px]">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2 text-indigo-700">
-          <ArrowRightLeft class="w-5 h-5" /> Sposta Budget (Bilancio Liquido)
+          <ArrowRightLeft class="w-5 h-5" /> {{ trans('gestionale.piani_rate.move_modal.title') }}
         </DialogTitle>
         <DialogDescription>
-          Rialloca fondi da una voce all'altra senza modificare il totale del piano rate.
+          {{ trans('gestionale.piani_rate.move_modal.subtitle') }}
         </DialogDescription>
       </DialogHeader>
 
@@ -91,11 +92,10 @@ watch(() => props.show, (val) => {
                     <Info class="w-4 h-4 text-blue-700" />
                 </div>
                 <div class="text-sm text-blue-900">
-                    <strong>Come funziona:</strong>
-                    Stai modificando la destinazione d'uso interna dei fondi. 
+                    <strong>{{ trans('gestionale.piani_rate.move_modal.how_it_works_title') }}</strong>
+                    {{ trans('gestionale.piani_rate.move_modal.how_it_works_body_1') }}
                     <span class="block mt-1 text-blue-800/80">
-                        Le rate già emesse ai condomini <strong>NON VERRANNO RICALCOLATE</strong>. 
-                        Eventuali differenze di ripartizione saranno gestite automaticamente nel conguaglio di fine anno.
+                        {{ trans('gestionale.piani_rate.move_modal.how_it_works_body_2') }}
                     </span>
                 </div>
             </div>
@@ -105,19 +105,17 @@ watch(() => props.show, (val) => {
                     <Lightbulb class="w-4 h-4 text-amber-700" />
                 </div>
                 <div class="text-xs text-slate-700">
-                    <strong>Esempio pratico:</strong>
-                    Hai avanzato 200€ dalle "Pulizie" e si rompe il cancello? 
-                    Sposta 200€ su "Manutenzione Cancello". 
-                    Il totale del piano non cambia, ma ora hai la copertura contabile corretta per pagare il fabbro.
+                    <strong>{{ trans('gestionale.piani_rate.move_modal.practical_example_title') }}</strong>
+                    {{ trans('gestionale.piani_rate.move_modal.practical_example_body') }}
                 </div>
             </div>
         </div>
         
         <div class="grid gap-2">
-          <Label>Preleva da (Sorgente)</Label>
+          <Label>{{ trans('gestionale.piani_rate.move_modal.source_label') }}</Label>
           <Select v-model="form.source_id">
             <SelectTrigger :class="{'border-red-500': form.errors.source_id}">
-              <SelectValue placeholder="Seleziona voce..." />
+              <SelectValue :placeholder="trans('gestionale.piani_rate.move_modal.source_placeholder')" />
             </SelectTrigger>
             
             <SelectContent 
@@ -132,21 +130,21 @@ watch(() => props.show, (val) => {
                 :value="String(source.id)"
                 :disabled="source.importo_residuo <= 0"
               >
-                {{ source.nome }} (Disp: {{ source.formatted_residuo }})
+                {{ source.nome }} ({{ trans('gestionale.piani_rate.new.chapters.available_short') }}: {{ source.formatted_residuo }})
               </SelectItem>
             </SelectContent>
           </Select>
           <p v-if="selectedSource" class="text-xs text-emerald-600 font-medium flex items-center gap-1">
-              <Wallet class="w-3 h-3" /> Disponibili: {{ euro(selectedSource.importo_residuo) }}
+              <Wallet class="w-3 h-3" /> {{ trans('gestionale.piani_rate.move_modal.available_amount', { amount: euro(selectedSource.importo_residuo) }) }}
           </p>
           <span v-if="form.errors.source_id" class="text-xs text-red-500">{{ form.errors.source_id }}</span>
         </div>
 
         <div class="grid gap-2">
-          <Label>Sposta su (Destinazione)</Label>
+          <Label>{{ trans('gestionale.piani_rate.move_modal.destination_label') }}</Label>
           <Select v-model="form.destination_id">
             <SelectTrigger :class="{'border-red-500': form.errors.destination_id}">
-              <SelectValue placeholder="Seleziona destinazione..." />
+              <SelectValue :placeholder="trans('gestionale.piani_rate.move_modal.destination_placeholder')" />
             </SelectTrigger>
             
             <SelectContent 
@@ -169,25 +167,25 @@ watch(() => props.show, (val) => {
 
         <div class="grid grid-cols-2 gap-4">
             <div class="grid gap-2">
-              <Label>Importo (€)</Label>
+              <Label>{{ trans('gestionale.piani_rate.move_modal.amount_label') }}</Label>
               <div class="relative">
                   <Input 
                     v-model="form.amount" 
                     :max="maxAmount"
                     :class="{'border-red-500': !isAmountValid || form.errors.amount}"
-                    placeholder="0.00" 
+                    :placeholder="trans('gestionale.piani_rate.move_modal.amount_placeholder')"
                   />
                   <div v-if="!isAmountValid && form.amount" class="absolute right-2 top-2.5 text-red-500">
                       <AlertTriangle class="w-4 h-4" />
                   </div>
               </div>
-              <span v-if="!isAmountValid" class="text-[10px] text-red-500 font-bold">Importo superiore alla disponibilità!</span>
+              <span v-if="!isAmountValid" class="text-[10px] text-red-500 font-bold">{{ trans('gestionale.piani_rate.move_modal.amount_exceeds_availability') }}</span>
               <span v-if="form.errors.amount" class="text-xs text-red-500">{{ form.errors.amount }}</span>
             </div>
 
             <div class="grid gap-2">
-              <Label>Motivazione</Label>
-              <Input v-model="form.reason" placeholder="Es. Rottura Cancello" :class="{'border-red-500': form.errors.reason}" />
+              <Label>{{ trans('gestionale.piani_rate.move_modal.reason_label') }}</Label>
+              <Input v-model="form.reason" :placeholder="trans('gestionale.piani_rate.move_modal.reason_placeholder')" :class="{'border-red-500': form.errors.reason}" />
               <span v-if="form.errors.reason" class="text-xs text-red-500">{{ form.errors.reason }}</span>
             </div>
         </div>
@@ -195,13 +193,13 @@ watch(() => props.show, (val) => {
       </div>
 
       <DialogFooter>
-        <Button variant="outline" @click="$emit('update:show', false)">Annulla</Button>
+        <Button variant="outline" @click="$emit('update:show', false)">{{ trans('gestionale.piani_rate.move_modal.cancel') }}</Button>
         <Button 
             class="bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap" 
             :disabled="form.processing || !isAmountValid || !form.source_id || !form.destination_id"
             @click="submit"
         >
-            <ArrowRightLeft class="w-4 h-4 mr-2" /> Esegui spostamento
+            <ArrowRightLeft class="w-4 h-4 mr-2" /> {{ trans('gestionale.piani_rate.move_modal.submit') }}
         </Button>
       </DialogFooter>
     </DialogContent>
