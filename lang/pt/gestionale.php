@@ -1344,6 +1344,10 @@ return [
             'associate' => 'Associar',
             'detach' => 'Dissociar',
         ],
+        'validation' => [
+            'already_linked' => 'Esta ficha já está associada a este imóvel.',
+            'quota_sum_exceeded' => 'A soma das quotas para :type não pode exceder 100.',
+        ],
         'confirm_detach_title' => 'Tem a certeza de que pretende dissociar esta ficha?',
         'confirm_detach_description' => 'Esta ação é irreversível e vai dissociar a ficha do imóvel.',
     ],

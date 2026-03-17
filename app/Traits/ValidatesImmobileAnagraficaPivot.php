@@ -23,7 +23,10 @@ trait ValidatesImmobileAnagraficaPivot
                 ->exists();
 
             if ($alreadyExists) {
-                $validator->errors()->add('anagrafica_id', 'Questa anagrafica è già collegata a questo immobile.');
+                $validator->errors()->add(
+                    'anagrafica_id',
+                    __('gestionale.immobili_anagrafiche.validation.already_linked')
+                );
             }
 
             // 2️⃣ Quota sum validation per tipologia
@@ -33,9 +36,17 @@ trait ValidatesImmobileAnagraficaPivot
                 ->sum('quota');
 
             if ($totalQuotaByTipologia + $newQuota > 100) {
+                $typeKey = "gestionale.list_pages.immobili.anagrafiche.types.{$newTipologia}";
+                $typeLabel = __($typeKey);
+                if ($typeLabel === $typeKey) {
+                    $typeLabel = ucfirst((string) $newTipologia);
+                }
+
                 $validator->errors()->add(
                     $quotaField,
-                    "La somma delle quote per {$newTipologia} non può superare 100."
+                    __('gestionale.immobili_anagrafiche.validation.quota_sum_exceeded', [
+                        'type' => $typeLabel,
+                    ])
                 );
             }
         });

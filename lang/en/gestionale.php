@@ -1126,6 +1126,10 @@ return [
             'associate' => 'Associate',
             'detach' => 'Detach',
         ],
+        'validation' => [
+            'already_linked' => 'This registry record is already linked to this unit.',
+            'quota_sum_exceeded' => 'The total shares for :type cannot exceed 100.',
+        ],
         'confirm_detach_title' => 'Are you sure you want to detach this registry record?',
         'confirm_detach_description' => 'This action is irreversible and will detach the registry record from the unit.',
     ],

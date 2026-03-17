@@ -1126,6 +1126,10 @@ return [
             'associate' => 'Associa',
             'detach' => 'Dissocia',
         ],
+        'validation' => [
+            'already_linked' => 'Questa anagrafica è già collegata a questo immobile.',
+            'quota_sum_exceeded' => 'La somma delle quote per :type non può superare 100.',
+        ],
         'confirm_detach_title' => 'Sei sicuro di voler dissociare questa anagrafica?',
         'confirm_detach_description' => 'Questa azione non è reversibile e dissocierà l\'anagrafica dall\'immobile.',
     ],
