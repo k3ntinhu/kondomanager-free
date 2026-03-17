@@ -2,6 +2,7 @@
 
 import { useForm } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
+import { trans } from 'laravel-vue-i18n'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -121,7 +122,7 @@ const submit = () => {
 <template>
   <Dialog v-model:open="props.show" @update:open="closeModal">
     <DialogContent class="sm:max-w-[700px]"> <DialogHeader>
-        <DialogTitle>Nuova voce di spesa o capitolo</DialogTitle>
+        <DialogTitle>{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.title') }}</DialogTitle>
       </DialogHeader>
 
       <div class="grid gap-4 py-4 overflow-y-auto px-6 max-h-[70vh]">
@@ -131,51 +132,51 @@ const submit = () => {
 
             <div class="grid grid-cols-4 gap-4">
                <div class="col-span-1">
-                  <Label for="codice">Codice</Label>
-                  <Input id="codice" v-model="form.codice" placeholder="A.1" class="mt-1" />
+                  <Label for="codice">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.code') }}</Label>
+                  <Input id="codice" v-model="form.codice" :placeholder="trans('gestionale.list_pages.piani_conti.show.new_entry_modal.placeholders.code')" class="mt-1" />
                </div>
                <div class="col-span-3">
-                  <Label for="nome">Nome Voce</Label>
-                  <Input id="nome" v-model="form.nome" placeholder="Es. Pulizia Scale" class="mt-1" required />
+                  <Label for="nome">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.entry_name') }}</Label>
+                  <Input id="nome" v-model="form.nome" :placeholder="trans('gestionale.list_pages.piani_conti.show.new_entry_modal.placeholders.entry_name')" class="mt-1" required />
                   <InputError :message="form.errors.nome" />
                </div>
             </div>
 
             <div>
-              <Label for="descrizione">Descrizione</Label>
-              <Textarea id="descrizione" v-model="form.descrizione" placeholder="Descrizione..." class="mt-1" />
+              <Label for="descrizione">{{ trans('gestionale.form_common.labels.description') }}</Label>
+              <Textarea id="descrizione" v-model="form.descrizione" :placeholder="trans('gestionale.list_pages.piani_conti.show.new_entry_modal.placeholders.description')" class="mt-1" />
             </div>
 
             <div class="flex items-center gap-6 pb-2">
-              <Label class="font-medium">Tipo di movimento</Label>
+              <Label class="font-medium">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.movement_type') }}</Label>
               <div class="flex items-center gap-2">
                 <input type="radio" id="spesa" value="spesa" v-model="form.tipo" />
-                <Label for="spesa">Spesa (uscita)</Label>
+                <Label for="spesa">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.options.expense_outgoing') }}</Label>
               </div>
               <div class="flex items-center gap-2">
                 <input type="radio" id="entrata" value="entrata" v-model="form.tipo" />
-                <Label for="entrata">Entrata</Label>
+                <Label for="entrata">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.options.income') }}</Label>
               </div>
             </div>
 
             <div class="flex flex-col gap-3 border-y border-gray-100 py-3">
                <div class="flex items-center justify-between">
-                 <Label for="isCapitolo" class="cursor-pointer">È un capitolo di spesa?</Label>
+                 <Label for="isCapitolo" class="cursor-pointer">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.is_expense_chapter') }}</Label>
                  <Switch id="isCapitolo" v-model="isCapitolo" :disabled="isSottoConto" />
                </div>
                <div class="flex items-center justify-between">
-                 <Label for="isSottoConto" class="cursor-pointer">È un sotto-conto di spesa?</Label>
+                 <Label for="isSottoConto" class="cursor-pointer">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.is_expense_subaccount') }}</Label>
                  <Switch id="isSottoConto" v-model="isSottoConto" :disabled="isCapitolo" />
                </div>
             </div>
 
             <div v-if="isSottoConto">
-              <Label>Capitolo padre</Label>
+              <Label>{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.parent_chapter') }}</Label>
               <v-select
                 :options="capitoli"
                 label="nome"
                 v-model="form.parent_id"
-                placeholder="Seleziona capitolo padre"
+                :placeholder="trans('gestionale.list_pages.piani_conti.show.new_entry_modal.placeholders.parent_chapter')"
                 :reduce="(c: CapitoloDropdown) => c.id"
                 @open="onDropdownCapitoliOpen"
                 :loading="isLoadingCapitoli"
@@ -188,43 +189,43 @@ const submit = () => {
 
             <div v-if="!isCapitolo" class="bg-slate-50 p-4 rounded-md border border-slate-200 grid grid-cols-2 gap-4">
                 <div>
-                   <Label for="fornitore" class="text-xs font-semibold uppercase text-slate-500">Fornitore Suggerito</Label>
+                   <Label for="fornitore" class="text-xs font-semibold uppercase text-slate-500">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.suggested_supplier') }}</Label>
                    <select 
                       id="fornitore"
                       v-model="form.default_fornitore_id"
                       class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-ring"
                    >
-                      <option :value="null">-- Nessuno --</option>
+                      <option :value="null">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.options.none') }}</option>
                       <option v-for="f in props.fornitori" :key="f.id" :value="f.id">
                         {{ f.ragione_sociale }}
                       </option>
                    </select>
-                   <p class="text-[10px] text-slate-500 mt-1">Verrà precompilato nelle fatture.</p>
+                   <p class="text-[10px] text-slate-500 mt-1">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.help.supplier_prefill') }}</p>
                 </div>
 
                 <div>
-                   <Label for="tipo_spesa" class="text-xs font-semibold uppercase text-slate-500">Natura Spesa (Fiscale)</Label>
+                   <Label for="tipo_spesa" class="text-xs font-semibold uppercase text-slate-500">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.fiscal_expense_nature') }}</Label>
                    <select 
                       id="tipo_spesa"
                       v-model="form.tipo_spesa"
                       class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-ring"
                    >
-                      <option value="standard">Standard (Beni/Servizi)</option>
-                      <option value="professionista">Professionista (Rit. Acconto)</option>
-                      <option value="lavori">Lavori Edili (Bonus/Ristr.)</option>
-                      <option value="utenza">Utenza (Luce/Gas/Acqua)</option>
+                      <option value="standard">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.expense_types.standard') }}</option>
+                      <option value="professionista">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.expense_types.professional') }}</option>
+                      <option value="lavori">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.expense_types.works') }}</option>
+                      <option value="utenza">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.expense_types.utility') }}</option>
                    </select>
                 </div>
             </div>
 
             <div v-if="!isCapitolo">
-              <Label for="importo">Importo Preventivato</Label>
+              <Label for="importo">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.planned_amount') }}</Label>
               <MoneyInput
                 id="importo"
                 v-model="form.importo"
                 :money-options="moneyOptions"
                 :lazy="true" 
-                placeholder="0,00"
+                :placeholder="trans('gestionale.list_pages.piani_conti.show.new_entry_modal.placeholders.amount')"
                 class="mt-1"
                 @focus="form.clearErrors('importo')"
               />
@@ -232,12 +233,12 @@ const submit = () => {
             </div>
 
             <div v-if="!isCapitolo">
-              <Label>Tabella millesimale</Label>
+              <Label>{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.allocation_table') }}</Label>
               <v-select
                 :options="tabelle"
                 label="nome"
                 v-model="form.tabella_millesimale_id"
-                placeholder="Seleziona tabella millesimale"
+                :placeholder="trans('gestionale.list_pages.piani_conti.show.new_entry_modal.placeholders.allocation_table')"
                 :reduce="(t: TabellaDropdown) => t.id"
                 @open="onDropdownTabelleOpen"
                 :loading="isLoadingTabelle"
@@ -250,28 +251,28 @@ const submit = () => {
 
             <div v-if="!isCapitolo" class="grid grid-cols-3 gap-4 bg-gray-50 p-3 rounded-md">
               <div>
-                <Label class="text-xs">Proprietario %</Label>
+                <Label class="text-xs">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.owner_percent') }}</Label>
                 <Input type="number" v-model="form.percentuale_proprietario" placeholder="100" class="h-8 mt-1" />
               </div>
               <div>
-                <Label class="text-xs">Inquilino %</Label>
+                <Label class="text-xs">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.tenant_percent') }}</Label>
                 <Input type="number" v-model="form.percentuale_inquilino" placeholder="0" class="h-8 mt-1" />
               </div>
               <div>
-                <Label class="text-xs">Usufruttuario %</Label>
+                <Label class="text-xs">{{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.usufruct_percent') }}</Label>
                 <Input type="number" v-model="form.percentuale_usufruttuario" placeholder="0" class="h-8 mt-1" />
               </div>
             </div>
 
             <div>
-              <Label for="note">Note</Label>
-              <Textarea id="note" v-model="form.note" placeholder="Note opzionali..." class="mt-1" />
+              <Label for="note">{{ trans('gestionale.form_common.labels.notes') }}</Label>
+              <Textarea id="note" v-model="form.note" :placeholder="trans('gestionale.list_pages.piani_conti.show.new_entry_modal.placeholders.notes')" class="mt-1" />
             </div>
 
             <DialogFooter class="flex justify-end space-x-2 mt-6">
-              <Button type="button" variant="outline" @click="closeModal">Annulla</Button>
+              <Button type="button" variant="outline" @click="closeModal">{{ trans('gestionale.form_common.actions.cancel') }}</Button>
               <Button type="submit" :disabled="form.processing">
-                {{ form.processing ? 'Salvataggio...' : 'Salva' }}
+                {{ form.processing ? trans('gestionale.list_pages.piani_conti.show.new_entry_modal.actions.saving') : trans('gestionale.form_common.actions.save') }}
               </Button>
             </DialogFooter>
           </form>
