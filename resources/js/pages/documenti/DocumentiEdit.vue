@@ -493,36 +493,36 @@ const submit = (): void => {
                       </SheetTrigger>
                       <SheetContent side="right" class="p-6">
                         <SheetHeader class="mt-4 p-0">
-                          <SheetTitle>{{ trans('documenti.header.new_category_title') }}</SheetTitle>
+                          <SheetTitle>{{ trans('documenti.header.categories.new_category_title') }}</SheetTitle>
                           <SheetDescription>
-                            {{ trans('documenti.header.new_category_description') }}
+                            {{ trans('documenti.header.categories.new_category_description') }}
                           </SheetDescription>
                         </SheetHeader>
 
                         <form @submit.prevent="createCategory" class="mt-6 space-y-4">
                           <div>
-                            <Label for="new-category-name">{{ trans('documenti.label.category_name') }}</Label>
+                            <Label for="new-category-name">{{ trans('documenti.label.categories.category_name') }}</Label>
                             <Input
                               id="new-category-name"
                               v-model="newCategoryName"
-                              :placeholder="trans('documenti.placeholder.category_name')"
+                              :placeholder="trans('documenti.placeholder.categories.category_name')"
                               class="w-full mt-1"
                             />
                           </div>
 
                           <div>
-                            <Label for="new-category-description">{{ trans('documenti.label.category_description') }}</Label>
+                            <Label for="new-category-description">{{ trans('documenti.label.categories.category_description') }}</Label>
                             <Textarea
                               id="new-category-description"
                               v-model="newCategoryDescription"
-                              :placeholder="trans('documenti.placeholder.category_description')"
+                              :placeholder="trans('documenti.placeholder.categories.category_description')"
                               class="w-full mt-1 min-h-[200px]"
                             />
                           </div>
 
                           <div class="flex justify-end">
                             <SheetClose as-child>
-                              <Button type="submit">{{ trans('documenti.actions.save_category') }}</Button>
+                              <Button type="submit">{{ trans('documenti.actions.categories.save_category') }}</Button>
                             </SheetClose>
                           </div>
                         </form>

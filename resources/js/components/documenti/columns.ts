@@ -75,13 +75,14 @@ export const columns: ColumnDef<Documento>[] = [
 
     cell: ({ row }) => {
       const categoria = row.original.categoria;
+      const categoriaLabel = categoria?.localized_name ?? categoria?.name;
 
       return h('div', { class: 'flex space-x-2 items-center' }, [
         categoria
           ? h(
               Badge,
               { variant: 'outline', class: 'rounded-md' },
-              () => categoria.name
+              () => categoriaLabel
             )
           : null,
       ]);
