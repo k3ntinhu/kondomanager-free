@@ -2,6 +2,7 @@
 
 import { computed, ref } from "vue";
 import { router } from "@inertiajs/vue3";
+import { trans } from 'laravel-vue-i18n';
 import { useCurrencyFormatter } from "@/composables/useCurrencyFormatter";
 import { Pencil, Trash2, Lock, Plus, Users, Coins, TrendingUp, TrendingDown, ChevronDown, Building2, User } from "lucide-vue-next";
 import MoneyInput from '@/components/MoneyInput.vue';
@@ -81,7 +82,7 @@ const gestioniGroups = computed<GestioneGroup[]>(() =>
         .forEach((saldo: any) => {
           
           const isSolidale = saldo.anagrafica_id == null;
-          const anagrafica = saldo.anagrafica || { nome: 'Intero Immobile' };
+          const anagrafica = saldo.anagrafica || { nome: trans('gestionale.saldi.assignments.full_property') };
           const importo = saldo.saldo_iniziale ?? 0;
           
           if (importo > 0) {
@@ -131,7 +132,7 @@ function saveEdit(saldo: any, tipo: 'credito' | 'debito') {
 function cancelEdit() { editingSaldoId.value = null; }
 
 function deleteSaldo(saldo: any) {
-  if (!confirm('Rimuovere questo saldo dal wallet?')) return;
+  if (!confirm(trans('gestionale.saldi.confirm.remove_balance'))) return;
   router.delete(
     route('admin.gestionale.saldi.destroy', { condominio: props.condominio.id, saldo: saldo.id }),
     { preserveScroll: true }
@@ -182,7 +183,7 @@ function submitAddModal() {
   if (!modalForm.value.importo || !modalForm.value.gestioneId) return;
   
   if (modalForm.value.targetType === 'personale' && !modalForm.value.anagraficaId) {
-      alert('Seleziona un soggetto per il debito/credito personale.');
+      alert(trans('gestionale.saldi.modal.select_subject_required'));
       return;
   }
 
@@ -214,18 +215,18 @@ function submitAddModal() {
       <div>
         <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
           {{ immobile.nome }}
-          <span class="font-normal text-slate-400 dark:text-slate-500 text-base"> · Int. {{ immobile.interno }}</span>
+          <span class="font-normal text-slate-400 dark:text-slate-500 text-base"> · {{ trans('gestionale.saldi.labels.unit_short') }} {{ immobile.interno }}</span>
         </h2>
         <p class="text-xs text-slate-400 mt-0.5">
-          <span v-if="immobile.palazzina">Palazzina {{ immobile.palazzina.name }}</span>
-          <span v-if="immobile.scala"> · Scala {{ immobile.scala.name }}</span>
+          <span v-if="immobile.palazzina">{{ trans('gestionale.saldi.labels.building') }} {{ immobile.palazzina.name }}</span>
+          <span v-if="immobile.scala"> · {{ trans('gestionale.saldi.labels.stair') }} {{ immobile.scala.name }}</span>
         </p>
       </div>
 
       <div class="flex items-center gap-2 flex-wrap">
         <div class="flex flex-col items-end px-3 py-2 rounded-lg border border-emerald-100 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800/40 min-w-[100px]">
           <span class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-            <TrendingUp class="w-3 h-3" /> Crediti
+            <TrendingUp class="w-3 h-3" /> {{ trans('gestionale.saldi.labels.credits') }}
           </span>
           <span class="text-sm font-semibold text-emerald-700 dark:text-emerald-300 mt-0.5">
             {{ euro(totaleCrediti) }}
@@ -234,7 +235,7 @@ function submitAddModal() {
 
         <div class="flex flex-col items-end px-3 py-2 rounded-lg border border-red-100 bg-red-50 dark:bg-red-900/20 dark:border-red-800/40 min-w-[100px]">
           <span class="text-[10px] font-bold uppercase tracking-widest text-red-500 dark:text-red-400 flex items-center gap-1">
-            <TrendingDown class="w-3 h-3" /> Debiti
+            <TrendingDown class="w-3 h-3" /> {{ trans('gestionale.saldi.labels.debts') }}
           </span>
           <span class="text-sm font-semibold text-red-700 dark:text-red-300 mt-0.5">
             {{ euro(totaleDebiti) }}
@@ -247,7 +248,7 @@ function submitAddModal() {
             'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800/40': netto < 0,
             'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700': netto === 0,
           }">
-          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Saldo netto</span>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{{ trans('gestionale.saldi.labels.net_balance') }}</span>
           <span class="text-sm font-semibold mt-0.5"
             :class="{
               'text-red-700 dark:text-red-300': netto > 0,
@@ -263,7 +264,7 @@ function submitAddModal() {
     <div>
       <div class="flex items-center gap-2 mb-3">
         <Users class="w-3.5 h-3.5 text-slate-400" />
-        <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Soggetti associati</span>
+        <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">{{ trans('gestionale.saldi.labels.associated_subjects') }}</span>
         <div class="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
       </div>
       <div class="flex flex-wrap gap-2">
@@ -276,14 +277,14 @@ function submitAddModal() {
             <p class="text-[10px] uppercase tracking-wider text-slate-400 leading-tight">{{ a.pivot?.tipologia }}</p>
           </div>
         </div>
-        <p v-if="!immobile.anagrafiche?.length" class="text-sm text-slate-400 italic">Nessun soggetto associato</p>
+        <p v-if="!immobile.anagrafiche?.length" class="text-sm text-slate-400 italic">{{ trans('gestionale.saldi.empty.no_subjects_associated') }}</p>
       </div>
     </div>
 
     <div>
       <div class="flex items-center gap-2 mb-3">
         <Coins class="w-3.5 h-3.5 text-slate-400" />
-        <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Saldi per gestione</span>
+        <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">{{ trans('gestionale.saldi.labels.balances_by_management') }}</span>
         <div class="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
       </div>
 
@@ -300,7 +301,7 @@ function submitAddModal() {
               <span class="text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded shrink-0" :class="group.gestione.tipo === 'straordinaria' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'">
                 {{ group.gestione.tipo }}
               </span>
-              <span class="text-[11px] text-slate-400 shrink-0 hidden sm:inline">{{ group.crediti.length + group.debiti.length }} voci</span>
+              <span class="text-[11px] text-slate-400 shrink-0 hidden sm:inline">{{ group.crediti.length + group.debiti.length }} {{ trans('gestionale.saldi.labels.entries') }}</span>
             </div>
             <span class="text-sm font-semibold shrink-0 ml-3"
               :class="{
@@ -317,7 +318,7 @@ function submitAddModal() {
 
               <div class="p-4 border-r border-slate-200 dark:border-slate-700">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-3 flex items-center gap-1.5">
-                  <TrendingUp class="w-3 h-3" /> Crediti
+                  <TrendingUp class="w-3 h-3" /> {{ trans('gestionale.saldi.labels.credits') }}
                 </p>
 
                 <div class="space-y-1.5">
@@ -326,7 +327,7 @@ function submitAddModal() {
                     <span class="flex-1 text-xs text-slate-600 dark:text-slate-400 truncate flex items-center gap-1.5">
                       <Building2 v-if="item.isSolidale" class="w-3 h-3 text-indigo-500 shrink-0" />
                       {{ item.anagrafica.nome }} {{ item.anagrafica.cognome }}
-                      <span v-if="item.isSolidale" class="text-[9px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 px-1 rounded uppercase tracking-widest font-bold ml-1">Art. 63</span>
+                      <span v-if="item.isSolidale" class="text-[9px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 px-1 rounded uppercase tracking-widest font-bold ml-1">{{ trans('gestionale.saldi.labels.art63') }}</span>
                     </span>
 
                     <template v-if="editingSaldoId === item.saldo.id">
@@ -360,7 +361,7 @@ function submitAddModal() {
                       <button v-if="item.saldo.is_applicato || group.isGestioneBloccata" 
                               @click.prevent="showLockedInfoModal = true" 
                               class="text-slate-400 hover:text-amber-500 transition-colors shrink-0" 
-                              title="Saldo Bloccato">
+                              :title="trans('gestionale.saldi.labels.locked_balance')">
                         <Lock class="w-3 h-3" />
                       </button>
                       <template v-else>
@@ -370,23 +371,23 @@ function submitAddModal() {
                     </template>
                   </div>
 
-                  <p v-if="group.crediti.length === 0" class="text-[11px] text-slate-400 italic px-2">Nessun credito registrato</p>
+                  <p v-if="group.crediti.length === 0" class="text-[11px] text-slate-400 italic px-2">{{ trans('gestionale.saldi.empty.no_credits_recorded') }}</p>
 
                   <button v-if="!group.isGestioneBloccata" @click="openAddModal(group.gestione.id, 'credito')" class="w-full mt-1 py-1.5 border border-dashed border-slate-200 dark:border-slate-700 rounded-md text-[11px] text-slate-400 flex items-center justify-center gap-1.5 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all">
-                    <Plus class="w-3 h-3" /> Aggiungi credito
+                    <Plus class="w-3 h-3" /> {{ trans('gestionale.saldi.actions.add_credit') }}
                   </button>
                 </div>
 
                 <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-right">
                   <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                    Totale: {{ euro(group.totaleCrediti) }}
+                    {{ trans('gestionale.saldi.labels.total') }}: {{ euro(group.totaleCrediti) }}
                   </span>
                 </div>
               </div>
 
               <div class="p-4">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-red-500 dark:text-red-400 mb-3 flex items-center gap-1.5">
-                  <TrendingDown class="w-3 h-3" /> Debiti
+                  <TrendingDown class="w-3 h-3" /> {{ trans('gestionale.saldi.labels.debts') }}
                 </p>
 
                 <div class="space-y-1.5">
@@ -395,7 +396,7 @@ function submitAddModal() {
                     <span class="flex-1 text-xs text-slate-600 dark:text-slate-400 truncate flex items-center gap-1.5">
                       <Building2 v-if="item.isSolidale" class="w-3 h-3 text-indigo-500 shrink-0" />
                       {{ item.anagrafica.nome }} {{ item.anagrafica.cognome }}
-                      <span v-if="item.isSolidale" class="text-[9px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 px-1 rounded uppercase tracking-widest font-bold ml-1">Art. 63</span>
+                      <span v-if="item.isSolidale" class="text-[9px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 px-1 rounded uppercase tracking-widest font-bold ml-1">{{ trans('gestionale.saldi.labels.art63') }}</span>
                     </span>
 
                     <template v-if="editingSaldoId === item.saldo.id">
@@ -429,7 +430,7 @@ function submitAddModal() {
                       <button v-if="item.saldo.is_applicato || group.isGestioneBloccata" 
                               @click.prevent="showLockedInfoModal = true" 
                               class="text-slate-400 hover:text-amber-500 transition-colors shrink-0" 
-                              title="Saldo Bloccato">
+                              :title="trans('gestionale.saldi.labels.locked_balance')">
                         <Lock class="w-3 h-3" />
                       </button>
                       <template v-else>
@@ -439,16 +440,16 @@ function submitAddModal() {
                     </template>
                   </div>
 
-                  <p v-if="group.debiti.length === 0" class="text-[11px] text-slate-400 italic px-2">Nessun debito registrato</p>
+                  <p v-if="group.debiti.length === 0" class="text-[11px] text-slate-400 italic px-2">{{ trans('gestionale.saldi.empty.no_debts_recorded') }}</p>
 
                   <button v-if="!group.isGestioneBloccata" @click="openAddModal(group.gestione.id, 'debito')" class="w-full mt-1 py-1.5 border border-dashed border-slate-200 dark:border-slate-700 rounded-md text-[11px] text-slate-400 flex items-center justify-center gap-1.5 hover:border-red-400 hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-all">
-                    <Plus class="w-3 h-3" /> Aggiungi debito
+                    <Plus class="w-3 h-3" /> {{ trans('gestionale.saldi.actions.add_debt') }}
                   </button>
                 </div>
 
                 <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-right">
                   <span class="text-xs font-semibold text-red-600 dark:text-red-400">
-                    Totale: {{ euro(group.totaleDebiti) }}
+                    {{ trans('gestionale.saldi.labels.total') }}: {{ euro(group.totaleDebiti) }}
                   </span>
                 </div>
               </div>
@@ -459,7 +460,7 @@ function submitAddModal() {
         </div>
 
         <p v-if="!gestioniGroups.length" class="text-center py-8 text-sm text-slate-400 italic">
-          Nessuna gestione attiva disponibile
+          {{ trans('gestionale.saldi.empty.no_active_managements') }}
         </p>
       </div>
     </div>
@@ -479,10 +480,10 @@ function submitAddModal() {
                :class="modalForm.tipo === 'credito' ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' : 'bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-800'">
             <div>
               <h3 class="text-lg font-bold" :class="modalForm.tipo === 'credito' ? 'text-emerald-900 dark:text-emerald-300' : 'text-red-900 dark:text-red-300'">
-                Aggiungi {{ modalForm.tipo === 'credito' ? 'Credito' : 'Debito' }}
+                {{ modalForm.tipo === 'credito' ? trans('gestionale.saldi.modal.title_add_credit') : trans('gestionale.saldi.modal.title_add_debt') }}
               </h3>
               <p class="text-xs font-medium opacity-80" :class="modalForm.tipo === 'credito' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
-                Int. {{ immobile.interno }}
+                {{ trans('gestionale.saldi.labels.unit_short') }} {{ immobile.interno }}
               </p>
             </div>
             <button @click="closeAddModal" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white/50 dark:bg-slate-800/50 p-1.5 rounded-full"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
@@ -490,7 +491,7 @@ function submitAddModal() {
 
           <div class="p-6 space-y-6">
             <div class="space-y-3">
-              <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">A chi è assegnato?</label>
+              <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{{ trans('gestionale.saldi.modal.assigned_to') }}</label>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 
                 <label class="cursor-pointer">
@@ -498,10 +499,10 @@ function submitAddModal() {
                   <div class="h-full rounded-xl border-2 dark:border-slate-700 p-4 transition-all peer-checked:border-indigo-500 peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-900/20 hover:bg-slate-50 dark:hover:bg-slate-800 relative">
                     <div class="flex items-center gap-2 mb-2 text-indigo-700 dark:text-indigo-400">
                       <Building2 class="w-5 h-5" />
-                      <span class="font-bold text-sm">Intero immobile</span>
+                      <span class="font-bold text-sm">{{ trans('gestionale.saldi.assignments.full_property') }}</span>
                     </div>
                     <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Solidale. Verrà ripartito in automatico sui proprietari al momento dell'emissione rate (Art. 63).
+                      {{ trans('gestionale.saldi.modal.full_property_description') }}
                     </p>
                   </div>
                 </label>
@@ -511,10 +512,10 @@ function submitAddModal() {
                   <div class="h-full rounded-xl border-2 dark:border-slate-700 p-4 transition-all peer-checked:border-indigo-500 peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-900/20 hover:bg-slate-50 dark:hover:bg-slate-800 relative">
                     <div class="flex items-center gap-2 mb-2 text-slate-700 dark:text-slate-300">
                       <User class="w-5 h-5" />
-                      <span class="font-bold text-sm">Soggetto specifico</span>
+                      <span class="font-bold text-sm">{{ trans('gestionale.saldi.assignments.specific_subject') }}</span>
                     </div>
                     <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      Personale. La Rata Zero sarà intestata esclusivamente a lui.
+                      {{ trans('gestionale.saldi.modal.specific_subject_description') }}
                     </p>
                   </div>
                 </label>
@@ -528,7 +529,7 @@ function submitAddModal() {
                     :options="anagraficheDisponibili" 
                     v-model="modalForm.anagraficaId"
                     :reduce="(a: any) => a.id"
-                    placeholder="Cerca o seleziona l'anagrafica..."
+                    :placeholder="trans('gestionale.saldi.modal.select_subject_placeholder')"
                   >
                     <template #option="{ nome, cognome, pivot }">
                       <div class="flex flex-col py-1">
@@ -547,15 +548,15 @@ function submitAddModal() {
                 </div>
 
                 <div v-else class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-700 dark:text-amber-400">
-                  Tutti i soggetti associati hanno già un saldo per questa gestione. <br>
-                  <strong>Suggerimento:</strong> modifica l'importo della riga già esistente.
+                  {{ trans('gestionale.saldi.modal.all_subjects_have_balance') }} <br>
+                  <strong>{{ trans('gestionale.saldi.modal.suggestion_label') }}</strong> {{ trans('gestionale.saldi.modal.suggestion_edit_row') }}
                 </div>
 
               </div>
             </div>
 
             <div class="space-y-1.5">
-              <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Inserisci l'importo</label>
+              <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{{ trans('gestionale.saldi.modal.enter_amount') }}</label>
               <div class="relative">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm z-10">€</span>
                 
@@ -573,7 +574,7 @@ function submitAddModal() {
 
           <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 flex justify-end gap-3">
             <button @click="closeAddModal" class="px-5 py-2.5 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-              Annulla
+              {{ trans('gestionale.form_common.actions.cancel') }}
             </button>
             <button @click="submitAddModal" 
                     class="px-5 py-2.5 rounded-lg text-sm font-bold text-white transition-all shadow-sm flex items-center gap-2"
@@ -581,7 +582,7 @@ function submitAddModal() {
                     :disabled="!modalForm.importo || (modalForm.targetType === 'personale' && !modalForm.anagraficaId)">
               <svg v-if="modalForm.tipo === 'credito'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
               <TrendingDown v-else class="w-4 h-4" />
-              Salva {{ modalForm.tipo === 'credito' ? 'Credito' : 'Debito' }}
+              {{ modalForm.tipo === 'credito' ? trans('gestionale.saldi.actions.save_credit') : trans('gestionale.saldi.actions.save_debt') }}
             </button>
           </div>
 
@@ -605,8 +606,8 @@ function submitAddModal() {
                 <Lock class="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <h3 class="text-lg font-bold text-amber-900 dark:text-amber-300">Saldo bloccato dal sistema</h3>
-                <p class="text-xs text-amber-700/70 dark:text-amber-400/60 font-medium">Integrazione piano rate attiva</p>
+                <h3 class="text-lg font-bold text-amber-900 dark:text-amber-300">{{ trans('gestionale.saldi.locked_modal.title') }}</h3>
+                <p class="text-xs text-amber-700/70 dark:text-amber-400/60 font-medium">{{ trans('gestionale.saldi.locked_modal.subtitle') }}</p>
               </div>
             </div>
             <button @click="showLockedInfoModal = false" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white/50 dark:bg-slate-800/50 p-1.5 rounded-full transition-colors">
@@ -616,29 +617,29 @@ function submitAddModal() {
           
           <div class="p-8 space-y-6 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             <p class="text-base">
-              Non è possibile modificare o eliminare questo saldo iniziale perché <strong>è già stato integrato in un piano rate</strong> e sono state generate le relative quote di pagamento.
+              {{ trans('gestionale.saldi.locked_modal.body') }}
             </p>
             
             <div class="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-6 border border-slate-100 dark:border-slate-700 space-y-4">
               <h4 class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                 <div class="w-1 h-4 bg-amber-400 rounded-full"></div>
-                Come procedere per la correzione?
+                {{ trans('gestionale.saldi.locked_modal.how_to_fix') }}
               </h4>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                  <p class="font-bold text-xs uppercase tracking-wider text-indigo-400">Opzione A: Eliminazione</p>
+                  <p class="font-bold text-xs uppercase tracking-wider text-indigo-400">{{ trans('gestionale.saldi.locked_modal.option_a_title') }}</p>
                   <p class="text-xs leading-normal">
-                    <strong>Nessun incasso registrato?</strong> <br>
-                    Vai nella sezione <em>Piani Rate</em>, individua il piano associato a questa gestione ed eliminalo. Il sistema rimuoverà i "lucchetti" e renderà i saldi nuovamente editabili.
+                    <strong>{{ trans('gestionale.saldi.locked_modal.option_a_question') }}</strong> <br>
+                    {{ trans('gestionale.saldi.locked_modal.option_a_description') }}
                   </p>
                 </div>
                 
                 <div class="space-y-2">
-                  <p class="font-bold text-xs uppercase tracking-wider text-indigo-400">Opzione B: Rettifica</p>
+                  <p class="font-bold text-xs uppercase tracking-wider text-indigo-400">{{ trans('gestionale.saldi.locked_modal.option_b_title') }}</p>
                   <p class="text-xs leading-normal">
-                    <strong>Incassi già registrati?</strong> <br>
-                    Per garantire l'integrità del Libro Giornale, non puoi eliminare il passato. Registra un <strong>Movimento di Storno</strong> manuale per compensare l'errore (nuovo debito o credito).
+                    <strong>{{ trans('gestionale.saldi.locked_modal.option_b_question') }}</strong> <br>
+                    {{ trans('gestionale.saldi.locked_modal.option_b_description') }}
                   </p>
                 </div>
               </div>
@@ -647,7 +648,7 @@ function submitAddModal() {
           
           <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 flex justify-end gap-3">
              <button @click="showLockedInfoModal = false" class="px-6 py-2.5 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all active:scale-95">
-              Ho capito
+              {{ trans('gestionale.saldi.locked_modal.confirm') }}
             </button>
           </div>
         </div>

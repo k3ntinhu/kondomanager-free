@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import { router, usePage } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { Input } from '@/components/ui/input';
 import { usePermission } from '@/composables/permissions';
 import type { Table } from '@tanstack/vue-table';
@@ -47,7 +48,7 @@ watchDebounced(
     <div class="flex items-center space-x-2">
       <div class="flex items-center space-x-2">
         <Input
-          placeholder="Cerca immobile (es. int 1)..."
+          :placeholder="trans('gestionale.saldi.search_placeholder')"
           v-model="nameFilter"
           class="h-8 w-[150px] lg:w-[250px]"
         />

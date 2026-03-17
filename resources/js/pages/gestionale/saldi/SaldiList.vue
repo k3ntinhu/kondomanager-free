@@ -2,6 +2,7 @@
 
 import { computed, ref } from "vue";
 import { Head } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import StrutturaLayout from '@/layouts/gestionale/StrutturaLayout.vue';
 import { usePermission } from "@/composables/permissions";
@@ -41,27 +42,27 @@ const filteredImmobili = computed(() => {
 
 // ── Breadcrumbs ────────────────────────────────────────────────────────────
 const headerBreadcrumbs = computed(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
-  { title: 'Struttura', href: '#' },
-  { title: 'Saldi Iniziali' }
+  { title: trans('gestionale.saldi.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.saldi.breadcrumbs.structure'), href: '#' },
+  { title: trans('gestionale.saldi.breadcrumbs.current') }
 ]);
 
 const pageGuides = [
   {
-    title: 'Separazione dei Fondi',
-    description: "Inserisci i debiti e i crediti dell'anno precedente separandoli per gestione (es. Ordinaria, Straordinaria).",
+    title: trans('gestionale.saldi.guides.separation_title'),
+    description: trans('gestionale.saldi.guides.separation_description'),
     icon: Coins,
     colorVariant: 'emerald' as const
   },
   {
-    title: 'Dati Blindati',
-    description: 'I saldi inclusi in un piano rate emesso mostreranno un lucchetto e non potranno essere modificati per garantire la quadratura.',
+    title: trans('gestionale.saldi.guides.locked_title'),
+    description: trans('gestionale.saldi.guides.locked_description'),
     icon: Lock,
     colorVariant: 'blue' as const
   },
   {
-    title: 'Subentri e Art. 63',
-    description: "Assegna i saldi all'intera unità (riparto automatico pro-quota) o a un singolo soggetto per gestire facilmente compravendite e cambi inquilino.",
+    title: trans('gestionale.saldi.guides.turnover_title'),
+    description: trans('gestionale.saldi.guides.turnover_description'),
     icon: Users,
     colorVariant: 'amber' as const
   }
@@ -69,12 +70,12 @@ const pageGuides = [
 </script>
 
 <template>
-  <Head title="Saldi Iniziali" />
+  <Head :title="trans('gestionale.saldi.head_title')" />
   <GestionaleLayout>
     <div class="px-6 py-8 space-y-4">
       <PageHeaderGuide
-        :page-title="`Saldi Iniziali - ${esercizio?.nome || 'Esercizio'}`"
-        page-subtitle="Configura il Wallet finanziario di partenza per ogni unità immobiliare."
+        :page-title="trans('gestionale.saldi.page_title', { esercizio: esercizio?.nome || trans('gestionale.saldi.exercise_fallback') })"
+        :page-subtitle="trans('gestionale.saldi.page_subtitle')"
         :guides="pageGuides"
         :breadcrumbs="headerBreadcrumbs"
         :condominio="condominio"
@@ -94,7 +95,7 @@ const pageGuides = [
                 <input
                   v-model="search"
                   type="text"
-                  placeholder="Cerca immobile (es. int 1)…"
+                  :placeholder="trans('gestionale.saldi.search_placeholder')"
                   class="w-full pl-8 pr-3 py-1.5 text-sm rounded-md border border-slate-200 dark:border-slate-700
                          bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200
                          placeholder:text-slate-400 outline-none
@@ -121,19 +122,19 @@ const pageGuides = [
                     :class="selectedId === imm.id ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-800 dark:text-slate-200'"
                   >
                     {{ imm.nome }}
-                    <span class="font-normal text-slate-400 dark:text-slate-500"> · Int. {{ imm.interno }}</span>
+                    <span class="font-normal text-slate-400 dark:text-slate-500"> · {{ trans('gestionale.saldi.labels.unit_short') }} {{ imm.interno }}</span>
                   </p>
                   <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1">
                     <Building2 class="w-3 h-3 shrink-0" />
-                    <span v-if="imm.palazzina">Pal. {{ imm.palazzina.name }}</span>
-                    <span v-if="imm.scala"> · Sc. {{ imm.scala.name }}</span>
-                    <span> · {{ imm.anagrafiche?.length ?? 0 }} soggett{{ imm.anagrafiche?.length === 1 ? 'o' : 'i' }}</span>
+                    <span v-if="imm.palazzina">{{ trans('gestionale.saldi.labels.building_short') }} {{ imm.palazzina.name }}</span>
+                    <span v-if="imm.scala"> · {{ trans('gestionale.saldi.labels.stair_short') }} {{ imm.scala.name }}</span>
+                    <span> · {{ imm.anagrafiche?.length ?? 0 }} {{ (imm.anagrafiche?.length ?? 0) === 1 ? trans('gestionale.saldi.labels.subject_singular') : trans('gestionale.saldi.labels.subject_plural') }}</span>
                   </p>
                 </div>
               </button>
 
               <div v-if="filteredImmobili.length === 0" class="text-center py-10 text-slate-400 text-sm">
-                Nessun immobile trovato
+                {{ trans('gestionale.saldi.empty.no_properties_found') }}
               </div>
             </div>
           </div>
@@ -146,7 +147,7 @@ const pageGuides = [
               class="h-full flex flex-col items-center justify-center text-slate-400 gap-3 p-8"
             >
               <Coins class="w-10 h-10 opacity-30" />
-              <p class="text-sm">Seleziona un immobile per vedere i saldi</p>
+              <p class="text-sm">{{ trans('gestionale.saldi.empty.select_property') }}</p>
             </div>
 
             <!-- Detail panel -->
