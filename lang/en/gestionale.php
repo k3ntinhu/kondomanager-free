@@ -990,6 +990,25 @@ return [
     ],
     'immobili_anagrafiche' => [
         'head_title' => 'Unit registry list',
+        'page_title' => 'Linked registry records',
+        'page_subtitle' => 'Manage the subjects linked to this unit: :name (Unit :interno).',
+        'breadcrumbs' => [
+            'management' => 'Management',
+            'properties' => 'Properties',
+            'current' => 'Registry',
+        ],
+        'guides' => [
+            'associated_subjects_title' => 'Linked subjects',
+            'associated_subjects_description' => 'View owners, tenants and beneficiaries linked to this property unit.',
+            'competence_shares_title' => 'Allocation shares',
+            'competence_shares_description' => 'Check the correct percentage allocation among linked subjects.',
+            'turnover_history_title' => 'Turnover history',
+            'turnover_history_description' => 'Track tenant changes with end dates to keep allocations consistent.',
+        ],
+        'header_actions' => [
+            'properties' => 'Properties',
+            'associate_subject' => 'Link subject',
+        ],
         'table' => [
             'name' => 'Name',
             'type' => 'Type',
@@ -1011,6 +1030,25 @@ return [
     ],
     'immobili_documenti' => [
         'head_title' => 'Unit documents list',
+        'page_title' => 'Document archive',
+        'page_subtitle' => 'Manage documents related to this property unit: :name.',
+        'breadcrumbs' => [
+            'management' => 'Management',
+            'properties' => 'Properties',
+            'current' => 'Documents',
+        ],
+        'guides' => [
+            'property_file_title' => 'Property file',
+            'property_file_description' => 'Store floor plans, cadastral records, lease contracts and deeds.',
+            'security_privacy_title' => 'Security and privacy',
+            'security_privacy_description' => 'Sensitive documents are protected and available only to authorized users.',
+            'sharing_title' => 'Controlled sharing',
+            'sharing_description' => 'Choose which documents are visible to residents in the app.',
+        ],
+        'header_actions' => [
+            'properties' => 'Properties',
+            'upload_file' => 'Upload file',
+        ],
         'table' => [
             'title' => 'Title',
             'status' => 'Status',

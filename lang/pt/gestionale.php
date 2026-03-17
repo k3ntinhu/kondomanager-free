@@ -1208,6 +1208,25 @@ return [
     ],
     'immobili_anagrafiche' => [
         'head_title' => 'Lista de fichas do imóvel',
+        'page_title' => 'Fichas associadas',
+        'page_subtitle' => 'Gerir os sujeitos associados à unidade imobiliária: :name (Int. :interno).',
+        'breadcrumbs' => [
+            'management' => 'Gestão',
+            'properties' => 'Imóveis',
+            'current' => 'Fichas',
+        ],
+        'guides' => [
+            'associated_subjects_title' => 'Sujeitos associados',
+            'associated_subjects_description' => 'Visualize proprietários, inquilinos ou usufrutuários ligados a esta unidade imobiliária.',
+            'competence_shares_title' => 'Quotas de competência',
+            'competence_shares_description' => 'Verifique a repartição correta da quota percentual entre os diferentes sujeitos.',
+            'turnover_history_title' => 'Histórico de subentradas',
+            'turnover_history_description' => 'Registe mudanças de inquilino com data de fim para calcular corretamente os rateios.',
+        ],
+        'header_actions' => [
+            'properties' => 'Imóveis',
+            'associate_subject' => 'Associar sujeito',
+        ],
         'table' => [
             'name' => 'Nome',
             'type' => 'Tipologia',
@@ -1229,6 +1248,25 @@ return [
     ],
     'immobili_documenti' => [
         'head_title' => 'Lista de documentos do imóvel',
+        'page_title' => 'Arquivo de documentos',
+        'page_subtitle' => 'Gerir os documentos relativos à unidade imobiliária: :name.',
+        'breadcrumbs' => [
+            'management' => 'Gestão',
+            'properties' => 'Imóveis',
+            'current' => 'Documentos',
+        ],
+        'guides' => [
+            'property_file_title' => 'Dossier do imóvel',
+            'property_file_description' => 'Arquivo de plantas, certidões cadastrais, contratos de arrendamento e escrituras.',
+            'security_privacy_title' => 'Segurança e privacidade',
+            'security_privacy_description' => 'Documentos sensíveis protegidos e acessíveis apenas a utilizadores autorizados.',
+            'sharing_title' => 'Partilha controlada',
+            'sharing_description' => 'Defina que documentos ficam visíveis para os condóminos na aplicação.',
+        ],
+        'header_actions' => [
+            'properties' => 'Imóveis',
+            'upload_file' => 'Carregar ficheiro',
+        ],
         'table' => [
             'title' => 'Título',
             'status' => 'Estado',

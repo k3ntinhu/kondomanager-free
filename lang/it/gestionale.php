@@ -990,6 +990,25 @@ return [
     ],
     'immobili_anagrafiche' => [
         'head_title' => 'Elenco anagrafiche immobile',
+        'page_title' => 'Anagrafiche collegate',
+        'page_subtitle' => 'Gestisci i soggetti associati all\'unità immobiliare: :name (Int. :interno).',
+        'breadcrumbs' => [
+            'management' => 'Gestionale',
+            'properties' => 'Immobili',
+            'current' => 'Anagrafiche',
+        ],
+        'guides' => [
+            'associated_subjects_title' => 'Soggetti associati',
+            'associated_subjects_description' => 'Visualizza proprietari, inquilini o usufruttuari legati a questa unità immobiliare.',
+            'competence_shares_title' => 'Quote di competenza',
+            'competence_shares_description' => 'Verifica la corretta ripartizione percentuale tra i vari soggetti.',
+            'turnover_history_title' => 'Storico subentri',
+            'turnover_history_description' => 'Registra i cambi di inquilino con data di fine per mantenere corretti i riparti.',
+        ],
+        'header_actions' => [
+            'properties' => 'Immobili',
+            'associate_subject' => 'Associa soggetto',
+        ],
         'table' => [
             'name' => 'Nome',
             'type' => 'Tipologia',
@@ -1011,6 +1030,25 @@ return [
     ],
     'immobili_documenti' => [
         'head_title' => 'Elenco documenti immobile',
+        'page_title' => 'Archivio documenti',
+        'page_subtitle' => 'Gestisci i documenti relativi all\'unità immobiliare: :name.',
+        'breadcrumbs' => [
+            'management' => 'Gestionale',
+            'properties' => 'Immobili',
+            'current' => 'Documenti',
+        ],
+        'guides' => [
+            'property_file_title' => 'Fascicolo immobile',
+            'property_file_description' => 'Archivia planimetrie, visure catastali, contratti di locazione e atti di compravendita.',
+            'security_privacy_title' => 'Sicurezza e privacy',
+            'security_privacy_description' => 'I documenti sensibili sono protetti e accessibili solo al personale autorizzato.',
+            'sharing_title' => 'Condivisione',
+            'sharing_description' => 'Decidi quali documenti rendere visibili ai condòmini direttamente nell\'app.',
+        ],
+        'header_actions' => [
+            'properties' => 'Immobili',
+            'upload_file' => 'Carica file',
+        ],
         'table' => [
             'title' => 'Titolo',
             'status' => 'Stato',
