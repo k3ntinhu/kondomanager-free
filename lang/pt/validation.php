@@ -298,6 +298,7 @@ return [
             'description' => 'descrição da escada',
         ],
         'immobili' => [
+            'descrizione' => 'descrição',
             'tipologia_id' => 'tipologia do imóvel',
         ],
 

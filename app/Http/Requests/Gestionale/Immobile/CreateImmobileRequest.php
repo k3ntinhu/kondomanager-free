@@ -90,6 +90,7 @@ class CreateImmobileRequest extends FormRequest
     public function attributes()
     {
         return [
+            'descrizione' => __('gestionale.immobili_form.create.labels.description'),
             'tipologia_id'  => __('validation.attributes.immobili.tipologia_id')
         ];
     }
