@@ -1119,15 +1119,43 @@ return [
     ],
     'gestioni_form' => [
         'create' => [
+            'head_title' => 'Criar nova gestão',
             'breadcrumb_create' => 'Criar gestão',
             'heading_title' => 'Criar nova gestão para o exercício - :esercizio',
             'heading_description' => 'Preencha o seguinte formulário para criar uma nova gestão para o exercício aberto atual - :esercizio',
+            'sections' => [
+                'main_data_title' => 'Dados principais',
+                'main_data_description' => 'Nome, tipologia e período de competência da gestão.',
+                'internal_notes_title' => 'Notas internas',
+                'internal_notes_description' => 'Anotações visíveis apenas para administradores.',
+            ],
+            'labels' => [
+                'management_name' => 'Nome da gestão',
+            ],
             'type_options' => [
                 'ordinary' => 'Ordinária',
                 'extraordinary' => 'Extraordinária',
             ],
             'placeholders' => [
+                'name' => 'Ex.: Gestão ordinária 2026',
                 'type' => 'Tipologia da gestão',
+                'date' => 'Selecionar data',
+            ],
+            'actions' => [
+                'save_management' => 'Guardar gestão',
+            ],
+        ],
+        'edit' => [
+            'head_title' => 'Editar gestão',
+            'breadcrumb_edit' => 'Editar gestão',
+            'heading_title' => 'Editar gestão - :gestione',
+            'heading_description' => 'Atualize os detalhes da gestão contabilística existente.',
+            'guides' => [
+                'edit_title' => 'Editar gestão',
+                'edit_description' => 'Está a editar a gestão ":gestione" do exercício ":esercizio". Alterar datas de competência pode impactar os controlos dos movimentos associados.',
+            ],
+            'actions' => [
+                'save_changes' => 'Guardar alterações',
             ],
         ],
     ],
