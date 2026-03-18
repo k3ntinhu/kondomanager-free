@@ -419,7 +419,7 @@ class PianoRateController extends Controller
             $nuovoStato
         );
         
-        return back()->with($this->flashSuccess('Stato aggiornato con successo.'));
+        return back()->with($this->flashSuccess(__('gestionale.piani_rate.messages.status_updated_success')));
     }
 
     /**
@@ -489,8 +489,7 @@ class PianoRateController extends Controller
 
         if ($hasPagamenti) {
             return back()->with($this->flashError(
-                'Impossibile eliminare il piano rate: risultano incassi già registrati. ' .
-                'Devi prima annullare le registrazioni di incasso associate a queste rate.'
+                __('gestionale.piani_rate.messages.delete_blocked_payments')
             ));
         }
 
@@ -501,16 +500,14 @@ class PianoRateController extends Controller
 
         if ($hasEmissioni) {
             return back()->with($this->flashError(
-                'Impossibile eliminare il piano rate: le rate risultano già emesse in contabilità. ' .
-                'Usa l\'opzione "Annulla Emissioni" all\'interno del piano rate prima di eliminarlo.'
+                __('gestionale.piani_rate.messages.delete_blocked_emissions')
             ));
         }
 
         // C. Controllo Approvazione (Ping-Pong Scadenziario)
         if ($pianoRate->stato === StatoPianoRate::APPROVATO) {
             return back()->with($this->flashError(
-                'Impossibile eliminare un piano rate approvato. ' .
-                'Devi prima togliere l\'approvazione (riportandolo in Bozza) affinché il sistema elimini automaticamente in modo pulito gli eventi dallo scadenziario.'
+                __('gestionale.piani_rate.messages.delete_blocked_approved')
             ));
         }
 
@@ -594,11 +591,11 @@ class PianoRateController extends Controller
     public function detachCapitolo(Condominio $condominio, Esercizio $esercizio, PianoRate $pianoRate, $capitoloId)
     {
         if ($pianoRate->rate()->whereHas('rateQuote', fn($q) => $q->where('importo_pagato', '>', 0))->exists()) {
-            return back()->with($this->flashError("Impossibile modificare: ci sono incassi registrati."));
+            return back()->with($this->flashError(__('gestionale.piani_rate.messages.detach_blocked_payments')));
         }
         
         if ($pianoRate->rate()->whereHas('rateQuote', fn($q) => $q->whereNotNull('scrittura_contabile_id'))->exists()) {
-            return back()->with($this->flashError("Annulla le emissioni prima di modificare le voci."));
+            return back()->with($this->flashError(__('gestionale.piani_rate.messages.detach_blocked_emissions')));
         }
 
         $isInvolved = BudgetMovement::query()
@@ -610,8 +607,7 @@ class PianoRateController extends Controller
 
         if ($isInvolved) {
             return back()->with($this->flashError(
-                "Impossibile rimuovere: questa voce è vincolata da movimenti di budget (anche da altri piani rate). " .
-                "Devi prima annullare i movimenti o restituire i fondi, poi potrai cancellarla."
+                __('gestionale.piani_rate.messages.detach_blocked_budget_movements')
             ));
         }
 
@@ -625,11 +621,11 @@ class PianoRateController extends Controller
             app(GeneratePianoRateAction::class)->execute($pianoRate, null); 
             
             DB::commit();
-            return back()->with($this->flashSuccess("Voce rimossa e ricalcolata."));
+            return back()->with($this->flashSuccess(__('gestionale.piani_rate.messages.detach_success')));
             
         } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->with($this->flashError("Errore durante la rimozione: " . $e->getMessage()));
+            return back()->with($this->flashError(__('gestionale.piani_rate.messages.detach_error', ['error' => $e->getMessage()])));
         }
     }
 

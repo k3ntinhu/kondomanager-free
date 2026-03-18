@@ -349,7 +349,16 @@ return [
         'confirm_delete_title' => 'Are you sure you want to delete this rate plan?',
         'confirm_delete_description' => 'This action is irreversible. It will remove the rate plan and all related data.',
         'messages' => [
+            'status_updated_success' => 'Status updated successfully.',
             'delete_error' => 'Error while deleting the rate plan.',
+            'delete_blocked_payments' => 'Cannot delete the rate plan: payments have already been recorded. Cancel the related payment records first.',
+            'delete_blocked_emissions' => 'Cannot delete the rate plan: installments have already been issued in accounting. Use "Cancel emissions" inside the plan before deleting it.',
+            'delete_blocked_approved' => 'Cannot delete an approved rate plan. Remove approval first (set it back to Draft) so the scheduler events can be removed cleanly.',
+            'detach_blocked_payments' => 'Cannot modify: there are recorded payments.',
+            'detach_blocked_emissions' => 'Cancel emissions before modifying entries.',
+            'detach_blocked_budget_movements' => 'Cannot remove: this entry is locked by budget movements (including from other installment plans). Cancel movements or return funds first, then try again.',
+            'detach_success' => 'Entry removed and plan recalculated.',
+            'detach_error' => 'Error during removal: :error',
         ],
     ],
     'list_pages' => [

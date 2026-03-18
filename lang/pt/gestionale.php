@@ -567,7 +567,16 @@ return [
         'confirm_delete_title' => 'Tem a certeza de que pretende eliminar este plano de prestações?',
         'confirm_delete_description' => 'Esta ação é irreversível. O plano de prestações e todos os dados associados serão eliminados.',
         'messages' => [
+            'status_updated_success' => 'Estado atualizado com sucesso.',
             'delete_error' => 'Erro ao eliminar o plano de prestações.',
+            'delete_blocked_payments' => 'Não é possível eliminar o plano de prestações: existem incassos já registados. Anule primeiro os registos de incasso associados a estas prestações.',
+            'delete_blocked_emissions' => 'Não é possível eliminar o plano de prestações: as prestações já foram emitidas na contabilidade. Use a opção "Anular emissões" dentro do plano antes de o eliminar.',
+            'delete_blocked_approved' => 'Não é possível eliminar um plano de prestações aprovado. Remova primeiro a aprovação (voltando a Rascunho) para que o sistema elimine corretamente os eventos do agendador.',
+            'detach_blocked_payments' => 'Não é possível modificar: existem incassos registados.',
+            'detach_blocked_emissions' => 'Anule as emissões antes de modificar as rubricas.',
+            'detach_blocked_budget_movements' => 'Não é possível remover: esta rubrica está bloqueada por movimentos de orçamento (incluindo outros planos de prestações). Anule primeiro os movimentos ou devolva os fundos e depois tente novamente.',
+            'detach_success' => 'Rubrica removida e plano recalculado.',
+            'detach_error' => 'Erro durante a remoção: :error',
         ],
     ],
     'list_pages' => [

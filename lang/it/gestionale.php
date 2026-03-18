@@ -349,7 +349,16 @@ return [
         'confirm_delete_title' => 'Sei sicuro di voler eliminare questo piano rate?',
         'confirm_delete_description' => 'Questa azione non è reversibile. Eliminerà il piano rate e tutti i dati ad esso associati.',
         'messages' => [
+            'status_updated_success' => 'Stato aggiornato con successo.',
             'delete_error' => 'Errore durante la cancellazione del piano rate.',
+            'delete_blocked_payments' => 'Impossibile eliminare il piano rate: risultano incassi già registrati. Devi prima annullare le registrazioni di incasso associate a queste rate.',
+            'delete_blocked_emissions' => 'Impossibile eliminare il piano rate: le rate risultano già emesse in contabilità. Usa l\'opzione "Annulla emissioni" all\'interno del piano rate prima di eliminarlo.',
+            'delete_blocked_approved' => 'Impossibile eliminare un piano rate approvato. Devi prima togliere l\'approvazione (riportandolo in Bozza) affinché il sistema elimini automaticamente in modo pulito gli eventi dallo scadenziario.',
+            'detach_blocked_payments' => 'Impossibile modificare: ci sono incassi registrati.',
+            'detach_blocked_emissions' => 'Annulla le emissioni prima di modificare le voci.',
+            'detach_blocked_budget_movements' => 'Impossibile rimuovere: questa voce è vincolata da movimenti di budget (anche da altri piani rate). Devi prima annullare i movimenti o restituire i fondi, poi potrai cancellarla.',
+            'detach_success' => 'Voce rimossa e ricalcolata.',
+            'detach_error' => 'Errore durante la rimozione: :error',
         ],
     ],
     'list_pages' => [
