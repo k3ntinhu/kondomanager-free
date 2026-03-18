@@ -343,6 +343,12 @@ return [
         ],
     ],
     'list_pages' => [
+        'top_nav' => [
+            'gestioni' => 'Gestioni',
+            'piani_conti' => 'Piani conti',
+            'piani_rate' => 'Piani rate',
+            'movimenti' => 'Movimenti',
+        ],
         'casse' => [
             'head_title' => 'Elenco risorse e fondi',
             'page_title' => 'Risorse e fondi',

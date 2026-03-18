@@ -11,6 +11,13 @@ import money from 'v-money3';
 import { i18nVue, loadLanguageAsync } from 'laravel-vue-i18n';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const supportedLocales = new Set(['pt', 'it', 'en']);
+
+const normalizeLocale = (value: unknown): string => {
+    const raw = typeof value === 'string' ? value : '';
+    const base = raw.replace('_', '-').split('-')[0].toLowerCase();
+    return supportedLocales.has(base) ? base : 'pt';
+};
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -25,7 +32,7 @@ createInertiaApp({
                 .use(ZiggyVue)
                 .use(money)
                 .use(i18nVue, {
-                    lang: props.initialPage.props.locale as string,
+                    lang: normalizeLocale(props.initialPage.props.locale),
                     resolve: async (lang: string) => {
                         const langs = import.meta.glob('../../lang/*.json');
                         return await langs[`../../lang/${lang}.json`]();
@@ -39,7 +46,7 @@ createInertiaApp({
                 () => usePage().props.locale,
                 (newLocale) => {
                     if (newLocale) {
-                        loadLanguageAsync(newLocale as string);
+                        loadLanguageAsync(normalizeLocale(newLocale));
                     }
                 }
             );

@@ -343,6 +343,12 @@ return [
         ],
     ],
     'list_pages' => [
+        'top_nav' => [
+            'gestioni' => 'Managements',
+            'piani_conti' => 'Chart of accounts',
+            'piani_rate' => 'Installment plans',
+            'movimenti' => 'Movements',
+        ],
         'casse' => [
             'head_title' => 'Resources and funds list',
             'page_title' => 'Resources and funds',

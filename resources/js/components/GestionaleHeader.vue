@@ -103,25 +103,25 @@ const mainNavItems: NavItem[] = [
     }, 
     {
         type: 'link',
-        title: trans('gestionale.list_pages.gestioni.page_title'),
+        title: trans('gestionale.list_pages.top_nav.gestioni'),
         href: generatePath('gestionale/:condominio/esercizi/:esercizio/gestioni', { condominio: condominio.value.id, esercizio: esercizio.value.id }), 
         icon: ListPlus,
     }, 
     {
         type: 'link',
-        title: trans('gestionale.list_pages.piani_conti.page_title'),
+        title: trans('gestionale.list_pages.top_nav.piani_conti'),
         href: generatePath('gestionale/:condominio/esercizi/:esercizio/piani-conti', { condominio: condominio.value.id, esercizio: esercizio.value.id }),
         icon: HandCoins,
     },
     {
         type: 'link',
-        title: trans('gestionale.piani_rate.page_title'),
+        title: trans('gestionale.list_pages.top_nav.piani_rate'),
         href: generatePath('gestionale/:condominio/esercizi/:esercizio/piani-rate', { condominio: condominio.value.id, esercizio: esercizio.value.id }),
         icon: Wallet,
     },
     {
         type: 'link',
-        title: trans('gestionale.list_pages.movimenti.page_title'),
+        title: trans('gestionale.list_pages.top_nav.movimenti'),
         href: generatePath('gestionale/:condominio/movimenti', { condominio: condominio.value.id }),
         icon: ArrowUpDown,
     }

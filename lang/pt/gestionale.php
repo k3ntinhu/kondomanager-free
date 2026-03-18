@@ -561,6 +561,12 @@ return [
         ],
     ],
     'list_pages' => [
+        'top_nav' => [
+            'gestioni' => 'Gestões',
+            'piani_conti' => 'Planos Contas',
+            'piani_rate' => 'Planos Prestações',
+            'movimenti' => 'Movimentos',
+        ],
         'casse' => [
             'head_title' => 'Lista de recursos e fundos',
             'page_title' => 'Recursos e fundos',
