@@ -1,6 +1,6 @@
 [![Read in English](https://img.shields.io/badge/Read_in-English-red.svg)](README.en.md)
-[![Leggi in Italiano](https://img.shields.io/badge/Leggi_in-Italiano-green.svg)](README.md)
-[![Leia em Português](https://img.shields.io/badge/Leia_em-Português-yellow.svg)](README.pt-br.md)
+[![Leggi in Italiano](https://img.shields.io/badge/Leggi_in-Italiano-green.svg)](README.it.md)
+[![Leia em Português](https://img.shields.io/badge/Leia_em-Português-yellow.svg)](README.pt.md)
 [![Generic badge](https://img.shields.io/badge/Version-1.8.0-blue.svg)](https://github.com/vince844/kondomanager-free/releases)
 [![License](https://img.shields.io/badge/License-AGPL_3.0-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
 
