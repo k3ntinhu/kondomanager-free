@@ -6,9 +6,9 @@ import { trans } from 'laravel-vue-i18n';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import ImmobileLayout from '@/layouts/gestionale/ImmobileLayout.vue';
 import Alert from "@/components/Alert.vue";
+import PageHeaderGuide from '@/components/PageHeaderGuide.vue';
 import { usePermission } from "@/composables/permissions";
 import { List, Pencil } from 'lucide-vue-next';
-import type { BreadcrumbItem } from '@/types';
 import type { Flash } from '@/types/flash';
 import type { Immobile } from '@/types/gestionale/immobili';
 import type { Building } from '@/types/buildings';
@@ -23,7 +23,7 @@ const { generatePath } = usePermission();
 const page = usePage<{ flash: { message?: Flash } }>();
 const flashMessage = computed(() => page.props.flash.message);
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+const headerBreadcrumbs = computed(() => [
   { title: trans('gestionale.list_pages.immobili.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
   { title: props.condominio.nome, href: '#' },
   { title: trans('gestionale.list_pages.immobili.breadcrumbs.list'), href: generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id }) },
@@ -57,35 +57,44 @@ const localizeTipologia = (immobile: Immobile): string => {
 </script>
 
 <template>
-  <GestionaleLayout :breadcrumbs="breadcrumbs">
+  <GestionaleLayout>
     <Head :title="trans('gestionale.immobili_view.head_title')" />
 
-    <ImmobileLayout>
+    <div class="px-6 py-8 space-y-4">
+      <PageHeaderGuide
+        :page-title="props.immobile.nome"
+        :page-subtitle="trans('gestionale.immobili_view.head_title')"
+        :guides="[]"
+        :breadcrumbs="headerBreadcrumbs"
+      >
+        <template #actions>
+          <div class="flex items-center gap-2">
+            <Link
+              as="button"
+              :href="generatePath('gestionale/:condominio/immobili/:immobile/edit', { condominio: props.condominio.id, immobile: props.immobile.id })"
+              class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              <Pencil class="w-4 h-4" />
+              <span>{{ trans('gestionale.form_common.actions.edit') }}</span>
+            </Link>
 
-      <div v-if="flashMessage" class="py-3">
-        <Alert :message="flashMessage.message" :type="flashMessage.type" />
-      </div>
+            <Link
+              as="button"
+              :href="generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id })"
+              class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              <List class="w-4 h-4" />
+              <span>{{ trans('gestionale.list_pages.immobili.page_title') }}</span>
+            </Link>
+          </div>
+        </template>
+      </PageHeaderGuide>
 
-      <!-- Action buttons -->
-      <div class="flex flex-col lg:flex-row lg:justify-end gap-2 w-full">
-        <Link
-          as="button"
-          :href="generatePath('gestionale/:condominio/immobili/:immobile/edit', { condominio: props.condominio.id, immobile: props.immobile.id })"
-          class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <Pencil class="w-4 h-4" />
-          <span>{{ trans('gestionale.form_common.actions.edit') }}</span>
-        </Link>
+      <ImmobileLayout>
 
-        <Link
-          as="button"
-          :href="generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id })"
-          class="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <List class="w-4 h-4" />
-          <span>{{ trans('gestionale.list_pages.immobili.page_title') }}</span>
-        </Link>
-      </div>
+        <div v-if="flashMessage" class="py-3">
+          <Alert :message="flashMessage.message" :type="flashMessage.type" />
+        </div>
 
       <div class="container mx-auto p-0">
         <div class="bg-card mb-6 grid grid-cols-1 md:grid-cols-2 gap-6 rounded-lg border p-6 text-sm mt-4">
@@ -208,6 +217,7 @@ const localizeTipologia = (immobile: Immobile): string => {
         </div>
       </div>
 
-    </ImmobileLayout>
+      </ImmobileLayout>
+    </div>
   </GestionaleLayout>
 </template>

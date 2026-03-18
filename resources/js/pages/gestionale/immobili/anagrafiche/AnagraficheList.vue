@@ -11,7 +11,6 @@ import Alert from "@/components/Alert.vue";
 import PageHeaderGuide from '@/components/PageHeaderGuide.vue';
 import { usePermission } from "@/composables/permissions";
 import { UsersRound, ArrowRightLeft, PieChart, UserPlus, List } from 'lucide-vue-next';
-import type { BreadcrumbItem } from '@/types';
 import type { Flash } from '@/types/flash';
 import type { Building } from '@/types/buildings';
 import type { Immobile } from '@/types/gestionale/immobili';
@@ -25,14 +24,6 @@ const { generatePath, generateRoute } = usePermission();
 
 const page = usePage<{ flash: { message?: Flash } }>();
 const flashMessage = computed(() => page.props.flash.message);
-
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-  { title: trans('gestionale.list_pages.immobili.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
-  { title: props.condominio.nome, href: '#' },
-  { title: trans('gestionale.list_pages.immobili.breadcrumbs.list'), href: generatePath('gestionale/:condominio/immobili', { condominio: props.condominio.id }) },
-  { title: props.immobile.nome, href: generatePath('gestionale/:condominio/immobili/:immobile', { condominio: props.condominio.id, immobile: props.immobile.id }) },
-  { title: trans('gestionale.immobile_layout.tabs.registry'), href: '#' },
-]);
 
 const headerBreadcrumbs = computed(() => [
   { title: trans('gestionale.immobili_anagrafiche.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
@@ -66,7 +57,7 @@ const pageGuides = computed(() => [
 </script>
 
 <template>
-  <GestionaleLayout :breadcrumbs="breadcrumbs">
+  <GestionaleLayout>
     <Head :title="trans('gestionale.immobili_anagrafiche.head_title')" />
 
     <div class="px-6 py-8 space-y-4">
