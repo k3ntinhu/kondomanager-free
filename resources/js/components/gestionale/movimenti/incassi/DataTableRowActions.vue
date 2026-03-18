@@ -8,6 +8,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { usePermission } from "@/composables/permissions";
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter';
 import { RotateCcw, MoreHorizontal, Eye, Printer } from 'lucide-vue-next'
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
   incasso: any,
@@ -45,9 +46,7 @@ function confirmStorno() {
 }
 
 const printRicevuta = () => {
-    // Apri una nuova finestra per la stampa (da implementare rotta backend)
-    // window.open(route(generateRoute('gestionale.incassi.stampa'), { ... }), '_blank');
-    alert("Funzionalità stampa ricevuta in arrivo!");
+    alert(trans('gestionale.movimenti_rate.actions.print_coming_soon'));
 }
 </script>
 
@@ -55,19 +54,19 @@ const printRicevuta = () => {
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button variant="ghost" class="h-8 w-8 p-0 data-[state=open]:bg-muted">
-        <span class="sr-only">Apri menu</span>
+        <span class="sr-only">{{ trans('gestionale.movimenti_rate.actions.open_menu') }}</span>
         <MoreHorizontal class="h-4 w-4 text-muted-foreground" />
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" class="w-[160px]">
-      <DropdownMenuLabel class="text-xs font-normal text-muted-foreground">Azioni su Prot. {{ incasso.numero_protocollo }}</DropdownMenuLabel>
+      <DropdownMenuLabel class="text-xs font-normal text-muted-foreground">{{ trans('gestionale.movimenti_rate.actions.actions_on_protocol') }} {{ incasso.numero_protocollo }}</DropdownMenuLabel>
       
       <DropdownMenuItem @click="router.visit(route(generateRoute('gestionale.movimenti-rate.show'), { condominio: condominioId, scrittura: incasso.id }))">
-        <Eye class="w-4 h-4 mr-2" /> Dettagli
+        <Eye class="w-4 h-4 mr-2" /> {{ trans('gestionale.movimenti_rate.actions.details') }}
       </DropdownMenuItem>
       
       <DropdownMenuItem @click="printRicevuta">
-        <Printer class="w-4 h-4 mr-2" /> Stampa Ricevuta
+        <Printer class="w-4 h-4 mr-2" /> {{ trans('gestionale.movimenti_rate.actions.print_receipt') }}
       </DropdownMenuItem>
 
       <DropdownMenuSeparator />
@@ -77,16 +76,16 @@ const printRicevuta = () => {
         @click="handleStorno" 
         class="text-red-600 focus:text-red-600 focus:bg-red-50"
       >
-        <RotateCcw class="w-4 h-4 mr-2" /> Storna
+        <RotateCcw class="w-4 h-4 mr-2" /> {{ trans('gestionale.movimenti_rate.actions.reverse') }}
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
 
   <ConfirmDialog
     v-model:modelValue="isAlertOpen"
-    title="Storno Movimento"
-    :description="`Stai per annullare l'incasso protocollo #${incasso.numero_protocollo || incasso.id} di ${euro(importoDaStornare)}. Le rate torneranno 'da pagare' per il condòmino. Continuare?`"
-    confirmText="Sì, Annulla Incasso"
+    :title="trans('gestionale.movimenti_rate.actions.reverse_title')"
+    :description="trans('gestionale.movimenti_rate.actions.reverse_description', { protocol: incasso.numero_protocollo || incasso.id, amount: euro(importoDaStornare) })"
+    :confirmText="trans('gestionale.movimenti_rate.actions.reverse_confirm')"
     variant="destructive"
     :loading="isStorning"
     @confirm="confirmStorno"

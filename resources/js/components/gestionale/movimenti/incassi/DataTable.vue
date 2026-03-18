@@ -6,6 +6,7 @@ import { FlexRender, getCoreRowModel, useVueTable, getSortedRowModel } from '@ta
 import { valueUpdater } from '@/lib/utils';
 import DataTablePagination from '@/components/DataTablePagination.vue';
 import DataTableToolbar from '@/components/gestionale/movimenti/incassi/DataTableToolbar.vue';
+import { usePermission } from "@/composables/permissions";
 import { trans } from 'laravel-vue-i18n';
 import type { ColumnDef, SortingState } from '@tanstack/vue-table';
 import type { Building } from '@/types/buildings';
@@ -110,7 +111,7 @@ const table = useVueTable({
             <TableRow>
               <TableCell :colspan="columns.length" class="h-24 text-center text-muted-foreground">
                 <div class="flex flex-col items-center justify-center gap-2">
-                  <p>Nessun movimento trovato</p>
+                  <p>{{ trans('gestionale.movimenti_rate.empty.no_movements') }}</p>
                 </div>
               </TableCell>
             </TableRow>

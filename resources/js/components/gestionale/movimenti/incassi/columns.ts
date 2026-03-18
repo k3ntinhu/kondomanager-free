@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { CalendarDays, Info, Banknote, Coins } from 'lucide-vue-next'
 import { useFormat } from '@/composables/useFormat'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import { trans } from 'laravel-vue-i18n'
 import type { ColumnDef } from '@tanstack/vue-table'
 import type { Incasso } from '@/types/gestionale/movimenti'
 
@@ -13,14 +14,14 @@ const { formatDate } = useFormat()
 export const createColumns = (condominioId: number): ColumnDef<Incasso>[] => [
   {
     accessorKey: 'numero_protocollo',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Protocollo' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.movimenti_rate.table.protocol') }),
     cell: ({ row }) => h('div', { class: 'text-xs font-bold whitespace-nowrap' }, '#' + row.getValue('numero_protocollo')),
     enableSorting: false,
     size: 120, 
 },
   {
     accessorKey: 'data_competenza',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Data' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.movimenti_rate.table.date') }),
     size: 110,
     cell: ({ row }) => {
         const dataCompetenza = formatDate(row.getValue('data_competenza'));
@@ -28,16 +29,16 @@ export const createColumns = (condominioId: number): ColumnDef<Incasso>[] => [
 
         return h('div', { class: 'flex flex-col' }, [
             h('span', { class: 'font-semibold text-sm' }, dataCompetenza),
-            h('span', { class: 'text-[10px] text-muted-foreground' }, 'Reg: ' + dataReg)
+            h('span', { class: 'text-[10px] text-muted-foreground' }, `${trans('gestionale.movimenti_rate.table.registered_short')}: ${dataReg}`)
         ])
     },
   },
   {
     accessorKey: 'pagante',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Soggetto' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.movimenti_rate.table.subject') }),
     size: 140,
     cell: ({ row }) => {
-        const pagante = row.original.pagante || { principale: 'Sconosciuto', altri_count: 0, lista_completa: '', ruolo: '' };
+        const pagante = row.original.pagante || { principale: trans('gestionale.movimenti_rate.table.unknown'), altri_count: 0, lista_completa: '', ruolo: '' };
         const anagraficaId = row.original.anagrafica_id_principale; 
 
         const nameContent = [
@@ -59,24 +60,24 @@ export const createColumns = (condominioId: number): ColumnDef<Incasso>[] => [
 
         return h('div', { class: 'flex flex-col' }, [
             linkWrapper,
-            h('span', { class: 'text-[10px] text-muted-foreground' }, pagante.ruolo || 'Condòmino') 
+            h('span', { class: 'text-[10px] text-muted-foreground' }, pagante.ruolo || trans('gestionale.movimenti_rate.table.resident')) 
         ]);
     },
   },
   {
     accessorKey: 'causale',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Descrizione' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.movimenti_rate.table.description') }),
     size: 260,
     cell: ({ row }) => {
-        const gestione = row.original.gestione_nome || 'Generica'; 
+        const gestione = row.original.gestione_nome || trans('gestionale.movimenti_rate.table.generic'); 
         const dettagli = row.original.dettagli_rate || []; 
         
         const rateUniche = new Set(dettagli.map((d: any) => d.numero)).size
         const haCredito = dettagli.some((d: any) => d.tipo === 'credito')
 
         const riassuntoRate = dettagli.length > 0
-            ? `${rateUniche} rate` + (haCredito ? ' · credito usato' : '')
-            : 'Acconto / Generico'
+            ? `${rateUniche} ${trans('gestionale.movimenti_rate.table.installments')}` + (haCredito ? ` · ${trans('gestionale.movimenti_rate.table.credit_used')}` : '')
+            : trans('gestionale.movimenti_rate.table.advance_generic')
 
         return h('div', { class: 'flex flex-col space-y-1 overflow-hidden' }, [
             h('span', { class: 'truncate font-medium text-sm' }, row.getValue('causale')),
@@ -104,9 +105,9 @@ export const createColumns = (condominioId: number): ColumnDef<Incasso>[] => [
                             default: () => h('div', { class: 'flex flex-col' }, [
                                 // Header
                                 h('div', { class: 'px-3 py-2 bg-gray-50 border-b border-gray-100 rounded-t-md flex items-center justify-between' }, [
-                                    h('span', { class: 'text-[10px] font-bold text-gray-500 uppercase tracking-wider' }, 'Dettaglio Copertura'),
+                                    h('span', { class: 'text-[10px] font-bold text-gray-500 uppercase tracking-wider' }, trans('gestionale.movimenti_rate.table.coverage_details')),
                                     haCredito && dettagli.some((d: any) => d.tipo === 'contanti')
-                                        ? h('span', { class: 'text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold' }, 'Misto')
+                                        ? h('span', { class: 'text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold' }, trans('gestionale.movimenti_rate.table.mixed'))
                                         : null
                                 ]),
                                 
@@ -124,7 +125,7 @@ export const createColumns = (condominioId: number): ColumnDef<Incasso>[] => [
                                                 }),
                                                 h('div', { class: 'flex flex-col' }, [
                                                     h('span', { class: 'font-medium text-gray-700' },
-                                                        `Rata n.${rata.numero}` + (rata.immobile ? ` · Int. ${rata.immobile}` : '')
+                                                        `${trans('gestionale.movimenti_rate.table.installment_no')} ${rata.numero}` + (rata.immobile ? ` · ${trans('gestionale.movimenti_rate.table.unit_short')} ${rata.immobile}` : '')
                                                     ),
                                                     h('span', { class: 'text-[9px] text-gray-400' }, rata.scadenza)
                                                 ])
@@ -136,7 +137,7 @@ export const createColumns = (condominioId: number): ColumnDef<Incasso>[] => [
                                                 h('span', {
                                                     class: 'text-[9px] font-semibold uppercase tracking-wide ' + 
                                                         (isCredito ? 'text-blue-400' : 'text-emerald-400')
-                                                }, isCredito ? 'Credito' : 'Contanti')
+                                                }, isCredito ? trans('gestionale.movimenti_rate.table.credit') : trans('gestionale.movimenti_rate.table.cash'))
                                             ])
                                         ])
                                     })
@@ -152,11 +153,11 @@ export const createColumns = (condominioId: number): ColumnDef<Incasso>[] => [
   },
   {
     id: 'risorsa',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Risorsa' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.movimenti_rate.table.resource') }),
     size: 130,
     cell: ({ row }) => {
-        const cassaNome = row.original.cassa_nome || 'N/D';
-        const cassaTipo = row.original.cassa_tipo_label || 'Risorsa';
+        const cassaNome = row.original.cassa_nome || trans('gestionale.movimenti_rate.table.na');
+        const cassaTipo = row.original.cassa_tipo_label || trans('gestionale.movimenti_rate.table.resource');
 
         return h('div', { class: 'flex flex-col items-start gap-0.5' }, [
             h(Badge, { variant: 'outline', class: 'text-xs text-gray-600 rounded-md bg-white border-gray-200 truncate max-w-full' }, () => cassaNome),
@@ -166,7 +167,7 @@ export const createColumns = (condominioId: number): ColumnDef<Incasso>[] => [
   },
   {
     accessorKey: 'importo_totale_raw', 
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Importo' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.movimenti_rate.table.amount') }),
     size: 110,
     cell: ({ row }) => {
         const formattedLabel = row.original.importo_totale_formatted;
@@ -178,7 +179,7 @@ export const createColumns = (condominioId: number): ColumnDef<Incasso>[] => [
   },
   {
     accessorKey: 'stato',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Stato' }),
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: trans('gestionale.movimenti_rate.table.status') }),
     size: 110,
     cell: ({ row }) => {
       const stato = row.getValue('stato') as string
@@ -187,7 +188,7 @@ export const createColumns = (condominioId: number): ColumnDef<Incasso>[] => [
         class: stato === 'registrata' 
             ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 shadow-none rounded-md' 
             : 'shadow-none rounded-md'
-      }, () => stato === 'registrata' ? 'Confermato' : 'Annullato')
+      }, () => stato === 'registrata' ? trans('gestionale.movimenti_rate.table.status_confirmed') : trans('gestionale.movimenti_rate.table.status_cancelled'))
     }
   },
   {

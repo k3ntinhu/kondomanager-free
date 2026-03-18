@@ -8,6 +8,7 @@ import { createColumns } from '@/components/gestionale/movimenti/incassi/columns
 import { usePermission } from "@/composables/permissions";
 import PageHeaderGuide from '@/components/PageHeaderGuide.vue';
 import { Wallet, Coins, CheckCircle } from 'lucide-vue-next';
+import { trans } from 'laravel-vue-i18n';
 
 // 1. IMPORTIAMO I TIPI CORRETTI
 import type { Building } from '@/types/buildings';
@@ -26,27 +27,27 @@ const props = defineProps<{
 const { generatePath } = usePermission();
 
 const headerBreadcrumbs = computed(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
-  { title: 'Movimenti' },
-  { title: 'Incassi Rate' }
+  { title: trans('gestionale.movimenti_rate.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.movimenti_rate.breadcrumbs.movements') },
+  { title: trans('gestionale.movimenti_rate.breadcrumbs.installment_receipts') }
 ]);
 
 const pageGuides = [
   {
-    title: 'Registrazione Rapida',
-    description: 'Registra gli incassi delle rate ordinarie e straordinarie. Il sistema calcola in automatico il residuo da saldare per ogni condòmino.',
+    title: trans('gestionale.movimenti_rate.guides.quick_recording_title'),
+    description: trans('gestionale.movimenti_rate.guides.quick_recording_description'),
     icon: Wallet,
     colorVariant: 'blue' as const
   },
   {
-    title: 'Pagamenti Parziali',
-    description: 'Puoi registrare tranquillamente incassi parziali. Il debito residuo rimarrà aperto e tracciato per i futuri solleciti.',
+    title: trans('gestionale.movimenti_rate.guides.partial_payments_title'),
+    description: trans('gestionale.movimenti_rate.guides.partial_payments_description'),
     icon: Coins,
     colorVariant: 'amber' as const
   },
   {
-    title: 'Saldare i Pregressi',
-    description: 'Utilizza l\'interfaccia per intercettare e saldare velocemente la quota relativa al "Saldo Iniziale" (il debito dell\'anno precedente).',
+    title: trans('gestionale.movimenti_rate.guides.settle_previous_balances_title'),
+    description: trans('gestionale.movimenti_rate.guides.settle_previous_balances_description'),
     icon: CheckCircle,
     colorVariant: 'emerald' as const
   }
@@ -54,15 +55,15 @@ const pageGuides = [
 </script>
 
 <template>
-  <Head title="Elenco Incassi" />
+  <Head :title="trans('gestionale.movimenti_rate.head_title')" />
 
   <GestionaleLayout>
 
     <div class="px-6 py-8 space-y-3">
       
       <PageHeaderGuide
-        page-title="Incassi pagamenti rate"
-        page-subtitle="Registra i pagamenti dei condòmini. Tieni traccia delle rate versate, gestisci i pagamenti parziali e monitora la liquidità in entrata."
+        :page-title="trans('gestionale.movimenti_rate.page_title')"
+        :page-subtitle="trans('gestionale.movimenti_rate.page_subtitle')"
         :guides="pageGuides"
         :breadcrumbs="headerBreadcrumbs"
         :video-url="null /* 'https://youtube.com/...' */"

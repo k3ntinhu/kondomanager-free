@@ -10,6 +10,7 @@ import { usePermission } from '@/composables/permissions';
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter';
 import { FileText, Clock, AlertTriangle, Euro } from 'lucide-vue-next';
 import type { Building } from '@/types/buildings';
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
     condominio: Building;
@@ -23,15 +24,15 @@ const { generatePath, generateRoute } = usePermission();
 const { euro } = useCurrencyFormatter();
 
 const headerBreadcrumbs = computed(() => [
-    { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
-    { title: 'Movimenti' },
-    { title: 'Fatture Passive' },
+    { title: trans('gestionale.fatture.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+    { title: trans('gestionale.fatture.breadcrumbs.movements') },
+    { title: trans('gestionale.fatture.breadcrumbs.supplier_invoices') },
 ]);
 
 const pageGuides = [
-    { title: 'Ciclo Passivo', description: 'Registra le fatture con controllo automatico del budget.', icon: FileText, colorVariant: 'blue' as const },
-    { title: 'Sfori Motivati', description: 'Le fatture che superano il preventivo richiedono ratifica.', icon: AlertTriangle, colorVariant: 'amber' as const },
-    { title: 'Scadenzario', description: 'Ogni fattura genera scadenze di pagamento.', icon: Clock, colorVariant: 'emerald' as const },
+    { title: trans('gestionale.fatture.guides.payables_cycle_title'), description: trans('gestionale.fatture.guides.payables_cycle_description'), icon: FileText, colorVariant: 'blue' as const },
+    { title: trans('gestionale.fatture.guides.motivated_overruns_title'), description: trans('gestionale.fatture.guides.motivated_overruns_description'), icon: AlertTriangle, colorVariant: 'amber' as const },
+    { title: trans('gestionale.fatture.guides.due_dates_title'), description: trans('gestionale.fatture.guides.due_dates_description'), icon: Clock, colorVariant: 'emerald' as const },
 ];
 
 const sforiFilterActive = computed(() => props.filters.stato_approvazione === 'sforo_motivato');
@@ -53,12 +54,12 @@ const filterSfori = () => {
 </script>
 
 <template>
-    <Head title="Fatture passive" />
+    <Head :title="trans('gestionale.fatture.head_title')" />
     <GestionaleLayout>
         <div class="px-6 py-8 space-y-3">
             <PageHeaderGuide
-                page-title="Fatture passive"
-                page-subtitle="Gestisci il ciclo passivo del condominio. Registra le fatture dei fornitori con controllo budget integrato e scadenzario automatico."
+                :page-title="trans('gestionale.fatture.page_title')"
+                :page-subtitle="trans('gestionale.fatture.page_subtitle')"
                 :guides="pageGuides"
                 :breadcrumbs="(headerBreadcrumbs as any)"
                 :condominio="(props.condominio as any)"
@@ -76,7 +77,7 @@ const filterSfori = () => {
                                     <Clock class="w-5 h-5 text-amber-600" />
                                 </div>
                                 <div>
-                                    <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Fatture Aperte</p>
+                                    <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">{{ trans('gestionale.fatture.cards.open_invoices') }}</p>
                                     <p class="text-2xl font-black text-slate-900">{{ stats.totale_aperte }}</p>
                                 </div>
                             </div>
@@ -87,7 +88,7 @@ const filterSfori = () => {
                                     <Euro class="w-5 h-5 text-red-600" />
                                 </div>
                                 <div>
-                                    <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Importo da Pagare</p>
+                                    <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">{{ trans('gestionale.fatture.cards.amount_to_pay') }}</p>
                                     <p class="text-2xl font-black text-slate-900">{{ euro(stats.importo_da_pagare) }}</p>
                                 </div>
                             </div>
@@ -113,12 +114,12 @@ const filterSfori = () => {
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Da Ratificare</p>
+                                        <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">{{ trans('gestionale.fatture.cards.to_ratify') }}</p>
                                         <span
                                             v-if="sforiFilterActive"
                                             class="text-[9px] font-black uppercase bg-orange-200 text-orange-700 px-1.5 py-0.5 rounded-full whitespace-nowrap"
                                         >
-                                            FILTRO ATTIVO · clicca per rimuovere
+                                            {{ trans('gestionale.fatture.cards.active_filter_hint') }}
                                         </span>
                                     </div>
                                     <p

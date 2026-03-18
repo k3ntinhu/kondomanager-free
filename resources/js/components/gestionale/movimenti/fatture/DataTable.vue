@@ -9,6 +9,7 @@ import DataTablePagination from '@/components/DataTablePagination.vue';
 import DataTableToolbar from '@/components/gestionale/movimenti/fatture/DataTableToolbar.vue';
 import { usePermission } from "@/composables/permissions";
 import { FileText } from 'lucide-vue-next'; 
+import { trans } from 'laravel-vue-i18n';
 import type { ColumnDef, SortingState } from '@tanstack/vue-table';
 import type { Building } from '@/types/buildings';
 import type { FatturaPassiva } from '@/types/gestionale/fatture';
@@ -115,10 +116,10 @@ const table = useVueTable({
           <EmptyMedia variant="icon" class="bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-500">
             <FileText class="w-8 h-8" />
           </EmptyMedia>
-          <EmptyTitle>Nessun documento trovato</EmptyTitle>
+          <EmptyTitle>{{ trans('gestionale.fatture.empty.no_documents') }}</EmptyTitle>
           <EmptyDescription>
-            Non ci sono fatture che corrispondono ai criteri di ricerca. <br>
-            Registra una nuova fattura o prova a modificare i filtri.
+            {{ trans('gestionale.fatture.empty.description') }} <br>
+            {{ trans('gestionale.fatture.empty.hint') }}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
