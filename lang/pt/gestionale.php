@@ -667,14 +667,26 @@ return [
             ],
             'create' => [
                 'head_title' => 'Criar nova escada',
+                'page_title' => 'Criar escada',
+                'page_subtitle' => 'Registe uma nova escada para o condomínio :condominio.',
                 'breadcrumb' => 'Criar escada',
+                'back_to_list' => 'Voltar à lista',
+                'card_title' => 'Dados da escada',
+                'card_description' => 'Preencha a designação, bloco associado e notas operacionais.',
                 'labels' => [
+                    'name' => 'Designação',
                     'building' => 'Bloco',
+                    'description' => 'Descrição',
+                    'notes' => 'Notas',
                 ],
                 'placeholders' => [
                     'name' => 'Nome da escada',
                     'select_building' => 'Associar a um bloco',
                     'description' => 'Descrição da escada',
+                    'notes_internal' => 'Notas internas',
+                ],
+                'actions' => [
+                    'save_scale' => 'Guardar',
                 ],
             ],
             'edit' => [

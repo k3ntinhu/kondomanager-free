@@ -449,14 +449,26 @@ return [
             ],
             'create' => [
                 'head_title' => 'Create new stairwell',
+                'page_title' => 'Create stairwell',
+                'page_subtitle' => 'Register a new stairwell for condominium :condominio.',
                 'breadcrumb' => 'Create stairwell',
+                'back_to_list' => 'Back to list',
+                'card_title' => 'Stairwell data',
+                'card_description' => 'Fill in name, linked building and operational notes.',
                 'labels' => [
+                    'name' => 'Name',
                     'building' => 'Building',
+                    'description' => 'Description',
+                    'notes' => 'Notes',
                 ],
                 'placeholders' => [
                     'name' => 'Stairwell name',
                     'select_building' => 'Link to a building',
                     'description' => 'Stairwell description',
+                    'notes_internal' => 'Internal notes',
+                ],
+                'actions' => [
+                    'save_scale' => 'Save',
                 ],
             ],
             'edit' => [

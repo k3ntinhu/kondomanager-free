@@ -449,14 +449,26 @@ return [
             ],
             'create' => [
                 'head_title' => 'Crea nuova scala',
+                'page_title' => 'Crea scala',
+                'page_subtitle' => 'Registra una nuova scala per il condominio :condominio.',
                 'breadcrumb' => 'Crea scala',
+                'back_to_list' => 'Torna all\'elenco',
+                'card_title' => 'Dati scala',
+                'card_description' => 'Compila denominazione, palazzina associata e note operative.',
                 'labels' => [
+                    'name' => 'Denominazione',
                     'building' => 'Palazzina',
+                    'description' => 'Descrizione',
+                    'notes' => 'Note',
                 ],
                 'placeholders' => [
                     'name' => 'Nome scala',
                     'select_building' => 'Associa a una palazzina',
                     'description' => 'Descrizione scala',
+                    'notes_internal' => 'Note interne',
+                ],
+                'actions' => [
+                    'save_scale' => 'Salva',
                 ],
             ],
             'edit' => [
