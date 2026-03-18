@@ -124,6 +124,7 @@ const props = defineProps<{
     banche: Banca[]; 
     immobili: Immobile[];
     debiti_patrimoniali: DebitoPatrimoniale[];
+    fatture_pregresse_registrate: any[];
     fondi_riserva: FondoRiserva[];
     capienza_rata_zero: number;
     incassato_rata_zero: number;
@@ -639,6 +640,7 @@ const pageGuides = [
                             :form="form"
                             :fornitore-id="form.fornitore_id"
                             :debiti-patrimoniali="debiti_patrimoniali as any"
+                            :fatture-pregresse-registrate="fatture_pregresse_registrate as any"
                             :conti-spesa="conti as any"
                             :fondi-riserva="fondi_riserva as any"
                             :capienza-rata-zero="capienza_rata_zero"

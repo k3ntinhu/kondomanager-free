@@ -25,6 +25,7 @@ const props = defineProps<{
     incassatoRataZero: number;
     totaleFatturaLordo: number; 
     bankForecast: { attuale_cents: number, post_cents: number, isRed: boolean } | null; 
+    fatturePregresseRegistrate: any[];
 }>();
 
 // --- COMPUTED ---
@@ -35,6 +36,11 @@ const debitiFiltrati = computed(() => {
 
 const debitoSelezionato = computed(() => {
     return debitiFiltrati.value.find(d => d.id === props.form.saldo_patrimoniale_id);
+});
+
+const fatturePregresseFornitore = computed(() => {
+    if (!props.fornitoreId || !props.fatturePregresseRegistrate) return [];
+    return props.fatturePregresseRegistrate.filter((f: any) => f.fornitore_id === props.fornitoreId);
 });
 
 const fatturaCents = computed(() => Math.round(props.totaleFatturaLordo * 100));
@@ -63,7 +69,14 @@ const bucoRataZeroCents = computed(() => {
 const semaforoContabile = computed(() => {
     if (!props.form.saldo_patrimoniale_id) return 'WAITING';
     if (scopertoAttualeEuro.value > 0) return 'ORANGE'; 
-    if (bucoRataZeroCents.value > 0) return 'RED'; 
+
+    if (bucoRataZeroCents.value > 0) {
+        if (props.bankForecast && !props.bankForecast.isRed) {
+            return 'YELLOW';
+        }
+        return 'RED';
+    }
+
     return 'GREEN'; 
 });
 
@@ -88,6 +101,18 @@ const fiscalAssistant = computed(() => {
             icon: Scale,
             colorClass: 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-800/50',
             iconColor: 'text-amber-600 dark:text-amber-400'
+        };
+    }
+
+    if (semaforoContabile.value === 'YELLOW') {
+        return {
+            title: trans('gestionale.fatture.double_lock.assistant.tamponed_deficit_title'),
+            desc: trans('gestionale.fatture.double_lock.assistant.tamponed_deficit_description', {
+                amount: euro(bucoRataZeroCents.value),
+            }),
+            icon: AlertTriangle,
+            colorClass: 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800/50',
+            iconColor: 'text-yellow-600 dark:text-yellow-400'
         };
     }
 
@@ -187,20 +212,23 @@ const rischioPrescrizione = computed(() => {
                         </template>
                     </v-select>
 
-                    <div v-if="debitoSelezionato && debitoSelezionato.fatture_collegate?.length" class="mt-3 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg">
+                    <div v-if="fatturePregresseFornitore.length > 0" class="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                         <div class="flex items-center gap-2 mb-2">
                             <History class="w-3.5 h-3.5 text-slate-400" />
-                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">{{ trans('gestionale.fatture.double_lock.labels.already_used_by', { count: debitoSelezionato.fatture_collegate.length }) }}</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">{{ trans('gestionale.fatture.double_lock.labels.already_registered_invoices') }}</span>
                         </div>
                         <div class="space-y-1.5">
-                            <div v-for="fat in debitoSelezionato.fatture_collegate" :key="fat.id" class="flex justify-between items-center text-xs bg-white dark:bg-slate-800 px-2 py-1.5 rounded border border-slate-100 dark:border-slate-700">
+                            <div v-for="fat in fatturePregresseFornitore" :key="fat.id" class="flex justify-between items-center text-xs bg-white dark:bg-slate-900 px-2 py-1.5 rounded border border-slate-100 dark:border-slate-700">
                                 <div class="flex gap-2 text-slate-600 dark:text-slate-400">
                                     <FileText class="w-3.5 h-3.5" />
                                     <span>{{ trans('gestionale.fatture.double_lock.labels.invoice_number') }} <strong>{{ fat.numero_documento }}</strong> ({{ fat.data_documento }})</span>
                                 </div>
-                                <span class="font-bold text-rose-500">- {{ euro(fat.importo_usato * 100) }}</span>
+                                <span class="font-bold text-rose-500">- {{ euro(fat.importo_usato, { fromCents: false }) }}</span>
                             </div>
                         </div>
+                        <p class="text-[9px] text-amber-600 mt-2 flex items-center gap-1">
+                            <AlertTriangle class="w-3 h-3" /> {{ trans('gestionale.fatture.double_lock.labels.check_duplicate_warning') }}
+                        </p>
                     </div>
                 </div>
 
@@ -339,7 +367,7 @@ const rischioPrescrizione = computed(() => {
                 <component :is="fiscalAssistant.icon" class="w-6 h-6 shrink-0 mt-0.5" :class="fiscalAssistant.iconColor" />
                 <div>
                     <h4 class="font-bold text-base mb-1" :class="fiscalAssistant.iconColor">{{ fiscalAssistant.title }}</h4>
-                    <p class="text-sm leading-relaxed opacity-90">{{ fiscalAssistant.desc }}</p>
+                    <p class="text-sm leading-relaxed opacity-90 whitespace-pre-line">{{ fiscalAssistant.desc }}</p>
                 </div>
             </div>
         </div>

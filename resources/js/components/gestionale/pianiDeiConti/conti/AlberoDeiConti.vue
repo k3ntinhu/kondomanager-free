@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Folder, FolderOpen, FileText, Lock } from 'lucide-vue-next'
+import { computed } from 'vue'
+import { Folder, FolderOpen, FileText, Lock, Plus } from 'lucide-vue-next'
 import { trans } from 'laravel-vue-i18n'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter'
@@ -26,8 +27,18 @@ const hasSottoconti = (conto: Conto) => {
 }
 
 const isCapitolo = (conto: Conto) => {
-  return (conto.importo === '€ 0,00' || conto.importo === '0,00') && hasSottoconti(conto)
+  return conto.parent_id === null && (conto.importo === '€ 0,00' || conto.importo === '0,00')
 }
+
+const contiOrdinati = computed(() => {
+  return [...props.conti].sort((a, b) => {
+    const aIsCap = isCapitolo(a)
+    const bIsCap = isCapitolo(b)
+    if (aIsCap && !bIsCap) return -1
+    if (!aIsCap && bIsCap) return 1
+    return a.nome.localeCompare(b.nome)
+  })
+})
 
 // ─── NUOVA LOGICA COLORI SINCRONIZZATA CON IL DETTAGLIO ───
 
@@ -83,7 +94,7 @@ const getTextColor = (conto: Conto) => {
     
     <div v-else class="space-y-0">
       <div
-        v-for="conto in props.conti"
+        v-for="conto in contiOrdinati"
         :key="conto.id"
         class="conto-item"
       >
@@ -152,14 +163,26 @@ const getTextColor = (conto: Conto) => {
           </div>
         </div>
 
-        <div 
-          v-if="hasSottoconti(conto)" 
-          class="sottoconti border-l-2 border-muted ml-4 border-b"
-        >
-          <AlberoDeiConti 
-            :conti="conto.sottoconti || []" 
-            @seleziona="selezionaConto"
-          />
+        <div v-if="isCapitolo(conto)">
+          <div 
+            v-if="hasSottoconti(conto)" 
+            class="sottoconti border-l-2 border-muted ml-4 border-b"
+          >
+            <AlberoDeiConti 
+              :conti="conto.sottoconti || []" 
+              @seleziona="selezionaConto"
+            />
+          </div>
+
+          <div 
+            v-else 
+            class="ml-8 py-2 pr-4 border-l border-dashed border-slate-200"
+          >
+            <p class="text-[10px] text-slate-400 italic flex items-center gap-1.5">
+              <Plus class="w-3 h-3" />
+              {{ trans('gestionale.list_pages.piani_conti.show.tree.no_subaccounts_hint') }}
+            </p>
+          </div>
         </div>
       </div>
     </div>
