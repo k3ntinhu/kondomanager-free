@@ -45,7 +45,7 @@ const topbarNavItems: LinkItem[] = [
   {
     type: 'link',
     icon: Coins,
-    title: 'Saldi Iniziali',
+    title: trans('gestionale.struttura.nav.initial_balances'),
     href: generatePath('gestionale/:condominio/saldi', { condominio: condominio.value.id }),
   }
 ];

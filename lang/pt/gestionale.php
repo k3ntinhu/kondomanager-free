@@ -1038,6 +1038,7 @@ return [
             'buildings' => 'Blocos',
             'stairs' => 'Escadas',
             'resources' => 'Recursos e fundos',
+            'initial_balances' => 'Saldos iniciais',
         ],
         'guides' => [
             'fiscal_title' => 'Dados fiscais',

@@ -820,6 +820,7 @@ return [
             'buildings' => 'Palazzine',
             'stairs' => 'Scale',
             'resources' => 'Risorse e fondi',
+            'initial_balances' => 'Saldi iniziali',
         ],
         'guides' => [
             'fiscal_title' => 'Dati fiscali',

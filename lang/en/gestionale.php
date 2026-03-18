@@ -820,6 +820,7 @@ return [
             'buildings' => 'Buildings',
             'stairs' => 'Stairwells',
             'resources' => 'Resources and funds',
+            'initial_balances' => 'Opening balances',
         ],
         'guides' => [
             'fiscal_title' => 'Fiscal data',
