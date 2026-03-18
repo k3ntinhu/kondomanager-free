@@ -40,15 +40,15 @@ const goBack = () => {
 };
 
 const formatIndirizzoImmobile = (immobile: any) => {
-    let base = `Int. ${immobile.interno}`; 
-    if (immobile.piano) base += ` - P. ${immobile.piano}`;
+    let base = `${trans('gestionale.estratto_conto.labels.unit_short')} ${immobile.interno}`; 
+    if (immobile.piano) base += ` - ${trans('gestionale.estratto_conto.labels.floor_short')} ${immobile.piano}`;
     return base;
 };
 
 const breadcrumbs = computed(() => [
-  { title: 'Gestionale', href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
-  { title: 'Piani Rate', href: '#' },
-  { title: `EC: ${props.anagrafica.nome}`, href: '#' },
+  { title: trans('gestionale.estratto_conto.breadcrumbs.management'), href: generatePath('gestionale/:condominio', { condominio: props.condominio.id }) },
+  { title: trans('gestionale.estratto_conto.breadcrumbs.installment_plans'), href: '#' },
+  { title: `${trans('gestionale.estratto_conto.breadcrumbs.statement_short')}: ${props.anagrafica.nome}`, href: '#' },
 ]);
 
 const saldoColorClass = computed(() => {
@@ -68,19 +68,19 @@ const getStatoConfig = (stato: string | null) => {
 
     switch(stato) {
         case 'pagata': 
-            return { label: 'PAGATA', class: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 };
+            return { label: trans('gestionale.estratto_conto.status.paid').toUpperCase(), class: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 };
         case 'credito': 
-            return { label: 'COMPENSATA', class: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: Coins };
+            return { label: trans('gestionale.estratto_conto.status.compensated').toUpperCase(), class: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: Coins };
         case 'parzialmente_pagata': 
         case 'partial': // Aggiunto alias di sicurezza (se usato nel DB)
-            return { label: 'PARZIALE', class: 'bg-amber-50 text-amber-700 border-amber-200', icon: PieChart };
+            return { label: trans('gestionale.estratto_conto.status.partial').toUpperCase(), class: 'bg-amber-50 text-amber-700 border-amber-200', icon: PieChart };
         case 'da_pagare': 
         case 'pending': // Aggiunto alias
-            return { label: 'NON PAGATA', class: 'bg-red-50 text-red-700 border-red-200', icon: AlertCircle };
+            return { label: trans('gestionale.estratto_conto.status.unpaid').toUpperCase(), class: 'bg-red-50 text-red-700 border-red-200', icon: AlertCircle };
         case 'credito_puro': 
-            return { label: 'CREDITO', class: 'bg-blue-50 text-blue-700 border-blue-200', icon: ArrowDownCircle };
+            return { label: trans('gestionale.estratto_conto.status.credit').toUpperCase(), class: 'bg-blue-50 text-blue-700 border-blue-200', icon: ArrowDownCircle };
         case 'stornato': // GESTIONE DELLO STORNO
-            return { label: 'STORNATA', class: 'bg-slate-100 text-slate-600 border-slate-300', icon: XCircle };
+            return { label: trans('gestionale.estratto_conto.status.reversed').toUpperCase(), class: 'bg-slate-100 text-slate-600 border-slate-300', icon: XCircle };
         default: 
             return { label: '', class: '', icon: null };
     }
@@ -105,7 +105,7 @@ const getImportoStyle = (riga: any) => {
 </script>
 
 <template>
-    <Head :title="`EC - ${anagrafica.nome}`" />
+    <Head :title="`${trans('gestionale.estratto_conto.head_title_prefix')} - ${anagrafica.nome}`" />
 
     <GestionaleLayout :breadcrumbs="breadcrumbs">
         
@@ -117,12 +117,12 @@ const getImportoStyle = (riga: any) => {
                 </h1>
                 <p class="text-sm text-gray-500 mt-1 flex items-center gap-2">
                     <Mail class="w-3 h-3" /> {{ anagrafica.email || trans('gestionale.form_common.messages.no_email') }}
-                    <span class="text-gray-300">|</span> Esercizio: {{ esercizio.nome }}
+                    <span class="text-gray-300">|</span> {{ trans('gestionale.estratto_conto.labels.exercise') }}: {{ esercizio.nome }}
                 </p>
             </div>
             <div class="flex gap-2">
-                <Button variant="outline" size="sm" @click="goBack"><ArrowLeft class="w-4 h-4 mr-2" /> Indietro</Button>
-                <Button variant="outline" size="sm"><Printer class="w-4 h-4 mr-2" /> Stampa PDF</Button>
+                <Button variant="outline" size="sm" @click="goBack"><ArrowLeft class="w-4 h-4 mr-2" /> {{ trans('gestionale.form_common.actions.back') }}</Button>
+                <Button variant="outline" size="sm"><Printer class="w-4 h-4 mr-2" /> {{ trans('gestionale.estratto_conto.actions.print_pdf') }}</Button>
             </div>
         </div>
 
@@ -130,45 +130,45 @@ const getImportoStyle = (riga: any) => {
             <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="rounded-lg border bg-gray-50/50 shadow-sm border-gray-200">
                     <div class="flex flex-row items-center justify-between p-4 pb-2">
-                        <h3 class="text-xs font-medium uppercase text-muted-foreground tracking-wider">Saldo iniziale</h3>
+                        <h3 class="text-xs font-medium uppercase text-muted-foreground tracking-wider">{{ trans('gestionale.estratto_conto.cards.initial_balance') }}</h3>
                         <Landmark class="h-4 w-4 text-gray-400" />
                     </div>
                     <div class="p-4 pt-0">
                         <div class="text-xl font-bold" :class="saldoInizialeColorClass">{{ stats.saldo_iniziale }}</div>
                         <p class="text-[10px] uppercase font-bold mt-1 tracking-wide" :class="saldoInizialeColorClass">
-                            {{ stats.saldo_iniziale_raw > 0 ? 'A DEBITO' : (stats.saldo_iniziale_raw < 0 ? 'A CREDITO' : 'PAREGGIO') }}
+                            {{ stats.saldo_iniziale_raw > 0 ? trans('gestionale.estratto_conto.cards.debit').toUpperCase() : (stats.saldo_iniziale_raw < 0 ? trans('gestionale.estratto_conto.cards.credit').toUpperCase() : trans('gestionale.estratto_conto.cards.balance').toUpperCase()) }}
                         </p>
                     </div>
                 </div>
                 <div class="rounded-lg border bg-card text-card-foreground shadow-sm border-gray-200">
                     <div class="flex flex-row items-center justify-between p-4 pb-2">
-                        <h3 class="text-xs font-medium uppercase text-muted-foreground tracking-wider">Totale addebiti</h3>
+                        <h3 class="text-xs font-medium uppercase text-muted-foreground tracking-wider">{{ trans('gestionale.estratto_conto.cards.total_charges') }}</h3>
                         <ArrowDownCircle class="h-4 w-4 text-red-500" />
                     </div>
                     <div class="p-4 pt-0">
                         <div class="text-xl font-bold text-gray-900">{{ stats.totale_addebiti }}</div>
-                        <p class="text-[10px] text-muted-foreground mt-1">Rate emesse</p>
+                        <p class="text-[10px] text-muted-foreground mt-1">{{ trans('gestionale.estratto_conto.cards.issued_installments') }}</p>
                     </div>
                 </div>
                 <div class="rounded-lg border bg-card text-card-foreground shadow-sm border-gray-200">
                     <div class="flex flex-row items-center justify-between p-4 pb-2">
-                        <h3 class="text-xs font-medium uppercase text-muted-foreground tracking-wider">Totale Versato</h3>
+                        <h3 class="text-xs font-medium uppercase text-muted-foreground tracking-wider">{{ trans('gestionale.estratto_conto.cards.total_paid') }}</h3>
                         <ArrowUpCircle class="h-4 w-4 text-emerald-500" />
                     </div>
                     <div class="p-4 pt-0">
                         <div class="text-xl font-bold text-emerald-600">{{ stats.totale_versamenti }}</div>
-                        <p class="text-[10px] text-muted-foreground mt-1">Incassi registrati</p>
+                        <p class="text-[10px] text-muted-foreground mt-1">{{ trans('gestionale.estratto_conto.cards.recorded_receipts') }}</p>
                     </div>
                 </div>
                 <div class="rounded-lg border shadow-sm border-gray-200" :class="{'bg-red-50 border-red-200': stats.saldo_raw > 0, 'bg-emerald-50 border-emerald-200': stats.saldo_raw < 0, 'bg-white': stats.saldo_raw === 0}">
                     <div class="flex flex-row items-center justify-between p-4 pb-2">
-                        <h3 class="text-xs font-medium uppercase tracking-wider" :class="stats.saldo_raw > 0 ? 'text-red-500' : 'text-emerald-500'">Saldo Finale</h3>
+                        <h3 class="text-xs font-medium uppercase tracking-wider" :class="stats.saldo_raw > 0 ? 'text-red-500' : 'text-emerald-500'">{{ trans('gestionale.estratto_conto.cards.final_balance') }}</h3>
                         <Wallet class="h-4 w-4" :class="stats.saldo_raw > 0 ? 'text-red-500' : 'text-emerald-500'" />
                     </div>
                     <div class="p-4 pt-0">
                         <div class="text-2xl font-bold" :class="saldoColorClass">{{ stats.saldo_finale }}</div>
                         <p class="text-[10px] uppercase font-bold mt-1 tracking-wide" :class="stats.saldo_raw > 0 ? 'text-red-600' : 'text-emerald-600'">
-                            {{ stats.saldo_raw > 0 ? 'DA VERSARE' : (stats.saldo_raw < 0 ? 'A CREDITO' : 'PAREGGIO') }}
+                            {{ stats.saldo_raw > 0 ? trans('gestionale.estratto_conto.cards.to_pay').toUpperCase() : (stats.saldo_raw < 0 ? trans('gestionale.estratto_conto.cards.credit').toUpperCase() : trans('gestionale.estratto_conto.cards.balance').toUpperCase()) }}
                         </p>
                     </div>
                 </div>
@@ -177,7 +177,7 @@ const getImportoStyle = (riga: any) => {
                 <div class="rounded-lg border bg-card text-card-foreground h-full flex flex-col shadow-sm border-gray-200">
                     <div class="flex flex-col gap-y-1.5 p-4 pb-2 border-b bg-gray-50/50">
                         <h3 class="tracking-tight text-sm font-semibold flex items-center gap-2">
-                            <Building2 class="w-4 h-4 text-gray-500" /> Unità immobiliari
+                            <Building2 class="w-4 h-4 text-gray-500" /> {{ trans('gestionale.estratto_conto.cards.real_estate_units') }}
                             <Badge variant="secondary" class="ml-auto text-[10px] h-5">{{ anagrafica.immobili.length }}</Badge>
                         </h3>
                     </div>
@@ -201,21 +201,21 @@ const getImportoStyle = (riga: any) => {
         </div>
 
         <div class="flex flex-wrap gap-4 text-xs text-gray-500 items-center bg-gray-50/80 p-3 rounded-lg border border-dashed border-gray-200">
-            <span class="font-bold uppercase tracking-wider text-[10px] text-gray-400 mr-1">Legenda:</span>
-            <div class="flex items-center gap-1.5"><div class="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 shadow-sm"><FileText class="w-3 h-3" /></div><span>Emissione</span></div>
-            <div class="flex items-center gap-1.5"><div class="w-5 h-5 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-sm"><Banknote class="w-3 h-3" /></div><span>Incasso</span></div>
-            <div class="flex items-center gap-1.5"><div class="w-5 h-5 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-sm"><RotateCcw class="w-3 h-3" /></div><span>Storno</span></div>
+            <span class="font-bold uppercase tracking-wider text-[10px] text-gray-400 mr-1">{{ trans('gestionale.estratto_conto.legend.title') }}:</span>
+            <div class="flex items-center gap-1.5"><div class="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 shadow-sm"><FileText class="w-3 h-3" /></div><span>{{ trans('gestionale.estratto_conto.legend.issuance') }}</span></div>
+            <div class="flex items-center gap-1.5"><div class="w-5 h-5 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-sm"><Banknote class="w-3 h-3" /></div><span>{{ trans('gestionale.estratto_conto.legend.receipt') }}</span></div>
+            <div class="flex items-center gap-1.5"><div class="w-5 h-5 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-sm"><RotateCcw class="w-3 h-3" /></div><span>{{ trans('gestionale.estratto_conto.legend.reverse') }}</span></div>
             <div class="h-4 w-px bg-gray-300 mx-2 hidden sm:block"></div>
-            <div class="flex items-center gap-1.5"><CheckCircle2 class="w-3.5 h-3.5 text-emerald-600" /> <span class="text-emerald-700 font-medium">Saldata</span></div>
-            <div class="flex items-center gap-1.5"><PieChart class="w-3.5 h-3.5 text-amber-600" /> <span class="text-amber-700 font-medium">Parziale</span></div>
-            <div class="flex items-center gap-1.5"><AlertCircle class="w-3.5 h-3.5 text-red-600" /> <span class="text-red-700 font-medium">Non Pagata</span></div>
-            <div class="flex items-center gap-1.5"><Coins class="w-3.5 h-3.5 text-blue-600" /> <span class="text-blue-700 font-medium">Credito</span></div>
+            <div class="flex items-center gap-1.5"><CheckCircle2 class="w-3.5 h-3.5 text-emerald-600" /> <span class="text-emerald-700 font-medium">{{ trans('gestionale.estratto_conto.status.paid') }}</span></div>
+            <div class="flex items-center gap-1.5"><PieChart class="w-3.5 h-3.5 text-amber-600" /> <span class="text-amber-700 font-medium">{{ trans('gestionale.estratto_conto.status.partial') }}</span></div>
+            <div class="flex items-center gap-1.5"><AlertCircle class="w-3.5 h-3.5 text-red-600" /> <span class="text-red-700 font-medium">{{ trans('gestionale.estratto_conto.status.unpaid') }}</span></div>
+            <div class="flex items-center gap-1.5"><Coins class="w-3.5 h-3.5 text-blue-600" /> <span class="text-blue-700 font-medium">{{ trans('gestionale.estratto_conto.status.credit') }}</span></div>
         </div>
 
         <div class="rounded-lg border bg-card text-card-foreground shadow-sm border-gray-200">
             <div class="flex flex-col gap-y-1.5 p-4 pb-3 border-b bg-gray-50/30">
                 <div class="flex items-center justify-between">
-                    <h3 class="tracking-tight text-base font-semibold">Movimenti contabili</h3>
+                    <h3 class="tracking-tight text-base font-semibold">{{ trans('gestionale.estratto_conto.table.title') }}</h3>
                     <div class="text-xs text-muted-foreground">{{ esercizio.nome }}</div>
                 </div>
             </div>
@@ -224,12 +224,12 @@ const getImportoStyle = (riga: any) => {
                     <table class="w-full text-sm text-left">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50/50 border-b">
                             <tr>
-                                <th class="px-4 py-3 w-[50px] text-center">Tipo</th>
-                                <th class="px-4 py-3 w-[120px]">Data</th>
-                                <th class="px-4 py-3">Descrizione</th>
-                                <th class="px-4 py-3 text-right text-gray-700 w-[140px]">Addebiti <span class="block text-[9px] text-gray-400 font-normal normal-case">(Dare)</span></th>
-                                <th class="px-4 py-3 text-right text-gray-700 w-[140px]">Pagamenti <span class="block text-[9px] text-gray-400 font-normal normal-case">(Avere)</span></th>
-                                <th class="px-4 py-3 text-right bg-gray-50 text-gray-800 w-[160px]">Saldo</th>
+                                <th class="px-4 py-3 w-[50px] text-center">{{ trans('gestionale.estratto_conto.table.type') }}</th>
+                                <th class="px-4 py-3 w-[120px]">{{ trans('gestionale.estratto_conto.table.date') }}</th>
+                                <th class="px-4 py-3">{{ trans('gestionale.estratto_conto.table.description') }}</th>
+                                <th class="px-4 py-3 text-right text-gray-700 w-[140px]">{{ trans('gestionale.estratto_conto.table.charges') }} <span class="block text-[9px] text-gray-400 font-normal normal-case">({{ trans('gestionale.estratto_conto.table.debit') }})</span></th>
+                                <th class="px-4 py-3 text-right text-gray-700 w-[140px]">{{ trans('gestionale.estratto_conto.table.payments') }} <span class="block text-[9px] text-gray-400 font-normal normal-case">({{ trans('gestionale.estratto_conto.table.credit_side') }})</span></th>
+                                <th class="px-4 py-3 text-right bg-gray-50 text-gray-800 w-[160px]">{{ trans('gestionale.estratto_conto.table.balance') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -239,7 +239,7 @@ const getImportoStyle = (riga: any) => {
                                     <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center mx-auto text-yellow-600 shadow-sm border border-yellow-200"><Landmark class="w-4 h-4" /></div>
                                 </td>
                                 <td class="px-4 py-4 text-sm font-medium text-gray-700">{{ toItalian(esercizio.data_inizio) }}</td>
-                                <td class="px-4 py-4 font-semibold text-gray-800 text-sm">Saldo iniziale esercizio</td>
+                                <td class="px-4 py-4 font-semibold text-gray-800 text-sm">{{ trans('gestionale.estratto_conto.table.initial_balance_exercise') }}</td>
                                 <td class="px-4 py-4 text-right text-gray-300">-</td>
                                 <td class="px-4 py-4 text-right text-gray-300">-</td>
                                 <td class="px-4 py-4 text-right font-bold" :class="saldoInizialeColorClass">{{ stats.saldo_iniziale }}</td>
@@ -268,7 +268,7 @@ const getImportoStyle = (riga: any) => {
                                         <span class="font-semibold text-gray-800 text-sm">{{ riga.descrizione }}</span>
                                         <Badge v-if="riga.gestione" variant="secondary" class="text-[9px] h-4 px-1.5 bg-gray-100 text-gray-500 font-normal">{{ riga.gestione }}</Badge>
                                     </div>
-                                    <p v-if="riga.note" class="text-xs text-blue-600 italic mb-1">Note: {{ riga.note }}</p>
+                                    <p v-if="riga.note" class="text-xs text-blue-600 italic mb-1">{{ trans('gestionale.estratto_conto.labels.notes') }}: {{ riga.note }}</p>
                                     <div v-if="riga.dettagli && riga.dettagli.length > 0" class="flex flex-col gap-1 mt-1">
                                         <div v-for="(item, index) in riga.dettagli" :key="index" class="flex items-center flex-wrap gap-2">
                                             
@@ -301,10 +301,10 @@ const getImportoStyle = (riga: any) => {
                                                     <div class="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-wider border-b border-slate-700 pb-1 flex justify-between">
                                                         <span>
                                                             {{ 
-                                                              riga.breakdown.type === 'incasso' ? 'Dettaglio Incasso' : 
-                                                              (riga.breakdown.type === 'storno' ? 'Dettaglio Storno' : 'Dettaglio Addebito') 
+                                                              riga.breakdown.type === 'incasso' ? trans('gestionale.estratto_conto.breakdown.receipt_detail') : 
+                                                              (riga.breakdown.type === 'storno' ? trans('gestionale.estratto_conto.breakdown.reverse_detail') : trans('gestionale.estratto_conto.breakdown.charge_detail')) 
                                                             }}
-                                                            <span v-if="riga.breakdown.immobile !== 'Generico'">(Int. {{ riga.breakdown.immobile }})</span>
+                                                            <span v-if="riga.breakdown.immobile !== 'Generico'">({{ trans('gestionale.estratto_conto.labels.unit_short') }} {{ riga.breakdown.immobile }})</span>
                                                         </span>
                                                     </div>
 
@@ -312,14 +312,14 @@ const getImportoStyle = (riga: any) => {
                                                         <div class="flex justify-between items-center text-slate-400">
                                                             <span class="flex items-center gap-1">
                                                                 <div class="w-1.5 h-1.5 rounded-full" :class="riga.breakdown.start < 0 ? 'bg-emerald-500' : (riga.breakdown.start > 0 ? 'bg-red-500' : 'bg-gray-500')"></div>
-                                                                <span>Saldo precedente:</span>
+                                                                <span>{{ trans('gestionale.estratto_conto.breakdown.previous_balance') }}:</span>
                                                             </span>
                                                             <span class="font-mono">{{ euro(riga.breakdown.start) }}</span>
                                                         </div>
 
                                                         <div class="flex justify-between items-center text-white">
                                                             <span class="pl-2.5">
-                                                                Movimento in {{ riga.breakdown.type === 'incasso' ? 'Avere' : 'Dare' }}:
+                                                                {{ trans('gestionale.estratto_conto.breakdown.movement_in') }} {{ riga.breakdown.type === 'incasso' ? trans('gestionale.estratto_conto.table.credit_side') : trans('gestionale.estratto_conto.table.debit') }}:
                                                             </span>
                                                             <span class="font-mono font-bold" :class="riga.breakdown.type === 'storno' ? 'text-slate-400 line-through' : ''">
                                                                 {{ riga.breakdown.type === 'incasso' ? '-' : '+' }} {{ euro(riga.breakdown.cost) }}
@@ -329,24 +329,24 @@ const getImportoStyle = (riga: any) => {
                                                         <template v-if="riga.breakdown.type === 'emissione' && riga.breakdown.saldo_usato && riga.breakdown.saldo_usato !== 0">
                                                             <div class="my-1.5 pl-2.5 border-l-2 border-slate-600 ml-1 py-0.5 space-y-1 text-[11px]">
                                                                 <div class="flex justify-between items-center text-slate-300">
-                                                                    <span class="italic text-slate-400">Quota pura:</span>
+                                                                    <span class="italic text-slate-400">{{ trans('gestionale.estratto_conto.breakdown.pure_share') }}</span>
                                                                     <span class="font-mono">{{ euro(riga.breakdown.cost) }}</span>
                                                                 </div>
                                                                 <div class="flex justify-between items-center text-slate-300">
                                                                     <span class="italic text-slate-400">
-                                                                        {{ riga.breakdown.saldo_usato > 0 ? '+ Recupero Debito:' : '- Sconto Credito:' }}
+                                                                        {{ riga.breakdown.saldo_usato > 0 ? trans('gestionale.estratto_conto.breakdown.debt_recovery') : trans('gestionale.estratto_conto.breakdown.credit_discount') }}
                                                                     </span>
                                                                     <span class="font-mono">{{ euro(riga.breakdown.saldo_usato) }}</span>
                                                                 </div>
                                                                 <div class="flex justify-between items-center font-bold text-white pt-1">
-                                                                    <span>Da pagare per questa quota:</span>
+                                                                    <span>{{ trans('gestionale.estratto_conto.breakdown.amount_due_for_share') }}:</span>
                                                                     <span class="font-mono text-amber-400">{{ euro(riga.breakdown.totale_richiesto) }}</span>
                                                                 </div>
                                                             </div>
                                                         </template>
                                                         <div class="border-t border-slate-700 my-2 pt-2">
                                                             <div class="flex justify-between items-center font-bold text-sm">
-                                                                <span class="text-white">Nuovo saldo progressivo:</span>
+                                                                <span class="text-white">{{ trans('gestionale.estratto_conto.breakdown.new_running_balance') }}:</span>
                                                                 <span class="font-mono" :class="riga.breakdown.end < 0 ? 'text-emerald-400' : (riga.breakdown.end > 0 ? 'text-red-400' : 'text-white')">
                                                                     {{ euro(riga.breakdown.end) }}
                                                                 </span>
