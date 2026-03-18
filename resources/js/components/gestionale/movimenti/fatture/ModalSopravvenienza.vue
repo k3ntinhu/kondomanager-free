@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Scale } from 'lucide-vue-next';
 import vSelect from 'vue-select';
 import { useTabelle } from '@/composables/useTabelle';
-import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps<{
     show: boolean;
@@ -41,7 +40,7 @@ const onDropdownTabelleOpen = () => {
 watch(() => props.show, (isOpen) => {
     if (isOpen) {
         datiSopravvenienza.value = {
-            nome_voce: trans('gestionale.fatture.sopravvenienza.default_entry_name', { supplier: props.fornitoreNome }),
+            nome_voce: `Integrazione debito pregresso - ${props.fornitoreNome}`,
             autorizzazione: 'urgenza',
             data_assemblea: '',
             note: '',
@@ -73,41 +72,41 @@ const handleConfirm = () => {
                         <Scale class="w-6 h-6 text-amber-600" />
                     </div>
                     <div>
-                        <h3 class="font-black text-amber-900 dark:text-amber-100 text-lg">{{ trans('gestionale.fatture.sopravvenienza.title') }}</h3>
-                        <p class="text-xs text-amber-700/70 mt-1">{{ trans('gestionale.fatture.sopravvenienza.subtitle') }}</p>
+                        <h3 class="font-black text-amber-900 dark:text-amber-100 text-lg">Integrazione Spesa Rilevata</h3>
+                        <p class="text-xs text-amber-700/70 mt-1">Stai per creare una nuova voce di spesa fuori preventivo.</p>
                     </div>
                 </div>
                 <div class="p-7 space-y-5">
                     <div class="space-y-1.5">
-                        <Label class="text-[10px] font-black uppercase tracking-widest text-slate-500">{{ trans('gestionale.fatture.sopravvenienza.labels.entry_name') }}</Label>
+                        <Label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Nome Nuova Voce di Spesa *</Label>
                         <Input v-model="datiSopravvenienza.nome_voce" class="h-10 text-sm font-semibold" />
                     </div>
 
                     <div class="space-y-3">
-                        <Label class="text-[10px] font-black uppercase tracking-widest text-slate-500">{{ trans('gestionale.fatture.sopravvenienza.labels.legal_authorization') }}</Label>
+                        <Label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Autorizzazione Legale *</Label>
                         <label class="flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-colors" :class="datiSopravvenienza.autorizzazione === 'urgenza' ? 'border-amber-400 bg-amber-50/50 dark:bg-amber-900/10' : 'border-slate-200 hover:bg-slate-50'">
                             <input type="radio" v-model="datiSopravvenienza.autorizzazione" value="urgenza" class="mt-1 w-4 h-4 text-amber-600 focus:ring-amber-500" />
                             <div>
-                                <p class="text-sm font-bold text-slate-800 dark:text-slate-200">{{ trans('gestionale.fatture.sopravvenienza.authorization.urgency_title') }}</p>
-                                <p class="text-[10px] text-slate-500 mt-0.5">{{ trans('gestionale.fatture.sopravvenienza.authorization.urgency_description') }}</p>
+                                <p class="text-sm font-bold text-slate-800 dark:text-slate-200">Intervento d'Urgenza (Art. 1135 c.c.)</p>
+                                <p class="text-[10px] text-slate-500 mt-0.5">Rischio decreto. Da ratificare alla prossima assemblea.</p>
                             </div>
                         </label>
                         <label class="flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-colors" :class="datiSopravvenienza.autorizzazione === 'assemblea' ? 'border-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10' : 'border-slate-200 hover:bg-slate-50'">
                             <input type="radio" v-model="datiSopravvenienza.autorizzazione" value="assemblea" class="mt-1 w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
                             <div class="w-full">
-                                <p class="text-sm font-bold text-slate-800 dark:text-slate-200">{{ trans('gestionale.fatture.sopravvenienza.authorization.assembly_title') }}</p>
+                                <p class="text-sm font-bold text-slate-800 dark:text-slate-200">Delibera Assembleare</p>
                                 <Input v-if="datiSopravvenienza.autorizzazione === 'assemblea'" type="date" v-model="datiSopravvenienza.data_assemblea" class="h-8 text-xs w-full mt-2" />
                             </div>
                         </label>
                     </div>
 
                     <div class="space-y-1.5 border-t border-slate-100 dark:border-slate-800 pt-4">
-                        <Label class="text-[10px] font-black uppercase tracking-widest text-slate-500">{{ trans('gestionale.fatture.sopravvenienza.labels.allocation_table') }}</Label>
+                        <Label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Tabella di Ripartizione *</Label>
                         <v-select
                             :options="tabelle"
                             label="nome"
                             v-model="datiSopravvenienza.tabella_millesimale_id"
-                            :placeholder="trans('gestionale.fatture.sopravvenienza.placeholders.select_table')"
+                            placeholder="Seleziona tabella millesimale..."
                             :reduce="(t: any) => t.id"
                             @open="onDropdownTabelleOpen"
                             :loading="isLoadingTabelle"
@@ -116,27 +115,27 @@ const handleConfirm = () => {
                     </div>
                     <div class="grid grid-cols-3 gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                         <div>
-                            <Label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">{{ trans('gestionale.fatture.sopravvenienza.labels.owner_percentage') }}</Label>
+                            <Label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Proprietario %</Label>
                             <Input type="number" v-model="datiSopravvenienza.percentuale_proprietario" class="h-8 text-sm" />
                         </div>
                         <div>
-                            <Label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">{{ trans('gestionale.fatture.sopravvenienza.labels.tenant_percentage') }}</Label>
+                            <Label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Inquilino %</Label>
                             <Input type="number" v-model="datiSopravvenienza.percentuale_inquilino" class="h-8 text-sm" />
                         </div>
                         <div>
-                            <Label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">{{ trans('gestionale.fatture.sopravvenienza.labels.usufruct_percentage') }}</Label>
+                            <Label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Usufruttuario %</Label>
                             <Input type="number" v-model="datiSopravvenienza.percentuale_usufruttuario" class="h-8 text-sm" />
                         </div>
                     </div>
 
                     <div class="space-y-1.5">
-                        <Label class="text-[10px] font-black uppercase tracking-widest text-slate-500">{{ trans('gestionale.fatture.sopravvenienza.labels.audit_notes') }}</Label>
+                        <Label class="text-[10px] font-black uppercase tracking-widest text-slate-500">Note Log (Audit Trail)</Label>
                         <textarea v-model="datiSopravvenienza.note" rows="2" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm bg-slate-50 dark:bg-slate-800 outline-none resize-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 transition-all" />
                     </div>
 
                     <div class="flex gap-3 pt-2">
-                        <Button variant="outline" class="flex-1 h-11 rounded-xl font-bold" @click="handleCancel">{{ trans('gestionale.form_common.actions.cancel') }}</Button>
-                        <Button class="flex-1 h-11 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black" :disabled="datiSopravvenienza.nome_voce.length < 5 || !datiSopravvenienza.tabella_millesimale_id" @click="handleConfirm">{{ trans('gestionale.fatture.sopravvenienza.actions.create_and_register') }}</Button>
+                        <Button variant="outline" class="flex-1 h-11 rounded-xl font-bold" @click="handleCancel">Annulla</Button>
+                        <Button class="flex-1 h-11 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black" :disabled="datiSopravvenienza.nome_voce.length < 5 || !datiSopravvenienza.tabella_millesimale_id" @click="handleConfirm">Crea Voce e Registra</Button>
                     </div>
                 </div>
             </div>

@@ -4,7 +4,6 @@ import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { usePermission } from "@/composables/permissions";
-import { trans } from 'laravel-vue-i18n';
 import { UsersRound, Folders, TextSearch, Wallet } from 'lucide-vue-next';
 import type { LinkItem } from '@/types';
 import type { Fornitore } from '@/types/fornitori';
@@ -32,7 +31,7 @@ const topbarNavItems: LinkItem[] = [
   {
     type: 'link',
     icon: Wallet,
-    title: trans('fornitori.navigation.debt_position'),
+    title: 'Situazione Debitoria',
     href:  generatePath('fornitori/:fornitore/situazione-debitoria', { fornitore: fornitore.value.id }),
   },
   {   

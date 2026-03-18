@@ -473,7 +473,7 @@ const pageGuides = [
                                             <div class="flex items-center gap-2 mt-0.5">
                                                 <span v-if="piva" class="text-[10px] text-slate-500 font-medium">P.IVA: {{ piva }}</span>
                                                 <span v-else-if="codice_fiscale" class="text-[10px] text-slate-500 font-medium">C.F.: {{ codice_fiscale }}</span>
-                                                <span v-else class="text-[10px] text-slate-400 italic">{{ trans('gestionale.fatture.create.labels.no_vat_tax_code') }}</span>
+                                                <span v-else class="text-[10px] text-slate-400 italic">Nessuna P.IVA / C.F.</span>
                                                 <span v-if="soggetto_ritenuta" class="text-[8px] font-black uppercase tracking-wider text-amber-600 border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50 dark:text-amber-500 rounded px-1.5 py-0.5 leading-none">
                                                     Ritenuta
                                                 </span>
@@ -544,7 +544,7 @@ const pageGuides = [
 
                         <div v-if="form.is_pregresso" class="grid grid-cols-3 gap-3 p-4 bg-amber-50/30 dark:bg-amber-900/5 border border-amber-100 dark:border-amber-800/30 rounded-lg mt-3">
                             <div class="col-span-2 space-y-1.5">
-                                <Label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ trans('gestionale.fatture.create.labels.gross_taxable') }}</Label>
+                                <Label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Imponibile Lordo</Label>
                                 <MoneyInput
                                     id="importo_pregresso"
                                     v-model="form.imponibile_pregresso"
@@ -653,17 +653,17 @@ const pageGuides = [
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <Receipt class="w-5 h-5 text-slate-400" />
-                                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200">{{ trans('gestionale.fatture.create.entries.title') }}</h3>
+                                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200">Registro voci di spesa</h3>
                                     </div>
-                                    <p class="text-[11px] text-slate-500 mt-1">{{ trans('gestionale.fatture.create.entries.subtitle') }}</p>
+                                    <p class="text-[11px] text-slate-500 mt-1">Aggiungi una o più righe per ripartire il documento sui capitoli corretti.</p>
                                 </div>
                                 <div class="flex items-center gap-4">
                                     <Badge variant="secondary" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent">
-                                        {{ form.righe.length }} {{ form.righe.length === 1 ? trans('gestionale.fatture.create.entries.entry_singular') : trans('gestionale.fatture.create.entries.entry_plural') }}
+                                        {{ form.righe.length }} {{ form.righe.length === 1 ? 'Voce' : 'Voci' }}
                                     </Badge>
                                     <Button variant="outline" size="sm" type="button" @click="addRiga" 
                                         class="h-9 text-[11px] font-bold uppercase border-primary/20 text-primary hover:bg-primary/5 hover:text-primary transition-colors gap-1.5 shadow-sm">
-                                        <Plus class="w-3.5 h-3.5" /> {{ trans('gestionale.fatture.create.entries.add_row') }}
+                                        <Plus class="w-3.5 h-3.5" /> Aggiungi riga
                                     </Button>
                                 </div>
                             </div>
@@ -672,13 +672,13 @@ const pageGuides = [
                                 <div v-for="(riga, idx) in form.righe" :key="idx" class="p-6 hover:bg-slate-50/30 group transition-colors flex flex-col gap-4">
                                     <div class="grid grid-cols-12 gap-4">
                                         <div class="col-span-12 md:col-span-8 relative">
-                                            <Label class="text-[10px] font-bold uppercase text-slate-400 mb-1.5 block">{{ trans('gestionale.fatture.create.entries.expense_chapter') }}</Label>
+                                            <Label class="text-[10px] font-bold uppercase text-slate-400 mb-1.5 block">Capitolo di spesa</Label>
                                             <v-select 
                                                 v-model="riga.conto_id" 
                                                 :options="conti" 
                                                 label="nome"
                                                 :reduce="(c: Conto) => c.id" 
-                                                :placeholder="trans('gestionale.fatture.create.entries.search_chapter')" 
+                                                placeholder="Cerca capitolo..." 
                                                 class="style-chooser w-full"
                                                 append-to-body
                                             >
@@ -708,13 +708,13 @@ const pageGuides = [
                                         </div>
 
                                         <div class="col-span-12 md:col-span-4 relative">
-                                            <Label class="text-[10px] font-bold uppercase text-slate-400 mb-1.5 block">{{ trans('gestionale.fatture.create.entries.unit_optional') }}</Label>
+                                            <Label class="text-[10px] font-bold uppercase text-slate-400 mb-1.5 block">Unità (Opzionale)</Label>
                                             <v-select 
                                                 v-model="riga.immobile_id" 
                                                 :options="immobili" 
                                                 label="label" 
                                                 :reduce="(i: Immobile) => i.id" 
-                                                :placeholder="trans('gestionale.fatture.create.entries.all_units_common_expense')" 
+                                                placeholder="Tutti (Spesa Comune)" 
                                                 class="style-chooser text-xs"
                                                 append-to-body
                                             >
@@ -731,7 +731,7 @@ const pageGuides = [
                                     <div class="grid grid-cols-12 gap-4 items-start">
                                         <div class="col-span-12 md:col-span-4 lg:col-span-5">
                                             <Input v-model="riga.descrizione" 
-                                                :placeholder="trans('gestionale.fatture.create.entries.row_reason')" 
+                                                placeholder="Causale riga..." 
                                                 class="h-10 text-sm bg-slate-50 dark:bg-slate-900/50"
                                                 :class="{ 'border-red-500 focus-visible:ring-red-500': form.errors[`righe.${idx}.descrizione`] }" 
                                                 @input="form.clearErrors(`righe.${idx}.descrizione`)"
@@ -756,7 +756,7 @@ const pageGuides = [
                                                 return Math.round((Number(riga.importo_imponibile) || 0) * 100) > c.residuo_budget;
                                             })()" class="flex items-center gap-1 mt-1 text-rose-500 absolute -bottom-5 right-0">
                                                 <TrendingDown class="w-3 h-3" />
-                                                <span class="text-[9px] font-black uppercase">{{ trans('gestionale.fatture.create.entries.budget_overrun') }}</span>
+                                                <span class="text-[9px] font-black uppercase">Sforo budget</span>
                                             </div>
                                         </div>
 
@@ -770,7 +770,7 @@ const pageGuides = [
 
                                         <div class="col-span-5 md:col-span-3 flex items-center justify-end gap-3 h-10">
                                             <div class="text-right">
-                                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block leading-none mb-1">{{ trans('gestionale.fatture.create.entries.row_total') }}</span>
+                                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block leading-none mb-1">Totale Riga</span>
                                                 <span class="font-black text-base text-slate-800 dark:text-slate-200 block leading-none">
                                                     {{ euro(Number(riga.importo_imponibile) * (1 + (Number(riga.aliquota_iva) || 0) / 100), { fromCents: false }) }}
                                                 </span>
@@ -787,7 +787,7 @@ const pageGuides = [
                             <div class="py-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 rounded-b-xl flex justify-end">
                                 <div class="flex items-center gap-8 pr-[60px]"> 
                                     <div class="text-right">
-                                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-0.5">{{ trans('gestionale.fatture.create.totals.taxable') }}</span>
+                                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest block mb-0.5">Imponibile</span>
                                         <span class="font-black text-slate-700 dark:text-slate-300 text-lg">{{ euro(totali.imponibile, { fromCents: false }) }}</span>
                                     </div>
                                     <div class="w-px h-8 bg-slate-200 dark:bg-slate-700"></div> 
@@ -797,7 +797,7 @@ const pageGuides = [
                                     </div>
                                     <div class="w-px h-8 bg-slate-200 dark:bg-slate-700"></div> 
                                     <div class="text-right">
-                                        <span class="text-[10px] text-primary font-bold uppercase tracking-widest block mb-0.5">{{ trans('gestionale.fatture.create.totals.total') }}</span>
+                                        <span class="text-[10px] text-primary font-bold uppercase tracking-widest block mb-0.5">Totale</span>
                                         <span class="font-black text-primary text-xl">{{ euro(totali.imponibile + totali.iva, { fromCents: false }) }}</span>
                                     </div>
                                 </div>
@@ -810,7 +810,7 @@ const pageGuides = [
                             <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between bg-slate-800/40">
                                 <div class="flex items-center gap-2">
                                     <Zap class="w-4 h-4 text-blue-400" :class="transactionStatus === 'CRITICAL_BUDGET' ? 'text-rose-400 animate-pulse' : ''" />
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ trans('gestionale.fatture.create.simulation.title') }}</span>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Simulazione Impatto Finanziario</span>
                                 </div>
                                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase"
                                     :class="{
@@ -824,14 +824,14 @@ const pageGuides = [
                                             'bg-amber-500 animate-pulse': transactionStatus === 'WARNING_CASH',
                                             'bg-emerald-500':             transactionStatus === 'SAFE',
                                         }"></span>
-                                    {{ transactionStatus === 'CRITICAL_BUDGET' ? trans('gestionale.fatture.create.simulation.status_budget_overrun') : transactionStatus === 'WARNING_CASH' ? trans('gestionale.fatture.create.simulation.status_cash_warning') : trans('gestionale.fatture.create.simulation.status_ok') }}
+                                    {{ transactionStatus === 'CRITICAL_BUDGET' ? 'Sforo Budget' : transactionStatus === 'WARNING_CASH' ? 'Attenzione Cassa' : 'Tutto OK' }}
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 divide-x divide-slate-700/50">
                                 <div class="p-5">
-                                    <p class="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-4">{{ trans('gestionale.fatture.create.simulation.budget_analysis') }}</p>
-                                    <div v-if="budgetImpacts.length === 0" class="py-6 text-center text-slate-600 text-xs">{{ trans('gestionale.fatture.create.simulation.no_entries_yet') }}</div>
+                                    <p class="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-4">Analisi Budget — Capitoli</p>
+                                    <div v-if="budgetImpacts.length === 0" class="py-6 text-center text-slate-600 text-xs">Nessuna voce ancora</div>
                                     <div v-else class="space-y-3">
                                         <div v-for="impact in budgetImpacts" :key="impact.id" class="space-y-1.5 bg-slate-800/20 rounded-lg p-2.5 border border-slate-700/50">
                                             <div class="flex justify-between items-start">
@@ -849,14 +849,14 @@ const pageGuides = [
                                             </div>
                                             
                                             <div class="flex justify-between text-[9px] text-slate-500 font-medium">
-                                                <span>{{ trans('gestionale.fatture.create.simulation.used') }}: {{ euro(impact.speso_cents) }}</span>
-                                                <span>{{ trans('gestionale.fatture.create.simulation.budget') }}: {{ euro(impact.residuo_cents) }}</span>
+                                                <span>Usato: {{ euro(impact.speso_cents) }}</span>
+                                                <span>Budget: {{ euro(impact.residuo_cents) }}</span>
                                             </div>
                                             
                                             <div v-if="impact.ultimi_movimenti && impact.ultimi_movimenti.length > 0" class="mt-2 pt-2 border-t border-slate-700/50">
                                                 <button type="button" @click="toggleHistory(impact.id)" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400 hover:text-blue-400 transition-colors w-full">
                                                     <History class="w-3 h-3" />
-                                                    <span>{{ trans('gestionale.fatture.create.simulation.recent_movements', { count: impact.ultimi_movimenti.length }) }}</span>
+                                                    <span>{{ impact.ultimi_movimenti.length }} Moviment{{ impact.ultimi_movimenti.length > 1 ? 'i' : 'o' }} recent{{ impact.ultimi_movimenti.length > 1 ? 'i' : 'e' }}</span>
                                                     <ChevronDown class="w-3 h-3 ml-auto transition-transform" :class="expandedHistory[impact.id] ? 'rotate-180' : ''" />
                                                 </button>
 
@@ -878,20 +878,20 @@ const pageGuides = [
                                     </div>
                                 </div>
                                 <div class="p-5">
-                                    <p class="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-4">{{ trans('gestionale.fatture.create.simulation.cash_forecast') }}</p>
+                                    <p class="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-4">Previsione cassa</p>
                                     <div v-if="bankForecast" class="space-y-3">
                                         <div class="space-y-2">
                                             <div class="flex justify-between text-xs">
-                                                <span class="text-slate-400">{{ trans('gestionale.fatture.create.simulation.current_balance') }}</span>
+                                                <span class="text-slate-400">Saldo attuale</span>
                                                 <span class="text-white">{{ euro(bankForecast.attuale_cents) }}</span>
                                             </div>
                                             <div class="flex justify-between text-xs">
-                                                <span class="text-slate-400">{{ trans('gestionale.fatture.create.simulation.expected_outflow') }}</span>
+                                                <span class="text-slate-400">Uscita prevista</span>
                                                 <span class="text-rose-400">- {{ euro(totali.netto, { fromCents: false }) }}</span>
                                             </div>
                                         </div>
                                         <div class="pt-3 border-t border-slate-700 space-y-1">
-                                            <p class="text-[9px] text-slate-500 uppercase font-bold">{{ trans('gestionale.fatture.create.simulation.post_payment_balance') }}</p>
+                                            <p class="text-[9px] text-slate-500 uppercase font-bold">Saldo post-pagamento</p>
                                             <p class="font-black text-2xl" :class="bankForecast.isRed ? 'text-rose-500' : 'text-emerald-400'">
                                                 {{ euro(bankForecast.post_cents) }}
                                             </p>
@@ -904,7 +904,7 @@ const pageGuides = [
                                         </div>
                                     </div>
                                     <div v-else class="py-6 text-center text-slate-600 text-xs">
-                                        {{ trans('gestionale.fatture.create.simulation.select_account_left_panel') }}
+                                        Seleziona un conto nel pannello sinistro
                                     </div>
                                 </div>
                             </div>
@@ -951,7 +951,7 @@ const pageGuides = [
         <ModalSopravvenienza
             v-model:show="showSopravvenienzaModal"
             :condominio-id="props.condominio.id"
-            :fornitore-nome="selectedFornitore?.ragione_sociale || trans('gestionale.fatture.create.labels.supplier')"
+            :fornitore-nome="selectedFornitore?.ragione_sociale || 'Fornitore'"
             @confirm="handleSopravvenienzaConfirm"
         />
 
@@ -963,18 +963,18 @@ const pageGuides = [
                         <CheckCircle class="w-10 h-10 text-emerald-500" />
                     </div>
                     
-                    <h3 class="font-black text-slate-800 dark:text-slate-100 text-xl mb-2">{{ trans('gestionale.fatture.create.success_modal.title') }}</h3>
+                    <h3 class="font-black text-slate-800 dark:text-slate-100 text-xl mb-2">Operazione completata</h3>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-                        {{ trans('gestionale.fatture.create.success_modal.description') }}
+                        Il documento e le coperture contabili sono stati registrati e bilanciati correttamente.
                     </p>
                     
                     <div class="flex flex-col gap-3">
                         <Button @click="showSuccessModal = false" class="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-[11px] shadow-lg shadow-emerald-600/20 transition-all">
-                            {{ trans('gestionale.fatture.create.success_modal.register_another') }}
+                            Registra un'altra fattura
                         </Button>
                         
                         <Button variant="ghost" @click="router.visit(route(generateRoute('gestionale.fatture.index'), { condominio: props.condominio.id }))" class="w-full h-12 rounded-xl font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-                            {{ trans('gestionale.fatture.create.success_modal.back_to_list') }}
+                            Torna all'elenco fatture
                         </Button>
                     </div>
                 </div>

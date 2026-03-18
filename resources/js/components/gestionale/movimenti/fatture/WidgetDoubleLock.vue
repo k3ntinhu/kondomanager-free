@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import vSelect from 'vue-select';
 import { useCurrencyFormatter } from '@/composables/useCurrencyFormatter';
-import { trans } from 'laravel-vue-i18n';
 import { 
     AlertTriangle, History, Scale, Info, 
     AlertOctagon, CheckCircle, Trash2, FileText, Calculator, Activity, Zap
@@ -71,8 +70,8 @@ const semaforoContabile = computed(() => {
 const fiscalAssistant = computed(() => {
     if (!props.form.saldo_patrimoniale_id) {
         return {
-            title: trans('gestionale.fatture.double_lock.assistant.waiting_title'),
-            desc: trans('gestionale.fatture.double_lock.assistant.waiting_description'),
+            title: 'In attesa di selezione',
+            desc: 'Seleziona un debito ereditato dal menu a tendina per permettere al sistema di analizzare la copertura.',
             icon: Info,
             colorClass: 'bg-slate-50 border-slate-200 text-slate-700 dark:bg-slate-800/50 dark:border-slate-700',
             iconColor: 'text-slate-400'
@@ -81,8 +80,8 @@ const fiscalAssistant = computed(() => {
 
     if (semaforoContabile.value === 'ORANGE') {
         return {
-            title: trans('gestionale.fatture.double_lock.assistant.unbalanced_title'),
-            desc: trans('gestionale.fatture.double_lock.assistant.unbalanced_description', { amount: euro(scopertoAttualeEuro.value * 100) }),
+            title: 'Partita doppia sbilanciata (Azione Richiesta)',
+            desc: `Lo scontrino mostra uno scarto di ${euro(scopertoAttualeEuro.value * 100)}. Usa i pulsanti di Split per convertire questa differenza in Spesa dell'Anno o prelevarla da un Fondo. Senza questa azione non puoi registrare.`,
             icon: Scale,
             colorClass: 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-800/50',
             iconColor: 'text-amber-600 dark:text-amber-400'
@@ -91,8 +90,8 @@ const fiscalAssistant = computed(() => {
 
     if (semaforoContabile.value === 'RED') {
         return {
-            title: trans('gestionale.fatture.double_lock.assistant.structural_alert_title'),
-            desc: trans('gestionale.fatture.double_lock.assistant.structural_alert_description', { amount: euro(bucoRataZeroCents.value) }),
+            title: '🚨 Allarme Strutturale: Proiettile Vagante',
+            desc: `Hai bilanciato la spesa, ma i condòmini non hanno versato sufficiente Rata 0. C'è un buco strutturale di ${euro(bucoRataZeroCents.value)}. Se paghi questa fattura, userai soldi destinati ad altro. Si consiglia emissione Rata Integrativa post-registrazione.`,
             icon: AlertOctagon,
             colorClass: 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-900/20 dark:border-rose-800/50',
             iconColor: 'text-rose-600 dark:text-rose-400'
@@ -101,8 +100,8 @@ const fiscalAssistant = computed(() => {
 
     if (props.bankForecast?.isRed) {
         return {
-            title: trans('gestionale.fatture.double_lock.assistant.cash_warning_title'),
-            desc: trans('gestionale.fatture.double_lock.assistant.cash_warning_description'),
+            title: '⚠️ Crisi di Liquidità (Semaforo Giallo)',
+            desc: `Contabilmente sei perfetto, ma la banca andrà in rosso. Registra la fattura e avvia il Wizard Solleciti verso i morosi prima di bonificare.`,
             icon: AlertTriangle,
             colorClass: 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800/50',
             iconColor: 'text-yellow-600 dark:text-yellow-400'
@@ -110,8 +109,8 @@ const fiscalAssistant = computed(() => {
     }
 
     return {
-        title: trans('gestionale.fatture.double_lock.assistant.ideal_title'),
-        desc: trans('gestionale.fatture.double_lock.assistant.ideal_description'),
+        title: '✅ Scenario Ideale (Copertura Totale)',
+        desc: 'Tutto perfetto. Il debito è interamente coperto dalla Rata 0 e il conto corrente ha i fondi materiali. Nessun impatto sul preventivo di quest\'anno.',
         icon: CheckCircle,
         colorClass: 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-800/50',
         iconColor: 'text-emerald-600 dark:text-emerald-400'
@@ -144,31 +143,31 @@ const rischioPrescrizione = computed(() => {
             <div class="px-6 py-5 border-b border-blue-200 dark:border-blue-800/50 bg-blue-100/50 dark:bg-amber-900/20">
                 <div class="flex items-center gap-2">
                     <History class="w-5 h-5 text-blue-600 dark:text-blue-500" />
-                    <h3 class="text-sm font-bold text-blue-900 dark:text-blue-100">{{ trans('gestionale.fatture.double_lock.title') }}</h3>
+                    <h3 class="text-sm font-bold text-blue-900 dark:text-blue-100">Gestione debito pregresso</h3>
                 </div>
                 <p class="text-[11px] text-blue-700 dark:text-blue-400 mt-1">
-                    {{ trans('gestionale.fatture.double_lock.subtitle') }}
+                    Associa questa spesa a un debito ereditato dal bilancio precedente.
                 </p>
             </div>
 
             <div class="p-6 space-y-6">
                 
                 <div class="space-y-1.5">
-                    <Label class="text-[11px] font-bold uppercase text-slate-500">{{ trans('gestionale.fatture.double_lock.labels.debt_origin_date') }}</Label>
+                    <Label class="text-[11px] font-bold uppercase text-slate-500">Data di origine del debito</Label>
                     <Input type="date" v-model="form.data_competenza_originaria" class="h-9 w-48 text-sm" />
                     <p v-if="rischioPrescrizione" class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1">
-                        <AlertTriangle class="w-3.5 h-3.5" /> {{ trans('gestionale.fatture.double_lock.labels.prescription_risk') }}
+                        <AlertTriangle class="w-3.5 h-3.5" /> Rischio Prescrizione (> 5 anni)
                     </p>
                 </div>
 
                 <div class="space-y-1.5 relative z-50">
-                    <Label class="text-[11px] font-bold uppercase text-slate-500">{{ trans('gestionale.fatture.double_lock.labels.select_debt') }}</Label>
+                    <Label class="text-[11px] font-bold uppercase text-slate-500">Seleziona fornitore da pagare</Label>
                     <v-select 
                         v-model="props.form.saldo_patrimoniale_id"
                         :options="debitiFiltrati" 
                         label="descrizione"
                         :reduce="(d: any) => d.id" 
-                        :placeholder="trans('gestionale.fatture.double_lock.placeholders.no_debt_selected')" 
+                        placeholder="Nessun debito selezionato..." 
                         class="style-chooser w-full"
                         append-to-body 
                     >
@@ -176,8 +175,8 @@ const rischioPrescrizione = computed(() => {
                             <div class="flex justify-between py-1">
                                 <span class="font-medium text-sm">{{ descrizione }}</span>
                                 <div class="flex flex-col text-right">
-                                    <span class="text-xs font-bold text-amber-600">{{ trans('gestionale.fatture.double_lock.labels.available_short') }}: {{ euro(importo_disponibile) }}</span>
-                                    <span v-if="importo_iniziale && importo_disponibile !== importo_iniziale" class="text-[9px] text-slate-400 line-through">{{ trans('gestionale.fatture.double_lock.labels.original_short') }}: {{ euro(importo_iniziale) }}</span>
+                                    <span class="text-xs font-bold text-amber-600">Disp: {{ euro(importo_disponibile) }}</span>
+                                    <span v-if="importo_iniziale && importo_disponibile !== importo_iniziale" class="text-[9px] text-slate-400 line-through">Orig: {{ euro(importo_iniziale) }}</span>
                                 </div>
                             </div>
                         </template>
@@ -186,13 +185,13 @@ const rischioPrescrizione = computed(() => {
                     <div v-if="debitoSelezionato && debitoSelezionato.fatture_collegate?.length" class="mt-3 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg">
                         <div class="flex items-center gap-2 mb-2">
                             <History class="w-3.5 h-3.5 text-slate-400" />
-                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">{{ trans('gestionale.fatture.double_lock.labels.already_used_by', { count: debitoSelezionato.fatture_collegate.length }) }}</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Già eroso da {{ debitoSelezionato.fatture_collegate.length }} fatture</span>
                         </div>
                         <div class="space-y-1.5">
                             <div v-for="fat in debitoSelezionato.fatture_collegate" :key="fat.id" class="flex justify-between items-center text-xs bg-white dark:bg-slate-800 px-2 py-1.5 rounded border border-slate-100 dark:border-slate-700">
                                 <div class="flex gap-2 text-slate-600 dark:text-slate-400">
                                     <FileText class="w-3.5 h-3.5" />
-                                    <span>{{ trans('gestionale.fatture.double_lock.labels.invoice_number') }} <strong>{{ fat.numero_documento }}</strong> ({{ fat.data_documento }})</span>
+                                    <span>Fattura n° <strong>{{ fat.numero_documento }}</strong> ({{ fat.data_documento }})</span>
                                 </div>
                                 <span class="font-bold text-rose-500">- {{ euro(fat.importo_usato * 100) }}</span>
                             </div>
@@ -207,14 +206,14 @@ const rischioPrescrizione = computed(() => {
                         <div class="p-4 bg-slate-900 font-mono text-[11px] rounded-xl shadow-inner border border-slate-800 text-slate-300 flex flex-col justify-between">
                             <div>
                                 <div class="flex items-center gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">
-                                    <Calculator class="w-3.5 h-3.5" /> {{ trans('gestionale.fatture.double_lock.labels.reconciliation') }}
+                                    <Calculator class="w-3.5 h-3.5" /> Quadratura
                                 </div>
                                 <div class="flex justify-between mb-1.5">
-                                    <span>[+] {{ trans('gestionale.fatture.double_lock.labels.invoice') }}</span>
+                                    <span>[+] Fattura</span>
                                     <span class="text-white">{{ euro(fatturaCents) }}</span>
                                 </div>
                                 <div class="flex justify-between mb-1.5 text-emerald-400">
-                                    <span>[-] {{ trans('gestionale.fatture.double_lock.labels.database_debt') }}</span>
+                                    <span>[-] Debito DB</span>
                                     <span>{{ euro(debitoSelezionato.importo_disponibile) }}</span>
                                 </div>
                                 <div v-for="(cop, idx) in props.form.coperture" :key="idx" class="flex justify-between mb-1.5 text-blue-400">
@@ -225,7 +224,7 @@ const rischioPrescrizione = computed(() => {
                             <div>
                                 <div class="border-t border-slate-700 my-2 border-dashed"></div>
                                 <div class="flex justify-between font-bold text-xs">
-                                    <span class="text-white">= {{ trans('gestionale.fatture.double_lock.labels.delta') }}</span>
+                                    <span class="text-white">= SCARTO</span>
                                     <span :class="scopertoAttualeEuro > 0 ? 'text-rose-500' : 'text-emerald-500'">
                                         {{ euro(scopertoAttualeEuro * 100) }}
                                     </span>
@@ -237,14 +236,14 @@ const rischioPrescrizione = computed(() => {
                             <div>
                                 <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-3 border-b pb-2"
                                     :class="bucoRataZeroCents > 0 ? 'text-rose-600 border-rose-200' : 'text-emerald-600 border-emerald-200'">
-                                    <Activity class="w-3.5 h-3.5" /> {{ trans('gestionale.fatture.double_lock.labels.resident_coverage') }}
+                                    <Activity class="w-3.5 h-3.5" /> Copertura Condòmini
                                 </div>
                                 <div class="flex justify-between text-[11px] mb-1">
-                                    <span class="text-slate-600">{{ trans('gestionale.fatture.double_lock.labels.rate_zero_total') }}:</span>
+                                    <span class="text-slate-600">Rata 0 Globale:</span>
                                     <span class="font-bold">{{ euro(capienzaRataZero) }}</span>
                                 </div>
                                 <div class="flex justify-between text-[10px] mb-2 text-slate-500">
-                                    <span>{{ trans('gestionale.fatture.double_lock.labels.of_which_collected') }}:</span>
+                                    <span>↳ di cui incassati:</span>
                                     <span>{{ euro(incassatoRataZero) }}</span>
                                 </div>
                                 
@@ -256,35 +255,35 @@ const rischioPrescrizione = computed(() => {
                                 </div>
                             </div>
                             <div v-if="bucoRataZeroCents > 0" class="text-[10px] font-bold text-rose-600 mt-3 leading-tight">
-                                {{ trans('gestionale.fatture.double_lock.labels.missing_amount', { amount: euro(bucoRataZeroCents) }) }}
+                                ⚠️ Mancano {{ euro(bucoRataZeroCents) }}. Suggerita rata integrativa.
                             </div>
                             <div v-else class="text-[10px] font-bold text-emerald-600 mt-3">
-                                {{ trans('gestionale.fatture.double_lock.labels.rate_zero_sufficient') }}
+                                ✅ Rata 0 sufficiente.
                             </div>
                         </div>
 
                         <div class="p-4 rounded-xl border bg-slate-800 border-slate-700 text-white flex flex-col justify-between">
                             <div>
                                 <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-3 border-b border-slate-700 pb-2 text-blue-400">
-                                    <Zap class="w-3.5 h-3.5" /> {{ trans('gestionale.fatture.double_lock.labels.cash_impact') }}
+                                    <Zap class="w-3.5 h-3.5" /> Impatto Cassa
                                 </div>
                                 <div v-if="bankForecast">
                                     <div class="flex justify-between text-[11px] mb-1 text-slate-300">
-                                        <span>{{ trans('gestionale.fatture.double_lock.labels.current_balance') }}:</span>
+                                        <span>Saldo attuale:</span>
                                         <span>{{ euro(bankForecast.attuale_cents) }}</span>
                                     </div>
                                     <div class="flex justify-between text-[11px] mb-2 text-rose-400">
-                                        <span>{{ trans('gestionale.fatture.double_lock.labels.outgoing') }}:</span>
+                                        <span>Uscita:</span>
                                         <span>- {{ euro(fatturaCents) }}</span>
                                     </div>
                                 </div>
                                 <div v-else class="text-[10px] text-slate-400 italic">
-                                    {{ trans('gestionale.fatture.double_lock.labels.select_account') }}
+                                    Seleziona un conto di addebito
                                 </div>
                             </div>
                             <div v-if="bankForecast" class="border-t border-slate-700 pt-2 mt-2">
                                 <div class="flex justify-between font-black text-sm" :class="bankForecast.isRed ? 'text-rose-500' : 'text-emerald-400'">
-                                    <span>{{ trans('gestionale.fatture.double_lock.labels.post_payment_short') }}</span>
+                                    <span>Post-pagam.</span>
                                     <span>{{ euro(bankForecast.post_cents) }}</span>
                                 </div>
                             </div>
@@ -295,10 +294,10 @@ const rischioPrescrizione = computed(() => {
                         
                         <div class="flex gap-2">
                             <Button type="button" size="sm" variant="outline" class="text-xs" @click="addCopertura('sopravvenienza')" :disabled="scopertoAttualeEuro === 0">
-                                {{ trans('gestionale.fatture.double_lock.actions.convert_current_expense') }}
+                                + Converti in Spesa Corrente
                             </Button>
                             <Button type="button" size="sm" variant="outline" class="text-xs" @click="addCopertura('fondo_riserva')" :disabled="scopertoAttualeEuro === 0">
-                                {{ trans('gestionale.fatture.double_lock.actions.reverse_from_reserve') }}
+                                + Storna da Fondo Riserva
                             </Button>
                         </div>
 
@@ -306,17 +305,17 @@ const rischioPrescrizione = computed(() => {
                             <div v-for="(cop, idx) in props.form.coperture" :key="idx" class="flex gap-3 items-end">
                                 <div class="flex-1 relative z-40">
                                     <Label class="text-[10px] uppercase text-slate-500 block mb-1">
-                                        {{ cop.tipo_copertura === 'sopravvenienza' ? trans('gestionale.fatture.double_lock.labels.expense_chapter') : trans('gestionale.fatture.double_lock.labels.fund') }}
+                                        {{ cop.tipo_copertura === 'sopravvenienza' ? 'Capitolo di Spesa' : 'Fondo' }}
                                     </Label>
                                     
                                     <div v-if="cop.tipo_copertura === 'sopravvenienza'" class="h-9 border border-slate-200 rounded-md bg-amber-50 flex items-center px-3 text-sm text-slate-600 font-medium">
-                                        {{ trans('gestionale.fatture.double_lock.labels.extraordinary_integration') }}
+                                        Integrazione Straordinaria (Verrà chiesta la causale)
                                     </div>
                                     <v-select v-else v-model="cop.fonte_id" :options="fondiRiserva" label="nome" :reduce="(f: any) => f.id" class="style-chooser text-xs bg-white" append-to-body />
                                     
                                 </div>
                                 <div class="w-32">
-                                    <Label class="text-[10px] uppercase text-slate-500 block mb-1">{{ trans('gestionale.fatture.double_lock.labels.amount_eur') }}</Label>
+                                    <Label class="text-[10px] uppercase text-slate-500 block mb-1">Importo (€)</Label>
                                     <Input type="number" step="0.01" v-model="cop.importo" class="h-9 text-sm bg-white" />
                                 </div>
                                 <Button type="button" variant="ghost" size="icon" @click="removeCopertura(idx)" class="h-9 w-9 text-rose-500 hover:bg-rose-100">
