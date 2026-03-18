@@ -144,6 +144,7 @@ return [
     'navigation' => [
         'details'   => 'Dettagli',
         'referents' => 'Referenti',
+        'debt_position' => 'Situazione debitoria',
         'documents' => 'Documenti',
         'suppliers' => 'Fornitori',
     ],
