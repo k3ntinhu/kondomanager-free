@@ -24,6 +24,11 @@ export const createColumns = (condominio: Building, esercizio: Esercizio): Colum
     cell: ({ row }) => {
       const pianoRate = row.original
       const stato = pianoRate.stato 
+      const statoLabel = stato === 'approvato'
+        ? trans('gestionale.piani_rate.show.status.approved')
+        : stato === 'bozza'
+          ? trans('gestionale.piani_rate.show.status.draft')
+          : stato
       const desc = pianoRate.descrizione
       const hasSaldi = pianoRate.has_saldi || false; 
 
@@ -56,7 +61,7 @@ export const createColumns = (condominio: Building, esercizio: Esercizio): Colum
                 // BADGE STATO (Dinamico)
                 stato ? h('span', { 
                     class: `px-1.5 py-0.5 text-[9px] font-bold uppercase border rounded-md ${colorClasses}` 
-                }, stato) : null,
+                }, statoLabel) : null,
 
                 // BADGE SALDI (Sempre Amber per contrasto)
                 hasSaldi ? h('span', { 
@@ -96,7 +101,7 @@ export const createColumns = (condominio: Building, esercizio: Esercizio): Colum
       
       return h('div', { class: 'flex flex-col' }, [
         h('span', { class: 'text-sm font-medium text-slate-700 dark:text-slate-300' }, `${pianoRate.numero_rate} ${trans('gestionale.piani_rate.table.installments')}`),
-        h('span', { class: 'text-xs text-slate-500' }, `${trans('gestionale.piani_rate.table.from_date')} ${new Date(pianoRate.data_inizio).toLocaleDateString('it-IT')}`)
+        h('span', { class: 'text-xs text-slate-500' }, `${trans('gestionale.piani_rate.table.from_date')} ${new Date(pianoRate.data_inizio).toLocaleDateString(typeof document !== 'undefined' ? document.documentElement.lang : undefined)}`)
       ])
     },
   },
