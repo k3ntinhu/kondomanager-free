@@ -50,7 +50,8 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
 
     },
     {
-      accessorKey: 'tipologia',
+      id: 'tipologia',
+      accessorFn: (immobile) => localizeTipologia(immobile).toLowerCase(),
       header: ({ column }) =>  h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.immobili.table.type') }),
       cell: ({ row }) => {
         const immobile = row.original as Immobile
@@ -62,7 +63,8 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
         
     },
     {
-      accessorKey: 'palazzina',
+      id: 'palazzina',
+      accessorFn: (immobile) => (immobile.palazzina?.name ?? '').toLowerCase(),
       header: ({ column }) =>
         h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.immobili.table.building') }),
 
@@ -76,7 +78,8 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
         
     },
     {
-      accessorKey: 'scala',
+      id: 'scala',
+      accessorFn: (immobile) => (immobile.scala?.name ?? '').toLowerCase(),
       header: ({ column }) =>
         h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.immobili.table.stair') }),
 
@@ -90,7 +93,13 @@ export function getColumns(condominio: Building): ColumnDef<Immobile>[] {
         
     },
     {
-      accessorKey: 'dettagli',
+      id: 'dettagli',
+      accessorFn: (immobile) => {
+        const interno = immobile.interno ?? '';
+        const piano = immobile.piano ?? '';
+        const superficie = immobile.superficie ? `${immobile.superficie}` : '';
+        return `${interno}|${piano}|${superficie}`.toLowerCase();
+      },
       header: ({ column }) =>
         h(DataTableColumnHeader, { column, title: trans('gestionale.list_pages.immobili.table.details') }),
 
