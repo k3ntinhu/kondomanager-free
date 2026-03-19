@@ -990,6 +990,52 @@ return [
                         'saving' => 'A guardar...',
                     ],
                 ],
+                'edit_entry_modal' => [
+                    'title' => 'Editar rubrica de despesa',
+                    'labels' => [
+                        'code' => 'Código',
+                        'entry_name' => 'Nome da rubrica',
+                        'movement_type' => 'Tipo de movimento',
+                        'parent_chapter' => 'Capítulo pai',
+                        'suggested_supplier' => 'Fornecedor sugerido',
+                        'fiscal_expense_nature' => 'Natureza da despesa (fiscal)',
+                        'planned_amount' => 'Valor orçamentado',
+                        'locked_badge' => 'Bloqueado por prestações emitidas ou plano aprovado',
+                    ],
+                    'placeholders' => [
+                        'code' => 'A.1',
+                        'entry_name' => 'Ex.: Limpeza das escadas',
+                        'description' => 'Descrição...',
+                        'parent_chapter' => 'Selecionar capítulo pai',
+                        'amount' => '0,00',
+                    ],
+                    'options' => [
+                        'expense_outgoing' => 'Despesa (saída)',
+                        'income' => 'Receita',
+                        'none' => '-- Nenhum --',
+                    ],
+                    'expense_types' => [
+                        'standard' => 'Padrão (Bens/Serviços)',
+                        'professional' => 'Profissional (Ret. na fonte)',
+                        'works' => 'Obras (Bónus/Reabilitação)',
+                        'utility' => 'Utilidades (Luz/Gás/Água)',
+                    ],
+                    'help' => [
+                        'supplier_prefill' => 'Será pré-preenchido nas faturas.',
+                    ],
+                    'locked_notice' => [
+                        'title' => 'Restrições no valor:',
+                        'how_to_fix' => 'Como resolver:',
+                        'locked_by_installments_text' => 'O valor desta rubrica está bloqueado porque está ligado a um plano de prestações já aprovado ou com prestações emitidas.',
+                        'locked_by_installments_how_to_fix' => 'Para alterar este valor, anule primeiro as prestações emitidas ou faça a gestão da diferença no módulo "Mover Orçamento".',
+                        'committed_already_text' => 'Esta despesa já foi alocada num plano de prestações no montante total de :amount. Para manter a coerência contabilística, não pode reduzir o total abaixo deste valor.',
+                        'committed_how_to_fix' => 'Se precisar de um valor inferior, vá ao módulo "Planos de prestações", remova a quota atribuída a esta rubrica e depois volte a editar aqui.',
+                    ],
+                    'actions' => [
+                        'saving' => 'A guardar...',
+                        'save_changes' => 'Guardar alterações',
+                    ],
+                ],
                 'tree' => [
                     'empty_title' => 'Nenhuma rubrica de despesa criada',
                     'empty_description' => 'Crie a primeira rubrica para começar a estruturar o plano de contas.',
