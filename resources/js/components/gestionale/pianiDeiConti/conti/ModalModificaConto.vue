@@ -287,6 +287,25 @@ const submit = () => {
               </div>
             </div>
 
+            <div class="flex flex-col gap-3 border-y border-gray-100 py-3">
+              <div class="flex items-center justify-between">
+                <Label for="editIsCapitolo" class="cursor-pointer">
+                  {{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.is_expense_chapter') }}
+                </Label>
+                <Switch
+                  id="editIsCapitolo"
+                  v-model="isCapitolo"
+                  :disabled="isSottoConto || hasSottoconti"
+                />
+              </div>
+              <div class="flex items-center justify-between">
+                <Label for="editIsSottoConto" class="cursor-pointer">
+                  {{ trans('gestionale.list_pages.piani_conti.show.new_entry_modal.labels.is_expense_subaccount') }}
+                </Label>
+                <Switch id="editIsSottoConto" v-model="isSottoConto" :disabled="isCapitolo" />
+              </div>
+            </div>
+
             <div v-if="isSottoConto">
               <Label>{{ trans('gestionale.list_pages.piani_conti.show.edit_entry_modal.labels.parent_chapter') }}</Label>
               <v-select
