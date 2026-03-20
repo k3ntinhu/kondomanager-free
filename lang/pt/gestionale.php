@@ -69,6 +69,7 @@ return [
     'success_update_conto'              => "A rubrica de despesa foi atualizada com sucesso.",
     'error_update_conto'                => "Ocorreu um erro ao atualizar a rubrica de despesa.",
     'error_conto_has_sottoconti'        => "Não é possível eliminar a rubrica porque contém sub-rubricas. Elimine primeiro as sub-rubricas.",
+    'error_conto_locked_by_rate_plan'   => "Não é possível eliminar: a rubrica está associada a um plano de prestações aprovado, emitido ou fechado.",
     'error_conto_used_in_active_plans'  => "Não é possível eliminar: a rubrica está a ser usada em planos de prestações ativos: :plans.",
     'error_conto_inherited_lock'        => "Não é possível eliminar: esta rubrica faz parte do grupo ':parent', associado a: :plans.",
     // Piano rate
