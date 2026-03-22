@@ -317,7 +317,8 @@ class DocumentoController extends Controller
 
         try {
             
-            if (!Storage::exists($documento->path)) {
+            // Specifichiamo il disco 'local' per coerenza con il metodo store()
+            if (!Storage::disk('local')->exists($documento->path)) {
                 return redirect()->back()->with(
                     $this->flashError(__('documenti.file_not_found'))
                 );
