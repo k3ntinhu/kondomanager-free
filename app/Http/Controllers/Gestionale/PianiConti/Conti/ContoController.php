@@ -57,12 +57,10 @@ class ContoController extends Controller
             // Se NON è un capitolo (quindi è una voce di spesa effettiva), gestiamo le tabelle millesimali
             if (!$isCapitolo) {
                 // 1. Validazione e recupero della tabella millesimale associata
-                if (!empty($data['tabella_millesimale_id'])) {
-                    $tabella = Tabella::where('id', $data['tabella_millesimale_id'])
-                                      ->where('condominio_id', $condominio->id)
-                                      ->first();
-                    if (!$tabella) throw new \Exception('Tabella millesimale non trovata');
-                } 
+                $tabella = Tabella::where('id', $data['tabella_millesimale_id'])
+                                  ->where('condominio_id', $condominio->id)
+                                  ->first();
+                if (!$tabella) throw new \Exception('Tabella millesimale non trovata');
 
                 // 2. Associazione della tabella al conto (pivot)
                 $contoTabellaId = DB::table('conto_tabella_millesimale')->insertGetId([
@@ -122,6 +120,13 @@ class ContoController extends Controller
             $isCapitolo = $data['isCapitolo'] ?? false;
             $isSottoConto = $data['isSottoConto'] ?? false;
             $nuovoImporto = $isCapitolo ? 0 : MoneyHelper::toCents($data['importo'] ?? 0);
+
+            // Guard strutturale: un capitolo con sottoconti non può diventare una voce normale
+            if ($isCapitolo === false && $conto->sottoconti()->exists()) {
+                throw ValidationException::withMessages([
+                    'isCapitolo' => 'Cannot convert to expense: this chapter has subaccounts attached. Please remove or reassign them first.'
+                ]);
+            }
 
             // CONTROLLI DI SICUREZZA: Scattano solo se l'utente tenta di modificare l'importo di una spesa
             if (!$isCapitolo && $nuovoImporto != $conto->importo) {
@@ -215,7 +220,6 @@ class ContoController extends Controller
                         ->delete();
                 }
                 // --- FINE FIX ---
-
                 $contoTabellaId = DB::table('conto_tabella_millesimale')
                     ->where('conto_id', $conto->id)
                     ->where('tabella_id', $tabella->id)
