@@ -50,7 +50,7 @@ const submit = () => {
 </script>
 
 <template>
-  <Head :title="trans('comunicazione.header.edit_communication_head')" />
+  <Head :title="trans('comunicazioni.header.edit_communication_head')" />
   
   <AppLayout>
     <div class="px-4 py-6">

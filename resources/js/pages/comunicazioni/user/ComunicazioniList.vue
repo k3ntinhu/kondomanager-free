@@ -301,7 +301,7 @@ async function confirmDelete(): Promise<void> {
                     v-if="canEdit(comunicazione)"
                     :href="route(generateRoute('comunicazioni.edit'), { id: comunicazione.id })"
                     class="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                    :title="trans('comunicazioni.actions.edit')"
+                    :title="trans('comunicazioni.actions.edit_communication')"
                     aria-label="Edit communication"
                   >
                     <Pencil class="w-4 h-4" />
@@ -311,7 +311,7 @@ async function confirmDelete(): Promise<void> {
                     v-if="canDelete(comunicazione)"
                     @click="openDeleteDialog(comunicazione.id)"
                     class="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                    :title="trans('comunicazioni.actions.delete')"
+                    :title="trans('comunicazioni.actions.delete_communication')"
                     aria-label="Delete communication"
                   >
                     <Trash2 class="w-4 h-4" />

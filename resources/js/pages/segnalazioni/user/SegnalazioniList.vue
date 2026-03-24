@@ -303,7 +303,7 @@ async function confirmDelete(): Promise<void> {
                     v-if="canEdit(segnalazione)"
                     :href="route(generateRoute('segnalazioni.edit'), { id: segnalazione.id })"
                     class="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                    :title="trans('segnalazioni.actions.edit')"
+                    :title="trans('segnalazioni.actions.edit_ticket')"
                     aria-label="Edit ticket"
                   >
                     <Pencil class="w-4 h-4" />
@@ -313,7 +313,7 @@ async function confirmDelete(): Promise<void> {
                     v-if="canDelete(segnalazione)"
                     @click="openDeleteDialog(segnalazione.id)"
                     class="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                    :title="trans('segnalazioni.actions.delete')"
+                    :title="trans('segnalazioni.actions.delete_ticket')"
                     aria-label="Delete ticket"
                   >
                     <Trash2 class="w-4 h-4" />

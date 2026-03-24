@@ -171,7 +171,7 @@ const editCategory = () => {
 
         <div class="flex justify-end">
             <Button type="submit">
-              {{ trans('documenti.action.categories.save_category') }}
+              {{ trans('documenti.actions.categories.save_category') }}
             </Button>
         </div>
       </form>
