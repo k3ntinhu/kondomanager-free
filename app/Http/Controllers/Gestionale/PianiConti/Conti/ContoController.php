@@ -168,6 +168,91 @@ class ContoController extends Controller
                 'note'                  => $data['note'] ?? null,
             ]);
 
+            // Coerenza dati contabili:
+            // - Capitolo => nessuna tabella/ripartizione associata
+            // - Voce spesa => almeno una tabella e relative ripartizioni
+            if ($isCapitolo) {
+                $contoTabellaIds = DB::table('conto_tabella_millesimale')
+                    ->where('conto_id', $conto->id)
+                    ->pluck('id');
+
+                if ($contoTabellaIds->isNotEmpty()) {
+                    DB::table('conto_tabella_ripartizioni')
+                        ->whereIn('conto_tabella_millesimale_id', $contoTabellaIds)
+                        ->delete();
+
+                    DB::table('conto_tabella_millesimale')
+                        ->where('conto_id', $conto->id)
+                        ->delete();
+                }
+            } else {
+                $tabella = Tabella::query()
+                    ->where('id', $data['tabella_millesimale_id'])
+                    ->where('condominio_id', $condominio->id)
+                    ->first();
+
+                if (!$tabella) {
+                    throw ValidationException::withMessages([
+                        'tabella_millesimale_id' => 'La tabella millesimale selezionata non è valida'
+                    ]);
+                }
+
+                // --- INIZIO FIX: PULIZIA DELLE VECCHIE TABELLE ORFANE ---
+                $vecchieAssociazioni = DB::table('conto_tabella_millesimale')
+                    ->where('conto_id', $conto->id)
+                    ->where('tabella_id', '!=', $tabella->id)
+                    ->pluck('id');
+
+                if ($vecchieAssociazioni->isNotEmpty()) {
+                    // Elimina prima i figli (ripartizioni)
+                    DB::table('conto_tabella_ripartizioni')
+                        ->whereIn('conto_tabella_millesimale_id', $vecchieAssociazioni)
+                        ->delete();
+                    
+                    // Poi elimina i padri orfani (l'associazione alla vecchia tabella)
+                    DB::table('conto_tabella_millesimale')
+                        ->whereIn('id', $vecchieAssociazioni)
+                        ->delete();
+                }
+                // --- FINE FIX ---
+
+                $contoTabellaId = DB::table('conto_tabella_millesimale')
+                    ->where('conto_id', $conto->id)
+                    ->where('tabella_id', $tabella->id)
+                    ->value('id');
+
+                if (!$contoTabellaId) {
+                    $contoTabellaId = DB::table('conto_tabella_millesimale')->insertGetId([
+                        'conto_id' => $conto->id,
+                        'tabella_id' => $tabella->id,
+                        'coefficiente' => 100.00,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                DB::table('conto_tabella_ripartizioni')
+                    ->where('conto_tabella_millesimale_id', $contoTabellaId)
+                    ->delete();
+
+                $ripartizioni = [
+                    ['soggetto' => 'proprietario', 'percentuale' => $data['percentuale_proprietario'] ?? 0],
+                    ['soggetto' => 'inquilino', 'percentuale' => $data['percentuale_inquilino'] ?? 0],
+                    ['soggetto' => 'usufruttuario', 'percentuale' => $data['percentuale_usufruttuario'] ?? 0],
+                ];
+
+                foreach ($ripartizioni as $rip) {
+                    if ((float) $rip['percentuale'] > 0) {
+                        DB::table('conto_tabella_ripartizioni')->insert([
+                            'conto_tabella_millesimale_id' => $contoTabellaId,
+                            'soggetto' => $rip['soggetto'],
+                            'percentuale' => $rip['percentuale'],
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            }
             DB::commit();
             return to_route('admin.gestionale.esercizi.piani-conti.show', [$condominio->id, $esercizio->id, $pianoConto->id])
                 ->with($this->flashSuccess(__('gestionale.success_update_conto')));
