@@ -166,7 +166,13 @@ class ContoResource extends JsonResource
             'piani_collegati'       => $this->pianiRate->pluck('nome'),
             'dettaglio_copertura'   => $dettaglioPiani,
 
-            'has_rate_emesse' => $this->has_rate_emesse,
+            'has_rate_emesse' => $this->pianiRate->contains(function ($piano) {
+                $statoPiano = $piano->stato instanceof \App\Enums\StatoPianoRate
+                    ? $piano->stato->value
+                    : $piano->stato;
+
+                return strtolower(trim((string) $statoPiano)) === 'approvato';
+            }),
 
             'sottoconti' => $this->whenLoaded('sottoconti', function () {
                 return ContoResource::collection($this->sottoconti);

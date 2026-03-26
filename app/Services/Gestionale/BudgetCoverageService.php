@@ -136,7 +136,8 @@ class BudgetCoverageService
 
                     // Importo disponibile dal padre per il push-down
                     if (is_null($capitolo->pivot->importo)) {
-                        $residuoPiano = PHP_INT_MAX; // copre tutto il fabbisogno dei figli
+                        // NULL = usa l'importo effettivo del capitolo, non infinito.
+                        $residuoPiano = (int) $capitolo->importo;
                     } else {
                         $residuoPiano = (int) $capitolo->pivot->importo;
                     }
