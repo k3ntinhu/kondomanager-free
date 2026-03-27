@@ -26,7 +26,7 @@ class CreatePianoRateRequest extends FormRequest
                 }),
             ],
             'descrizione'          => ['nullable', 'string'],
-            'metodo_distribuzione' => ['nullable', 'in:prima_rata,tutte_rate,rata_zero'],
+            'metodo_distribuzione' => ['required', 'in:prima_rata,tutte_rate,rata_zero'],
             'numero_rate'          => ['required', 'integer'],
             'giorno_scadenza'      => ['nullable', 'integer'],
             'note'                 => ['nullable', 'string'],
