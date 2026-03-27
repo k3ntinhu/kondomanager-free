@@ -235,7 +235,7 @@ class EventoController extends Controller
             'occurrence_date' => 'nullable|date',
         ]);
 
-        $mode = $request->query('mode', 'all');
+        $mode = $request->query('mode', 'only_this');
         $occurrenceDate = $request->query('occurrence_date', null);
 
         $anagrafica = $this->getUserAnagrafica();
