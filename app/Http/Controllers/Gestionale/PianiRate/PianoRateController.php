@@ -241,15 +241,30 @@ class PianoRateController extends Controller
                 $this->pianoRateCreatorService->creaRicorrenza($pianoRate, $validated);
             }
 
+            // Converte importi configurati nei saldi in centesimi prima della Generate Action.
+            $saldiConfigCents = $validated['saldi_config'] ?? [];
+            foreach ($saldiConfigCents as &$configSaldo) {
+                if (!isset($configSaldo['ripartizioni']) || !is_array($configSaldo['ripartizioni'])) {
+                    continue;
+                }
+
+                foreach ($configSaldo['ripartizioni'] as &$rip) {
+                    if (!array_key_exists('importo', $rip) || $rip['importo'] === '') {
+                        continue;
+                    }
+
+                    $rip['importo'] = MoneyHelper::toCents($rip['importo']);
+                }
+            }
+            unset($configSaldo, $rip);
+
             // 6. Generazione Rate fisiche tramite Action (PRIMA DEL LOCK!)
             $statistiche = [];
             if (!empty($validated['genera_subito'])) {
-                // Passiamo l'array originale del form. 
-                // Se è vuoto, GenerateSaldiAction pescherà automaticamente i saldi "is_applicato = false"
                 $statistiche = app(GeneratePianoRateAction::class)->execute(
                     $pianoRate, 
                     $applicareSaldi, 
-                    $validated['saldi_config'] ?? []
+                    $saldiConfigCents
                 );
             }
 
@@ -574,6 +589,9 @@ class PianoRateController extends Controller
                     ->where('is_applicato', true)
                     ->update(['is_applicato' => false]);
             }
+
+            // Sgancia i capitoli collegati prima della cancellazione del piano.
+            $pianoRate->capitoli()->detach();
 
             // Elimina fisicamente il piano rate
             $pianoRate->delete();
