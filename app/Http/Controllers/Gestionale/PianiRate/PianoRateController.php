@@ -109,7 +109,6 @@ class PianoRateController extends Controller
             ->get(['id', 'nome', 'stato']);
 
         $gestioni = Gestione::whereHas('esercizi', fn($q) => $q->where('esercizio_id', $esercizio->id))
-            ->whereHas('pianoConto')
             ->with(['esercizi' => fn($q) => $q->where('esercizio_id', $esercizio->id)])
             ->get();
 
