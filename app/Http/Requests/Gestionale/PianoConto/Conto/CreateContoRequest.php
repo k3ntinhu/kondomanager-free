@@ -24,19 +24,11 @@ class CreateContoRequest extends FormRequest
         ]);
     }
 
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         $rules = [
@@ -53,7 +45,6 @@ class CreateContoRequest extends FormRequest
             'tipo_spesa'             => ['nullable', 'string', 'in:standard,professionista,lavori,utenza'],
         ];
 
-        // Importo e tabelle obbligatori solo se non è un capitolo
         if (!$this->boolean('isCapitolo')) {
             $rules['importo'] = 'required|string';
             $rules['tabella_millesimale_id'] = 'required|exists:tabelle,id';
@@ -64,7 +55,6 @@ class CreateContoRequest extends FormRequest
             $rules['importo'] = 'nullable|numeric';
         }
 
-        // Parent_id obbligatorio solo se è un sottoconto
         if ($this->boolean('isSottoConto')) {
              $rules['parent_id'] = 'required|exists:conti,id';
         }
@@ -90,7 +80,6 @@ class CreateContoRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            // Verifica che la somma delle percentuali sia 100 se non è un capitolo
             if (!$this->boolean('isCapitolo')) {
                 $somma = $this->percentuale_proprietario + 
                          $this->percentuale_inquilino + 

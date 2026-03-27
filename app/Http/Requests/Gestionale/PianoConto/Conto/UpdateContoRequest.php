@@ -25,19 +25,11 @@ class UpdateContoRequest extends FormRequest
         ]);
     }
 
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         $contoId = optional($this->route('conto'))->id;
@@ -63,7 +55,6 @@ class UpdateContoRequest extends FormRequest
             'percentuale_usufruttuario' => 'nullable|numeric|min:0|max:100',
         ];
 
-        // Importo e tabelle obbligatori solo se non è un capitolo
         if (!$this->boolean('isCapitolo')) {
             $rules['importo'] = 'required|string';
             $rules['tabella_millesimale_id'] = 'required|exists:tabelle,id';
@@ -74,7 +65,6 @@ class UpdateContoRequest extends FormRequest
             $rules['importo'] = 'nullable|numeric';
         }
 
-        // Parent_id obbligatorio solo se è un sottoconto
         if ($this->boolean('isSottoConto')) {
             $rules['parent_id'] = 'required|exists:conti,id';
         }
@@ -101,7 +91,6 @@ class UpdateContoRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            // Verifica che non si stia cercando di rendere un capitolo con sottoconti un conto normale
             $conto = $this->route('conto');
 
             if ($conto && $this->filled('parent_id') && (int) $this->parent_id === (int) $conto->id) {
