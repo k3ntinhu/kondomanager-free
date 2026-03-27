@@ -20,6 +20,7 @@ use App\Models\Gestionale\Conto;
 use App\Models\Gestionale\PianoRate;
 use App\Models\Gestione;
 use App\Models\Saldo;
+use App\Services\Gestionale\BudgetCoverageService;
 use App\Services\Gestionale\SaldoEsercizioService;
 use App\Services\PianoRateCreatorService;
 use App\Services\PianoRateQuoteService;
@@ -293,19 +294,19 @@ class PianoRateController extends Controller
         
         // Calcolo voci di bilancio non coperte da questo (o altri) piani rate attivi
         $orfani = [];
-        if ($pianoRate->gestione && $pianoRate->gestione->pianoConto) {
-            $orfaniRaw = $pianoRate->gestione->pianoConto->conti()
-                ->whereNull('parent_id')
-                ->whereDoesntHave('pianiRate', fn($q) => $q->where('piani_rate.attivo', true))
-                ->whereNotIn('id', $pianoRate->capitoli->pluck('id')->toArray())
-                ->where('importo', '>', 0)
-                ->get();
-            
-            $orfani = $orfaniRaw->map(fn($c) => [
-                'id' => $c->id, 
-                'nome' => $c->nome, 
-                'importo' => $c->importo
-            ])->values()->toArray();
+        if ($pianoRate->gestione) {
+            $coverageService = app(BudgetCoverageService::class);
+            $report = $coverageService->analyze($pianoRate->gestione);
+
+            $orfani = collect($report['items'] ?? [])
+                ->filter(fn ($item) => $item['budget'] > 0 && $item['pianificato'] === 0)
+                ->map(fn ($item) => [
+                    'id' => $item['id'],
+                    'nome' => $item['parent_id'] ? '— '.$item['nome'] : $item['nome'],
+                    'importo' => $item['budget'],
+                ])
+                ->values()
+                ->toArray();
         }
         
         $coperturaData = [
