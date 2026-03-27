@@ -71,7 +71,7 @@ class UpdateContoRequest extends FormRequest
             $rules['percentuale_inquilino'] = 'required|numeric|min:0|max:100';
             $rules['percentuale_usufruttuario'] = 'required|numeric|min:0|max:100';
         } else {
-            $rules['importo'] = 'nullable';
+            $rules['importo'] = 'nullable|numeric';
         }
 
         // Parent_id obbligatorio solo se è un sottoconto
