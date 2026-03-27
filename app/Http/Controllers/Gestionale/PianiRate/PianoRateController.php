@@ -404,12 +404,32 @@ class PianoRateController extends Controller
      */
     public function updateStato(Request $request, Condominio $condominio, Esercizio $esercizio, PianoRate $pianoRate)
     {
-        $validated = $request->validate([ 'approvato' => 'required|boolean' ]);
+        $validated = $request->validate([
+            'approvato'               => 'required|boolean',
+            'data_delibera_assemblea' => 'required_if:approvato,true|nullable|date',
+            'numero_verbale'          => 'nullable|string|max:50',
+            'nota_approvazione'       => 'nullable|string|max:500',
+        ]);
         
         $vecchioStato = $pianoRate->stato;
         $nuovoStato = $validated['approvato'] ? StatoPianoRate::APPROVATO : StatoPianoRate::BOZZA;
-        
-        $pianoRate->update(['stato' => $nuovoStato]);
+
+        $updateData = ['stato' => $nuovoStato];
+        if ($validated['approvato']) {
+            $updateData['data_delibera_assemblea'] = $validated['data_delibera_assemblea'];
+            $updateData['numero_verbale'] = $validated['numero_verbale'] ?? null;
+            $updateData['nota_approvazione'] = $validated['nota_approvazione'] ?? null;
+            $updateData['approvato_da_user_id'] = Auth::id();
+            $updateData['approvato_il'] = now();
+        } else {
+            $updateData['data_delibera_assemblea'] = null;
+            $updateData['numero_verbale'] = null;
+            $updateData['nota_approvazione'] = null;
+            $updateData['approvato_da_user_id'] = null;
+            $updateData['approvato_il'] = null;
+        }
+
+        $pianoRate->update($updateData);
         
         PianoRateStatusUpdated::dispatch(
             $condominio, 
