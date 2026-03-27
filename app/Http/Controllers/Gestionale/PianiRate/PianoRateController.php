@@ -349,10 +349,10 @@ class PianoRateController extends Controller
         $sources = $pianoRate->capitoli->map(function ($conto) {
             $importoReale = $conto->pivot->importo ?? $conto->importo; 
             return [
-                'id' => $conto->id,
-                'nome' => $conto->nome,
-                'importo_residuo' => $importoReale,
-                'formatted_residuo' => number_format($importoReale / 100, 2, ',', '.')
+                'id'                => $conto->id,
+                'nome'              => $conto->nome,
+                'importo_residuo'   => $importoReale,
+                'formatted_residuo' => MoneyHelper::format($importoReale, false),
             ];
         });
 
