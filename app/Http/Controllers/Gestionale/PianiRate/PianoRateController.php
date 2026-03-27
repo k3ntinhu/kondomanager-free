@@ -310,14 +310,18 @@ class PianoRateController extends Controller
         // Calcolo voci di bilancio non coperte da questo (o altri) piani rate attivi
         $orfani = [];
         if ($pianoRate->gestione) {
-            $coverageService = app(BudgetCoverageService::class);
+            // Chiamiamo il service centralizzato di copertura budget
+            $coverageService = app(\App\Services\Gestionale\BudgetCoverageService::class);
             $report = $coverageService->analyze($pianoRate->gestione);
 
             $orfani = collect($report['items'] ?? [])
-                ->filter(fn ($item) => $item['budget'] > 0 && $item['pianificato'] === 0)
-                ->map(fn ($item) => [
+                ->filter(fn($item) =>
+                    $item['budget'] > 0 &&
+                    $item['pianificato'] === 0
+                )
+                ->map(fn($item) => [
                     'id' => $item['id'],
-                    'nome' => $item['parent_id'] ? '— '.$item['nome'] : $item['nome'],
+                    'nome' => $item['parent_id'] ? '— ' . $item['nome'] : $item['nome'],
                     'importo' => $item['budget'],
                 ])
                 ->values()
@@ -368,7 +372,7 @@ class PianoRateController extends Controller
                 'id'                => $conto->id,
                 'nome'              => $conto->nome,
                 'importo_residuo'   => $importoReale,
-                'formatted_residuo' => MoneyHelper::format($importoReale, false),
+                'formatted_residuo' => MoneyHelper::format($importoReale, false)
             ];
         });
 
