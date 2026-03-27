@@ -323,6 +323,26 @@ return [
                 ],
             ],
         ],
+        'show' => [
+            'legal' => [
+                'deliberation_of' => 'Deliberation dated',
+            ],
+            'approval_modal' => [
+                'title' => 'Installment plan approval',
+                'subtitle' => 'Record assembly deliberation details before making the plan executable (Art. 1135 c.c.).',
+                'deliberation_date_label' => 'Assembly deliberation date *',
+                'deliberation_date_help' => 'Date when the assembly approved this installment plan. It will be included in the accounting audit trail.',
+                'minutes_number_label' => 'Minutes number (optional)',
+                'minutes_number_placeholder' => 'Ex. Minutes no. 3/2026',
+                'notes_label' => 'Notes or references (optional)',
+                'notes_placeholder' => 'Ex. Approved with 8 favorable votes out of 10 thousandths present...',
+                'last_deliberation_title' => 'Last recorded deliberation:',
+                'last_deliberation_date' => 'Date:',
+                'last_deliberation_minutes' => 'Minutes:',
+                'saving' => 'Saving...',
+                'confirm' => 'Approve and record',
+            ],
+        ],
         'table' => [
             'name' => 'Name',
             'description' => 'Description',
