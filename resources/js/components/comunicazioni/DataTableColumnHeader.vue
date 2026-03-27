@@ -4,9 +4,9 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ArrowDown, ChevronsUpDown, ArrowUp } from 'lucide-vue-next';
+import { trans } from 'laravel-vue-i18n';
 import type { Column } from '@tanstack/vue-table';
 import type { Comunicazione } from '@/types/comunicazioni';
-import { trans } from 'laravel-vue-i18n';
 
 interface DataTableColumnHeaderProps {
   column: Column<Comunicazione, any> 
