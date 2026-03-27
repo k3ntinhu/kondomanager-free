@@ -241,22 +241,20 @@ class PianoRateController extends Controller
                 $this->pianoRateCreatorService->creaRicorrenza($pianoRate, $validated);
             }
 
-            // Converte importi configurati nei saldi in centesimi prima della Generate Action.
+            // --- INIZIO FIX: Conversione importi saldi_config in centesimi ---
             $saldiConfigCents = $validated['saldi_config'] ?? [];
             foreach ($saldiConfigCents as &$configSaldo) {
-                if (!isset($configSaldo['ripartizioni']) || !is_array($configSaldo['ripartizioni'])) {
-                    continue;
-                }
-
-                foreach ($configSaldo['ripartizioni'] as &$rip) {
-                    if (!array_key_exists('importo', $rip) || $rip['importo'] === '') {
-                        continue;
+                if (isset($configSaldo['ripartizioni']) && is_array($configSaldo['ripartizioni'])) {
+                    foreach ($configSaldo['ripartizioni'] as &$rip) {
+                        if (isset($rip['importo']) && $rip['importo'] !== '') {
+                            // Traduciamo la stringa "1.000,50" nel numero di centesimi 100050
+                            $rip['importo'] = MoneyHelper::toCents($rip['importo']);
+                        }
                     }
-
-                    $rip['importo'] = MoneyHelper::toCents($rip['importo']);
                 }
             }
-            unset($configSaldo, $rip);
+            unset($configSaldo, $rip); // Rompiamo le reference di PHP per sicurezza
+            // --- FINE FIX ---
 
             // 6. Generazione Rate fisiche tramite Action (PRIMA DEL LOCK!)
             $statistiche = [];
@@ -264,7 +262,7 @@ class PianoRateController extends Controller
                 $statistiche = app(GeneratePianoRateAction::class)->execute(
                     $pianoRate, 
                     $applicareSaldi, 
-                    $saldiConfigCents
+                    $saldiConfigCents // Passiamo l'array pulito e convertito in centesimi!
                 );
             }
 
