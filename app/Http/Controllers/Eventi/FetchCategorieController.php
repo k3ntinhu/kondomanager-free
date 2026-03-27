@@ -14,7 +14,10 @@ class FetchCategorieController extends Controller
      */
     public function __invoke(): JsonResponse
     {
-        $categorie = CategoriaEvento::query()->orderBy('name')->get();
+        // Keep localized_name flow via Resource, but limit selected columns.
+        $categorie = CategoriaEvento::select('id', 'name', 'description')
+            ->orderBy('name')
+            ->get();
 
         return response()->json(CategoriaEventoResource::collection($categorie));
     }
