@@ -220,6 +220,7 @@ class ContoController extends Controller
                         ->delete();
                 }
                 // --- FINE FIX ---
+
                 $contoTabellaId = DB::table('conto_tabella_millesimale')
                     ->where('conto_id', $conto->id)
                     ->where('tabella_id', $tabella->id)
@@ -257,6 +258,7 @@ class ContoController extends Controller
                     }
                 }
             }
+
             DB::commit();
             return to_route('admin.gestionale.esercizi.piani-conti.show', [$condominio->id, $esercizio->id, $pianoConto->id])
                 ->with($this->flashSuccess(__('gestionale.success_update_conto')));

@@ -15,7 +15,6 @@ class CreatePianoRateRequest extends FormRequest
     public function rules(): array
     {
         return [
-
             'gestione_id'          => ['required', 'exists:gestioni,id'],
             'nome' => [
                 'required', 
@@ -30,6 +29,7 @@ class CreatePianoRateRequest extends FormRequest
             'numero_rate'          => ['required', 'integer'],
             'giorno_scadenza'      => ['nullable', 'integer'],
             'note'                 => ['nullable', 'string'],
+            
             // Ricorrenza
             'recurrence_enabled'   => ['sometimes', 'boolean'],
             'recurrence_frequency' => ['required_if:recurrence_enabled,1', 'in:WEEKLY,MONTHLY,DAILY,YEARLY'],
@@ -37,22 +37,23 @@ class CreatePianoRateRequest extends FormRequest
             'recurrence_by_day'    => ['nullable', 'array'],
             'recurrence_until'     => ['nullable', 'date'],
             'genera_subito'        => ['sometimes', 'boolean'],
+            
             // Assicurati che siano conti validi
             'capitoli_ids'         => 'nullable|array',
             'capitoli_ids.*'       => 'exists:conti,id', 
-            // NUOVO: Validazione della configurazione dettagliata
+            
+            // Validazione della configurazione dettagliata
             'capitoli_config'      => 'nullable|array',
             'capitoli_config.*.id' => 'required|exists:conti,id',
-            'capitoli_config.*.importo' => 'nullable|string',
+            'capitoli_config.*.importo' => 'nullable|string', 
             'capitoli_config.*.note' => 'nullable|string|max:255',
-            // NUOVO: Configurazione personalizzata dei saldi (Riparto manuale Art. 63)
+            
+            // Configurazione personalizzata dei saldi (Riparto manuale Art. 63)
             'saldi_config'                             => ['nullable', 'array'],
             'saldi_config.*.saldo_id'                  => ['required', 'exists:saldi,id'],
             'saldi_config.*.ripartizioni'              => ['required', 'array'],
             'saldi_config.*.ripartizioni.*.anagrafica_id' => ['required', 'exists:anagrafiche,id'],
             'saldi_config.*.ripartizioni.*.importo'    => ['required', 'string'],
-            
         ];
     }
-
 }
