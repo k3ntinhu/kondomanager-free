@@ -40,8 +40,7 @@ class PianoRateController extends Controller
 
     /**
      * Costruttore del controller.
-     * Inietta i servizi necessari per l'estrazione delle quote, la creazione dei piani 
-     * e la verifica dei saldi pregressi.
+     * Inietta i servizi necessari per l'estrazione delle quote, la creazione dei piani e la verifica dei saldi pregressi.
      *
      * @param PianoRateQuoteService $pianoRateQuoteService
      * @param PianoRateCreatorService $pianoRateCreatorService
@@ -93,8 +92,7 @@ class PianoRateController extends Controller
 
     /**
      * Mostra la pagina di creazione per un nuovo Piano Rate.
-     * Recupera e prepara tutte le dipendenze necessarie (gestioni attive, saldi pregressi vuoti 
-     * e anagrafiche) per alimentare il form frontend.
+     * Recupera e prepara tutte le dipendenze necessarie (gestioni attive, saldi pregressi vuoti e anagrafiche) per alimentare il form frontend.
      *
      * @param Condominio $condominio Il condominio corrente
      * @param Esercizio $esercizio L'esercizio contabile corrente
@@ -672,8 +670,7 @@ class PianoRateController extends Controller
 
     /**
      * Helper di redirezione centralizzato.
-     * Restituisce un feedback all'utente a seconda che il piano rate sia stato
-     * solo creato in bozza o anche popolato fisicamente di rate.
+     * Restituisce un feedback all'utente a seconda che il piano rate sia stato solo creato in bozza o anche popolato fisicamente di rate.
      *
      * @param Condominio $condominio
      * @param Esercizio $esercizio
