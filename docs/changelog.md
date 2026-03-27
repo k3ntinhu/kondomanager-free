@@ -2,6 +2,25 @@
 
 Tutte le modifiche notevoli a questo progetto saranno documentate in questo file.
 
+## [1.9.17] - Legal Guardian & UI Precision
+
+### Conformità Legale (Gate Legale Art. 1135 c.c.)
+* **Workflow di approvazione blindato:** impedita l'esecuzione operativa di un Piano Rate senza delibera formale.
+* **Modale delibera assembleare:** la transizione da "Bozza" ad "Approvato" richiede Data Delibera, Numero Verbale e Note.
+* **Audit trail integrato:** tracciamento automatico di utente approvatore e timestamp (`approvato_da_user_id`, `approvato_il`).
+* **Badge legale visivo:** indicatore semantico nello show del piano rate per evidenziare i dati della delibera.
+* **Ripristino sicuro a Bozza:** ritorno a bozza con pulizia dati di delibera e audit.
+
+### Smart Sync & Backend
+* **Filtro capitoli a zero:** esclusione voci a `0,00` dal calcolo orfani per ridurre falsi positivi.
+* **Query robusta orfani:** uso di `whereNotIn` per selezione coerente dei capitoli non coperti.
+* **Azione contestuale:** percorso operativo distinto tra ricalcolo ordinario e sincronizzazione.
+
+### UX & Stabilità UI
+* **Tooltip context-aware:** messaggi dinamici in base allo stato operativo del piano.
+* **Feedback blocchi dinamico:** spiegazioni puntuali in caso di azioni bloccate (incassi/emissioni).
+* **Correzioni di comportamento UI:** migliorata coerenza visiva dei controlli in fasi di conferma/annullamento.
+
 # [1.9.16] - Accounting Intelligence & Precision (Latest)
 
 ## Potenziamento del Motore Finanziario
