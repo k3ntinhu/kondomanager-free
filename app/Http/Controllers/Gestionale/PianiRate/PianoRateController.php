@@ -297,7 +297,8 @@ class PianoRateController extends Controller
             $orfaniRaw = $pianoRate->gestione->pianoConto->conti()
                 ->whereNull('parent_id')
                 ->whereDoesntHave('pianiRate', fn($q) => $q->where('piani_rate.attivo', true))
-                ->where('id', '!=', $pianoRate->capitoli->pluck('id')->toArray()) 
+                ->whereNotIn('id', $pianoRate->capitoli->pluck('id')->toArray())
+                ->where('importo', '>', 0)
                 ->get();
             
             $orfani = $orfaniRaw->map(fn($c) => [
