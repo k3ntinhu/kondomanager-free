@@ -54,19 +54,18 @@ class CreateContoRequest extends FormRequest
         ];
 
         // Importo e tabelle obbligatori solo se non è un capitolo
-        if (!$this->isCapitolo) {
+        if (!$this->boolean('isCapitolo')) {
             $rules['importo'] = 'required|string';
             $rules['tabella_millesimale_id'] = 'required|exists:tabelle,id';
             $rules['percentuale_proprietario'] = 'required|numeric|min:0|max:100';
             $rules['percentuale_inquilino'] = 'required|numeric|min:0|max:100';
             $rules['percentuale_usufruttuario'] = 'required|numeric|min:0|max:100';
         } else {
-            // Se è un capitolo, accettiamo il numero (0) dal frontend
-            $rules['importo'] = 'nullable|numeric';
+            $rules['importo'] = 'nullable';
         }
 
         // Parent_id obbligatorio solo se è un sottoconto
-        if ($this->isSottoConto) {
+        if ($this->boolean('isSottoConto')) {
              $rules['parent_id'] = 'required|exists:conti,id';
         }
 
@@ -92,7 +91,7 @@ class CreateContoRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             // Verifica che la somma delle percentuali sia 100 se non è un capitolo
-            if (!$this->isCapitolo) {
+            if (!$this->boolean('isCapitolo')) {
                 $somma = $this->percentuale_proprietario + 
                          $this->percentuale_inquilino + 
                          $this->percentuale_usufruttuario;
