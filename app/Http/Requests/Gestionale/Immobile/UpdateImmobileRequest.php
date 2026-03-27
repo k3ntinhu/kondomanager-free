@@ -88,7 +88,7 @@ class UpdateImmobileRequest extends FormRequest
     public function attributes()
     {
         return [
-            'descrizione' => __('gestionale.immobili_form.create.labels.description'),
+            'descrizione' => __('validation.attributes.immobili.descrizione'),
             'tipologia_id'  => __('validation.attributes.immobili.tipologia_id')
         ];
     }
