@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { useForm, Head, router } from '@inertiajs/vue3';
+import { useForm, Head, router, usePage } from '@inertiajs/vue3';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
 import PageHeaderGuide from '@/components/PageHeaderGuide.vue';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,9 @@ import ModalSopravvenienza from '@/components/gestionale/movimenti/fatture/Modal
 import MoneyInput from '@/components/MoneyInput.vue';
 import vSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
+import { enUS, it, pt } from 'date-fns/locale';
 import type { Breadcrumb } from '@/components/PageHeaderGuide.vue';
 import { trans } from 'laravel-vue-i18n';
 
@@ -28,6 +31,24 @@ import { trans } from 'laravel-vue-i18n';
 // ---------------------------------------------------------------------------
 const { euro } = useCurrencyFormatter();
 const { generateRoute } = usePermission();
+const page = usePage<{ locale?: string }>();
+
+const localeCode = computed(() => {
+    const raw = String(page.props.locale ?? 'pt').toLowerCase();
+    return raw.replace('_', '-').split('-')[0];
+});
+
+const defaultVatRate = computed(() => (localeCode.value === 'pt' ? 23 : 22));
+const supplierIbanPlaceholder = computed(() => {
+    if (localeCode.value === 'pt') return 'PT50 0000...';
+    if (localeCode.value === 'en') return 'IBAN...';
+    return 'IT00 0000...';
+});
+const datePickerLocale = computed(() => {
+    if (localeCode.value === 'it') return it;
+    if (localeCode.value === 'en') return enUS;
+    return pt;
+});
 
 const moneyOptions = ref({
     prefix: '€ ',
@@ -150,7 +171,7 @@ const form = useForm({
     
     // NUOVI CAMPI PER FATTURA PREGRESSA
     imponibile_pregresso: 0,
-    aliquota_iva_pregressa: 22,
+    aliquota_iva_pregressa: defaultVatRate.value,
 
     numero_documento:   '',
     data_documento:     new Date().toISOString().substring(0, 10),
@@ -167,7 +188,7 @@ const form = useForm({
     },
     
     stato_approvazione: 'approvata',
-    righe: [{ descrizione: '', conto_id: null as number | null, immobile_id: null as number | null, importo_imponibile: 0, aliquota_iva: 22 }],
+    righe: [{ descrizione: '', conto_id: null as number | null, immobile_id: null as number | null, importo_imponibile: 0, aliquota_iva: defaultVatRate.value }],
     file: null as File | null,
 });
 
@@ -316,10 +337,24 @@ watch(() => form.esercizio_id, (v) => {
     form.gestione_id = props.gestioni.find(g => g.tipo === 'ordinaria')?.id ?? props.gestioni[0].id;
 }, { immediate: true });
 
+watch(localeCode, (newLocale) => {
+    const nextDefaultVat = newLocale === 'pt' ? 23 : 22;
+
+    if (form.aliquota_iva_pregressa === 22 || form.aliquota_iva_pregressa === 23) {
+        form.aliquota_iva_pregressa = nextDefaultVat;
+    }
+
+    form.righe.forEach((riga) => {
+        if ((riga.aliquota_iva === 22 || riga.aliquota_iva === 23) && !riga.importo_imponibile) {
+            riga.aliquota_iva = nextDefaultVat;
+        }
+    });
+});
+
 // ---------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------
-const addRiga    = () => form.righe.push({ descrizione: '', conto_id: null, immobile_id: null, importo_imponibile: 0, aliquota_iva: 22 });
+const addRiga    = () => form.righe.push({ descrizione: '', conto_id: null, immobile_id: null, importo_imponibile: 0, aliquota_iva: defaultVatRate.value });
 const removeRiga = (idx: number) => { if (form.righe.length > 1) form.righe.splice(idx, 1); };
 const showSopravvenienzaModal = ref(false);
 
@@ -517,14 +552,30 @@ const pageGuides = [
                         <div class="grid grid-cols-2 gap-3">
                             <div class="space-y-1.5">
                                 <Label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ trans('gestionale.fatture.create.labels.document_date') }}</Label>
-                                <Input type="date" v-model="form.data_documento" class="h-9 text-sm" />
+                                <VueDatePicker :teleport="true"
+                                    v-model="form.data_documento"
+                                    class="w-full"
+                                    model-type="yyyy-MM-dd"
+                                    format="dd/MM/yyyy"
+                                    :locale="datePickerLocale"
+                                    :enable-time-picker="false"
+                                    auto-apply
+                                    :clear-button-label="localeCode === 'pt' ? 'Limpar' : (localeCode === 'it' ? 'Cancella' : 'Clear')"
+                                    :today-button-label="localeCode === 'pt' ? 'Hoje' : (localeCode === 'it' ? 'Oggi' : 'Today')"
+                                />
                             </div>
                             <div class="space-y-1.5">
                                 <Label class="text-[11px] font-bold uppercase tracking-wider text-primary">{{ trans('gestionale.fatture.create.labels.due_date') }}</Label>
-                                <Input 
-                                    type="date" 
+                                <VueDatePicker :teleport="true"
                                     v-model="form.data_scadenza"
-                                    class="h-9 text-sm border-primary/40 bg-primary/5 text-primary font-bold" 
+                                    class="w-full"
+                                    model-type="yyyy-MM-dd"
+                                    format="dd/MM/yyyy"
+                                    :locale="datePickerLocale"
+                                    :enable-time-picker="false"
+                                    auto-apply
+                                    :clear-button-label="localeCode === 'pt' ? 'Limpar' : (localeCode === 'it' ? 'Cancella' : 'Clear')"
+                                    :today-button-label="localeCode === 'pt' ? 'Hoje' : (localeCode === 'it' ? 'Oggi' : 'Today')"
                                 />
                             </div>
                         </div>
@@ -587,7 +638,7 @@ const pageGuides = [
 
                         <div class="space-y-1.5">
                             <Label class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ trans('gestionale.fatture.create.labels.supplier_iban') }}</Label>
-                            <Input v-model="form.iban_fornitore" class="h-9 text-sm" placeholder="IT00 0000..." />
+                            <Input v-model="form.iban_fornitore" class="h-9 text-sm" :placeholder="supplierIbanPlaceholder" />
                         </div>
 
                         <div class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-50 transition-colors" @click="fileInput?.click()">
