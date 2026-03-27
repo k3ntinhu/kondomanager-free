@@ -5,11 +5,14 @@ namespace App\Models\Gestionale;
 use App\Enums\StatoPianoRate;
 use App\Models\Condominio;
 use App\Models\Gestione;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Database\Factories\Gestionale\PianoRateFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PianoRate extends Model
 {
@@ -29,12 +32,19 @@ class PianoRate extends Model
         'attivo',
         'note',
         'stato',
+        'data_delibera_assemblea',
+        'numero_verbale',
+        'nota_approvazione',
+        'approvato_da_user_id',
+        'approvato_il',
     ];
 
     protected $casts = [
-        'stato'       => StatoPianoRate::class,
-        'data_inizio' => 'date',
-        'attivo'      => 'boolean',
+        'stato'                   => StatoPianoRate::class,
+        'data_inizio'             => 'date',
+        'data_delibera_assemblea' => 'date',
+        'approvato_il'            => 'datetime',
+        'attivo'                  => 'boolean',
     ];
 
     /*
@@ -43,22 +53,22 @@ class PianoRate extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function gestione()
+    public function gestione(): BelongsTo
     {
         return $this->belongsTo(Gestione::class);
     }
 
-    public function condominio()
+    public function condominio(): BelongsTo
     {
         return $this->belongsTo(Condominio::class);
     }
 
-    public function ricorrenza()
+    public function ricorrenza(): HasOne
     {
         return $this->hasOne(RicorrenzaRata::class);
     }
 
-    public function rate()
+    public function rate(): HasMany
     {
         return $this->hasMany(Rata::class);
     }
@@ -82,6 +92,11 @@ class PianoRate extends Model
         return $this->belongsToMany(Conto::class, 'piano_rate_capitoli', 'piano_rate_id', 'conto_id')
                     ->withPivot(['importo', 'note']) // <--- IL FIX FONDAMENTALE
                     ->withTimestamps();
+    }
+
+    public function approvatoDa(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approvato_da_user_id');
     }
 
     /**
