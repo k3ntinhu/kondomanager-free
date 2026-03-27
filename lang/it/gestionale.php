@@ -765,6 +765,7 @@ return [
                         'owner_percent' => 'Proprietario %',
                         'tenant_percent' => 'Inquilino %',
                         'usufruct_percent' => 'Usufruttuario %',
+                        'usufructuary_percent' => 'Usufruttuario %',
                     ],
                     'placeholders' => [
                         'code' => 'A.1',
