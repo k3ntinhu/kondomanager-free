@@ -40,6 +40,7 @@ return [
         'buildings' => 'Condomini',
         'actions'   => 'Azioni',
         'filter'    => 'Filtra per nome...',
+        'no_contacts' => 'Nessun contatto',
     ],
 
     /* ------------------------------------------------------------------

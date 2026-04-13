@@ -38,12 +38,16 @@ class PianoRate extends Model
         'attivo',
         'note',
         'stato',
-        // --- NUOVI CAMPI DELIBERA E AUDIT ---
+        // --- CAMPI DELIBERA E AUDIT ---
         'data_delibera_assemblea',
         'numero_verbale',
         'nota_approvazione',
         'approvato_da_user_id',
         'approvato_il',
+        // --- FEATURE 2: PIANI STRAORDINARI ---
+        'tipo',
+        'tipo_autorizzazione',
+        'motivazione_autorizzazione',
     ];
 
     protected $casts = [
@@ -139,6 +143,24 @@ class PianoRate extends Model
     public function approvatoDa(): BelongsTo
     { 
         return $this->belongsTo(User::class, 'approvato_da_user_id'); 
+    }
+
+    /**
+     * Le fatture collegate a questo piano rate (solo per piani straordinari).
+     */
+    public function fatture(): BelongsToMany
+    {
+        return $this->belongsToMany(FatturaPassiva::class, 'piano_rate_fatture');
+    }
+
+    /**
+     * Le fatture impreviste o ad personam associate a questo piano rate straordinario.
+     */
+    public function fattureStraordinarie(): BelongsToMany
+    {
+        return $this->belongsToMany(FatturaPassiva::class, 'piano_rate_fatture')
+                    ->withPivot('importo_collegato')
+                    ->withTimestamps();
     }
 
     /*

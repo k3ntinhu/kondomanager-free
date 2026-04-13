@@ -13,6 +13,7 @@ use App\Traits\HasCondomini;
 use App\Traits\HasEsercizio;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -28,70 +29,135 @@ class DashboardController extends Controller
             $esercizio->load('gestioni');
             $totPrev = 0; 
             $totPian = 0; 
+            $totVirtualeGlobale = 0;
+            $totBudgetPuro = 0;
             $vociScoperte = [];
 
-            foreach ($esercizio->gestioni as $gestione) {
-                $report = $coverageService->analyze($gestione);
+            // --- 1. Recupero Fatturato Reale dell'esercizio (SOLO SPESE COMUNI) ---
+            $rawFatturato = DB::table('righe_fattura')
+                ->join('fatture_passive', 'righe_fattura.fattura_passiva_id', '=', 'fatture_passive.id')
+                ->where('fatture_passive.esercizio_id', $esercizio->id)
+                ->where('fatture_passive.stato_approvazione', '!=', 'contestata')
+                ->whereNull('righe_fattura.immobile_id') // Esclude le spese ad personam
+                ->select(
+                    'righe_fattura.conto_id', 
+                    DB::raw('SUM(righe_fattura.importo_imponibile + righe_fattura.importo_iva) as totale')
+                )
+                ->groupBy('righe_fattura.conto_id')
+                ->get();
 
-                // Salta la gestione se l'array restituito ha lo status 'empty'
+            $fatturatoMap = [];
+            foreach ($rawFatturato as $row) {
+                $fatturatoMap[(int)$row->conto_id] = (int)$row->totale;
+            }
+
+            // --- NUOVO: Recupero spese ad personam totali ---
+            $addebitiPersonali = (int) DB::table('righe_fattura')
+                ->join('fatture_passive', 'righe_fattura.fattura_passiva_id', '=', 'fatture_passive.id')
+                ->where('fatture_passive.esercizio_id', $esercizio->id)
+                ->where('fatture_passive.stato_approvazione', '!=', 'contestata')
+                ->whereNotNull('righe_fattura.immobile_id') // Solo le spese private
+                ->sum(DB::raw('righe_fattura.importo_imponibile + righe_fattura.importo_iva'));
+
+            // --- 2. Recupero di TUTTE le strategie di sforo (SOLO SPESE COMUNI) ---
+            $fattureSforo = DB::table('righe_fattura')
+                ->join('fatture_passive', 'righe_fattura.fattura_passiva_id', '=', 'fatture_passive.id')
+                ->where('fatture_passive.esercizio_id', $esercizio->id)
+                ->where('fatture_passive.stato_approvazione', 'sforo_motivato')
+                ->whereNull('righe_fattura.immobile_id') // Esclude le spese ad personam
+                ->select(
+                    'righe_fattura.conto_id', 
+                    'fatture_passive.dati_extra', 
+                    'righe_fattura.importo_imponibile', 
+                    'righe_fattura.importo_iva'
+                )
+                ->get();
+
+            $coperturaVirtualeMap = [];
+            $strategieMap = [];
+
+            foreach ($fattureSforo as $row) {
+                $datiExtra = is_string($row->dati_extra) ? json_decode($row->dati_extra, true) : (array) $row->dati_extra;
+                $strat = $datiExtra['override_budget']['strategia_rientro'] ?? 'conguaglio_fine_anno'; 
+                $importoRiga = abs((int)$row->importo_imponibile + (int)$row->importo_iva);
+
+                if (in_array($strat, ['conguaglio_fine_anno', 'fondo_riserva'])) {
+                    $coperturaVirtualeMap[(int)$row->conto_id] = ($coperturaVirtualeMap[(int)$row->conto_id] ?? 0) + $importoRiga;
+                }
+                
+                if (!isset($strategieMap[(int)$row->conto_id]) || $strategieMap[(int)$row->conto_id] !== 'rata_integrativa') {
+                    $strategieMap[(int)$row->conto_id] = $strat;
+                }
+            }
+
+            foreach ($esercizio->gestioni as $gestione) {
+                $report = $coverageService->analyze($gestione, $fatturatoMap, $coperturaVirtualeMap);
+
                 if (($report['status'] ?? '') === 'empty') {
                     continue;
                 }
                 
-                $totPrev += $report['totali']['budget'];
-                $totPian += $report['totali']['pianificato'];
+                $fabbisognoRealeGestione = 0;
+                $budgetPuroGestione = 0;
+                $virtualeGestione = 0; 
 
-                $idsCoinvolti = array_column($report['items'], 'id');
-                
-                // Mappa sicura delle parentela da DB
-                $mappaGenitori = Conto::whereIn('id', $idsCoinvolti)
-                    ->whereNotNull('parent_id')
-                    ->pluck('parent_id', 'id')
-                    ->toArray();
-
-                // 1. RIEMPIMENTO PORTAFOGLI (SURPLUS)
-                $walletPadri = [];
                 foreach ($report['items'] as $item) {
-                    $surplus = $item['pianificato'] - $item['budget'];
-                    if ($surplus > 0) {
-                        $walletPadri[$item['id']] = $surplus;
-                    }
+                    if (!($item['is_leaf'] ?? false)) continue; 
+                    
+                    $budgetTeorico = $item['budget'];
+                    $spesoReale = $fatturatoMap[$item['id']] ?? 0;
+                    
+                    $fabbisognoRealeGestione += max($budgetTeorico, $spesoReale);
+                    $budgetPuroGestione += $budgetTeorico;
+                    $virtualeGestione += $item['copertura_virtuale'] ?? 0;
                 }
 
-                // 2. ANALISI DEFICIT E COPERTURA (PUSH-DOWN)
+                $totPrev += $fabbisognoRealeGestione;
+                $totBudgetPuro += $budgetPuroGestione;
+                $totPian += $report['totali']['pianificato'];
+                $totVirtualeGlobale += $virtualeGestione; 
+
+                // --- 3. Analisi Deficit Pura ---
                 foreach ($report['items'] as $item) {
                     if (!($item['is_leaf'] ?? false)) continue;
 
-                    $deficit = $item['budget'] - $item['pianificato'];
+                    $fabbisognoReale = max($item['budget'], ($fatturatoMap[$item['id']] ?? 0));
+                    $pianificato = (int) ($item['pianificato'] ?? 0);
+                    $deficitRispettoRate = $fabbisognoReale - $pianificato;
                     
-                    if ($deficit > 100) { 
-                        $parentId = $mappaGenitori[$item['id']] ?? null;
-                        
-                        if ($parentId && isset($walletPadri[$parentId]) && $walletPadri[$parentId] > 0) {
-                            $disponibile = $walletPadri[$parentId];
-                            $coperto = min($deficit, $disponibile);
-                            
-                            $deficit -= $coperto;
-                            $walletPadri[$parentId] -= $coperto;
+                    if ($deficitRispettoRate > 100) { 
+
+                        $stratScelta = $strategieMap[$item['id']] ?? null;
+
+                        $tipoStrategia = 'nessuna';
+                        if ($stratScelta === 'rata_integrativa') {
+                            $tipoStrategia = 'rata_integrativa'; 
+                        } elseif ($stratScelta === 'fondo_riserva') {
+                            $tipoStrategia = 'fondo_riserva';    
+                        } elseif ($stratScelta === 'conguaglio_fine_anno') {
+                            $tipoStrategia = 'conguaglio';       
                         }
 
-                        if ($deficit > 100) {
-                            $vociScoperte[] = [
-                                'id'       => $item['id'],
-                                'nome'     => $item['nome'],
-                                'importo'  => $deficit, 
-                                'gestione' => $gestione->nome
-                            ];
-                        }
+                        $vociScoperte[] = [
+                            'id'         => $item['id'],
+                            'nome'       => $item['nome'],
+                            'importo'    => $deficitRispettoRate, 
+                            'gestione'   => $gestione->nome,
+                            'is_sforo'   => isset($fatturatoMap[$item['id']]) && $fatturatoMap[$item['id']] > $item['budget'],
+                            'strategia'  => $tipoStrategia 
+                        ];
+
                     }
                 }
 
-                // --- AGGIUNTA CHIRURGICA: CONTROLLO DISALLINEAMENTO PIANI RATE V1.9 ---
-                // Preleviamo i piani rate caricando anche le rate_quote, così possiamo leggere il JSON
                 $pianiRate = PianoRate::where('gestione_id', $gestione->id)
-                    ->with(['capitoli' => function($q) {
-                        $q->select('conti.id', 'conti.importo');
-                    }, 'rate.rateQuote']) 
+                    ->with([
+                        'capitoli' => function($q) {
+                            $q->select('conti.id', 'conti.importo');
+                        }, 
+                        'fattureStraordinarie', 
+                        'rate.rateQuote'
+                    ]) 
                     ->get();
                 
                 foreach ($pianiRate as $piano) {
@@ -99,14 +165,10 @@ class DashboardController extends Controller
                         $totalePuroGenerato = 0;
                         foreach ($piano->rate as $rata) {
                             foreach ($rata->rateQuote as $quota) {
-                                // FIX: regole_calcolo è già un array grazie al cast nel modello
                                 $regole = $quota->regole_calcolo;
-                                
-                                // V1.9: Estraiamo SOLO la spesa pura
                                 if (is_array($regole) && isset($regole['importi']['quota_pura_gestione'])) {
                                     $totalePuroGenerato += $regole['importi']['quota_pura_gestione'];
                                 } else {
-                                    // Fallback retrocompatibile V1.8
                                     if ($rata->numero_rata !== 0 && $quota->tipo !== 'saldo_iniziale') {
                                         $totalePuroGenerato += $quota->importo;
                                     }
@@ -115,8 +177,14 @@ class DashboardController extends Controller
                         }
 
                         $totaleAtteso = 0;
-                        foreach ($piano->capitoli as $capitolo) {
-                            $totaleAtteso += $capitolo->pivot->importo ?? $capitolo->importo;
+                        if ($piano->tipo === 'straordinario') {
+                            foreach ($piano->fattureStraordinarie as $fattura) {
+                                $totaleAtteso += $fattura->pivot->importo_collegato;
+                            }
+                        } else {
+                            foreach ($piano->capitoli as $capitolo) {
+                                $totaleAtteso += $capitolo->pivot->importo ?? $capitolo->importo;
+                            }
                         }
 
                         if ($totaleAtteso !== $totalePuroGenerato) {
@@ -129,26 +197,29 @@ class DashboardController extends Controller
                         }
                     }
                 }
-                // --- FINE AGGIUNTA CHIRURGICA ---
             }
 
-            $delta = $totPrev - $totPian;
+            $delta = $totPrev - ($totPian + $totVirtualeGlobale);
             $isBilanciato = abs($delta) <= 500; 
 
             $copertura = [
-                'preventivo'     => $totPrev, 
-                'pianificato'    => $totPian, 
-                'delta'          => $delta,
-                'scoperto'       => ($delta > 0 ? $delta : 0),
-                'percentuale'    => $totPrev > 0 ? round(($totPian / $totPrev) * 100) : 0,
-                'is_completo'    => $isBilanciato,
-                'orfani'         => $vociScoperte, 
-                'scoperto_count' => count($vociScoperte)
+                'preventivo'         => $totPrev, 
+                'pianificato'        => $totPian, 
+                'virtuale'           => $totVirtualeGlobale, 
+                'addebiti_personali' => $addebitiPersonali, // <--- AGGIUNTO
+                'uscite_totali'      => $totPrev + $addebitiPersonali, // <--- AGGIUNTO
+                'delta'              => $delta,
+                'scoperto'           => ($delta > 0 ? $delta : 0),
+                'percentuale'        => $totPrev > 0 ? round((($totPian + $totVirtualeGlobale) / $totPrev) * 100, 1) : 0,
+                'is_completo'        => $isBilanciato,
+                'orfani'             => $vociScoperte, 
+                'scoperto_count'     => collect($vociScoperte)
+                    ->whereNotIn('strategia', ['conguaglio', 'fondo_riserva']) 
+                    ->count(),
+                'has_sforo'          => $totPrev > $totBudgetPuro
             ];
         }
 
-        // --- INIZIO AGGIUNTA CHIRURGICA ---
-        // --- NUOVA LOGICA: INBOX OPERATIVA CON INFINITE SCROLL ---
         $inboxTasks = Evento::query()
             ->with(['anagrafiche:id,nome'])
             ->whereJsonContains('meta->requires_action', true)
@@ -157,8 +228,8 @@ class DashboardController extends Controller
                 $query->where('condomini.id', $condominio->id);
             })
             ->orderBy('start_time', 'asc')
-            ->paginate(10) // Paginazione a blocchi di 10
-            ->through(function ($task) { // usiamo through invece di map per mantenere il Paginator
+            ->paginate(10)
+            ->through(function ($task) {
                 $nomeAnagrafica = $task->anagrafiche->first()?->nome;
 
                 if (!$nomeAnagrafica && !empty($task->meta['context']['anagrafica_id'])) {
@@ -179,7 +250,6 @@ class DashboardController extends Controller
                     ],
                 ];
             });
-        // --- FINE AGGIUNTA CHIRURGICA ---
 
         return Inertia::render('gestionale/dashboard/Dashboard', [
             'condominio' => $condominio, 

@@ -7,12 +7,11 @@ use App\Http\Requests\Gestionale\Movimenti\StoreFatturaRequest;
 use App\Http\Resources\Condominio\CondominioResource;
 use App\Models\Condominio;
 use App\Models\Documento;
-use App\Models\Esercizio;
 use App\Models\Fornitore;
 use App\Models\Gestionale\Cassa;
 use App\Models\Gestionale\Conto;
-use App\Models\Gestionale\ContoContabile;
 use App\Models\Gestionale\FatturaPassiva;
+use App\Models\Gestionale\PianoRate;
 use App\Models\Gestionale\ScritturaContabile;
 use App\Models\Immobile;
 use App\Models\Saldo;
@@ -237,22 +236,27 @@ class FatturaPassivaController extends Controller
                 })->values();
         }
 
-        // 3. I Fondi di Riserva disponibili
-        $fondiRiserva = ContoContabile::where('condominio_id', $condominio->id)
-            ->where('ruolo', 'fondo_riserva')
-            ->withSum(['movimenti as totale_dare' => function ($q) {
-                $q->where('tipo_riga', 'dare');
-            }], 'importo')
-            ->withSum(['movimenti as totale_avere' => function ($q) {
-                $q->where('tipo_riga', 'avere');
-            }], 'importo')
+        // 3. I Fondi di Riserva disponibili (Presi dalla tabella CASSE)
+        $fondiRiserva = Cassa::where('condominio_id', $condominio->id)
+            ->where('tipo', 'fondo')
+            ->where('attiva', true)
             ->get()
-            ->map(function($fondo) {
-                $saldo = ($fondo->totale_avere ?? 0) - ($fondo->totale_dare ?? 0);
+            ->map(function($cassa) {
+                // Per ogni fondo, recuperiamo i movimenti DARE/AVERE dal suo conto contabile associato
+                $movimenti = DB::table('righe_scritture')
+                    ->where('conto_contabile_id', $cassa->conto_contabile_id)
+                    ->selectRaw("SUM(CASE WHEN tipo_riga = 'dare' THEN importo ELSE 0 END) as dare")
+                    ->selectRaw("SUM(CASE WHEN tipo_riga = 'avere' THEN importo ELSE 0 END) as avere")
+                    ->first();
+
+                // Calcolo: Saldo Iniziale (della tabella casse) + Entrate - Uscite
+                $saldoIniziale = $cassa->saldo_iniziale ?? 0;
+                $saldoAttuale = $saldoIniziale + ($movimenti->avere ?? 0) - ($movimenti->dare ?? 0);
+
                 return [
-                    'id'            => $fondo->id,
-                    'nome'          => $fondo->nome,
-                    'saldo_attuale' => max(0, $saldo),
+                    'id'            => $cassa->conto_contabile_id, // L'ID del conto serve per la registrazione contabile
+                    'nome'          => $cassa->nome,
+                    'saldo_attuale' => (int) max(0, $saldoAttuale),
                 ];
             });
 
@@ -428,6 +432,38 @@ class FatturaPassivaController extends Controller
      */
     public function destroy(Condominio $condominio, FatturaPassiva $fattura): RedirectResponse
     {
+        // --- INIZIO FIX: BLOCCO INTELLIGENTE PIANO RATE STRAORDINARIO ---
+        $pivotPlan = DB::table('piano_rate_fatture')->where('fattura_passiva_id', $fattura->id)->first();
+        
+        if ($pivotPlan) {
+            $piano = PianoRate::find($pivotPlan->piano_rate_id);
+            
+            if ($piano) {
+                // 1. Blocco Duro: Ci sono già incassi o emissioni contabili fisiche?
+                $hasPagamenti = $piano->rate()->whereHas('rateQuote', fn($q) => $q->where('importo_pagato', '>', 0))->exists();
+                $hasEmissioni = $piano->rate()->whereHas('rateQuote', fn($q) => $q->whereNotNull('scrittura_contabile_id'))->exists();
+
+                if ($hasPagamenti || $hasEmissioni) {
+                    return back()->with($this->flashError(
+                        'Operazione negata: La fattura è in un Piano Straordinario con rate già emesse o incassate. Usa lo Storno.'
+                    ));
+                }
+
+                // 2. Blocco Legale: Il piano è approvato (scudo Art. 1135)?
+                $stato = is_object($piano->stato) ? $piano->stato->value : $piano->stato;
+                if ($stato === 'approvato') {
+                    return back()->with($this->flashError(
+                        'Operazione negata: La fattura è in un Piano Approvato. Riporta il piano in Bozza per poterla eliminare.'
+                    ));
+                }
+
+                // Se arriviamo qui, il piano è in 'bozza' ed è vuoto. 
+                // Possiamo procedere! La 'cascadeOnDelete' della tua migration 
+                // cancellerà in automatico la riga dalla tabella 'piano_rate_fatture' mantenendo pulito il database.
+            }
+        }
+        // --- FINE FIX ---
+
         // 1. IL MURO CONTABILE
         if ($fattura->stato_pagamento !== 'aperta') {
             return back()->with($this->flashError(

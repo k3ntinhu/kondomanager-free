@@ -43,6 +43,7 @@ return [
         'buildings' => 'Buildings',
         'actions'   => 'Actions',
         'filter'    => 'Filter by name...',
+        'no_contacts' => 'No contacts',
     ],
 
     /* ------------------------------------------------------------------

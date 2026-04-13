@@ -8,39 +8,24 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ContoResource extends JsonResource
 {
-    /**
-     * Mappa precalcolata dal BudgetCoverageService.
-     * Popolata dal PianoContiController::show() prima di chiamare la collection.
-     * Formato: [conto_id => importo_pianificato_centesimi]
-     */
     public static array $coverageMap = [];
+    public static array $extraPianiNames = [];
+    public static array $pianiCoinvoltiMap = [];
+    
+    // Nuove mappe aggiunte per il widget
+    public static array $addebitiMap = []; 
+    public static array $strategieSforoMap = []; 
+    public static array $budgetOriginaliMap = []; 
 
     public function toArray(Request $request): array
     {
-        // ---------------------------------------------------------
-        // 1. IMPEGNATO — letto dalla mappa precalcolata dal Service
-        //
-        // Il BudgetCoverageService ha già gestito:
-        //   - Fondi diretti fissi
-        //   - NULL = "A Saldo" (copre l'intero preventivo residuo)
-        //   - Push-down dal padre distribuito equamente tra i figli con deficit
-        //   - Spostamenti in entrata (generano over oltre il preventivo)
-        // ---------------------------------------------------------
         $impegnato = (int) (self::$coverageMap[$this->id] ?? 0);
 
-        // ---------------------------------------------------------
-        // 2. DETTAGLIO VISIVO per la tabella nel pannello dettaglio
-        //
-        // Il Service non produce il formato riga-per-riga atteso dal
-        // frontend, quindi lo costruiamo qui — ma NON ricalcoliamo
-        // l'impegnato totale: usiamo solo quello della mappa.
-        // ---------------------------------------------------------
         $fondiDiretti      = $this->pianiRate()->withPivot(['importo', 'note'])->get();
         $dettaglioPiani    = [];
         $hasCoperturaNULL  = false;
         $totaleNonSpostati = 0;
 
-        // Passo 1: identifica NULL e somma fissi non-spostamento
         foreach ($fondiDiretti as $piano) {
             $nota          = $piano->pivot->note ?? '';
             $isSpostamento = str_contains(strtolower($nota), 'sposta spesa') ||
@@ -53,21 +38,17 @@ class ContoResource extends JsonResource
             }
         }
 
-        // Passo 2: costruisci le righe visive
         foreach ($fondiDiretti as $piano) {
             $nota          = $piano->pivot->note ?? '';
             $isSpostamento = str_contains(strtolower($nota), 'sposta spesa') ||
                              str_contains(strtolower($nota), 'spostamento');
             
-            // Helper per estrarre lo stato in formato stringa (Enum friendly)
             $statoPiano = $piano->stato instanceof \App\Enums\StatoPianoRate 
                 ? $piano->stato->value 
                 : $piano->stato;
 
             if (is_null($piano->pivot->importo)) {
-                // NULL = "A Saldo": mostra quanto copre visivamente
                 $valore = max(0, $this->importo - $totaleNonSpostati);
-
                 if ($valore > 0) {
                     $dettaglioPiani[] = [
                         'piano'      => $piano->nome,
@@ -75,13 +56,12 @@ class ContoResource extends JsonResource
                         'importo'    => $valore,
                         'fonte'      => 'diretta',
                         'is_shifted' => false,
-                        'is_auto'    => true,   // badge "A Saldo"
+                        'is_auto'    => true,
                         'note'       => $nota,
                     ];
                 }
             } else {
                 $valore = (int) $piano->pivot->importo;
-
                 if ($valore > 0) {
                     $dettaglioPiani[] = [
                         'piano'      => $piano->nome,
@@ -96,16 +76,15 @@ class ContoResource extends JsonResource
             }
         }
 
-        // Passo 3: aggiunge riga push-down visiva se necessario
-        // La quota push-down = impegnato (dal Service) - totale righe dirette visive
         $totaleDirettoVisivo  = array_sum(array_column($dettaglioPiani, 'importo'));
-        $quotaIndirettaVisiva = $impegnato - $totaleDirettoVisivo;
+        $quotaIndirettaVisiva = 0;
+        $quotaPushDownTarget  = $impegnato - $totaleDirettoVisivo;
 
-        if (!$hasCoperturaNULL && $quotaIndirettaVisiva > 0 && $this->parent_id && $this->parent) {
+        if (!$hasCoperturaNULL && $quotaPushDownTarget > 0 && $this->parent_id && $this->parent) {
             $fondiPadre = $this->parent->pianiRate()->withPivot('importo')->get();
-
             foreach ($fondiPadre as $pianoPadre) {
                 if (!is_null($pianoPadre->pivot->importo) && (int) $pianoPadre->pivot->importo > 0) {
+                    $quotaIndirettaVisiva = $quotaPushDownTarget;
                     $dettaglioPiani[] = [
                         'piano'      => $pianoPadre->nome,
                         'stato'      => $pianoPadre->stato instanceof \App\Enums\StatoPianoRate ? $pianoPadre->stato->value : $pianoPadre->stato,
@@ -120,9 +99,21 @@ class ContoResource extends JsonResource
             }
         }
 
-        // ---------------------------------------------------------
-        // 3. STATO COPERTURA
-        // ---------------------------------------------------------
+        $mancanteStraordinario = $impegnato - $totaleDirettoVisivo - $quotaIndirettaVisiva;
+        
+        if ($mancanteStraordinario > 0) {
+            $nomeRiga = !empty(self::$extraPianiNames) ? implode(', ', self::$extraPianiNames) : 'Piano rate straordinario';
+            $dettaglioPiani[] = [
+                'piano'      => $nomeRiga, 
+                'stato'      => 'approvato',
+                'importo'    => $mancanteStraordinario,
+                'fonte'      => 'diretta',
+                'is_shifted' => false,
+                'is_auto'    => false,
+                'note'       => 'Copertura generata dal piano rate straordinario.',
+            ];
+        }
+
         $percentualeCopertura = 0;
         $statoCopertura       = 'empty';
 
@@ -141,25 +132,27 @@ class ContoResource extends JsonResource
             }
         }
 
-        // ---------------------------------------------------------
-        // 3.5 STATO HARD LOCK (Lucchetto Infallibile)
-        // ---------------------------------------------------------
         $hasHardLock = $this->pianiRate->contains(function ($piano) {
-            $statoPuro = $piano->stato instanceof \App\Enums\StatoPianoRate 
-                ? $piano->stato->value 
-                : $piano->stato;
+            $statoPuro = $piano->stato instanceof \App\Enums\StatoPianoRate ? $piano->stato->value : $piano->stato;
             return strtolower(trim((string)$statoPuro)) === 'approvato';
         });
 
-        // ---------------------------------------------------------
-        // 4. RETURN
-        // ---------------------------------------------------------
+        $pianiCollegati = $this->pianiRate->pluck('nome')->toArray();
+        if ($mancanteStraordinario > 0) {
+            $pianiCollegati[] = 'Piano Rate Straordinario';
+        }
+
         return [
             'id'                    => $this->id,
             'piano_conto_id'        => $this->piano_conto_id,
             'parent_id'             => $this->parent_id,
             'importo'               => MoneyHelper::format($this->importo),
             'importo_raw'           => $this->importo,
+            // Valori aggiunti per il widget Audit:
+            'budget_originale_raw'  => self::$budgetOriginaliMap[$this->id] ?? $this->importo,
+            'addebiti_personali'    => self::$addebitiMap[$this->id] ?? [],
+            'strategie_sforo'       => self::$strategieSforoMap[$this->id] ?? [],
+            // ------------------------------------
             'nome'                  => $this->nome,
             'descrizione'           => $this->descrizione,
             'tipo'                  => $this->tipo,
@@ -171,7 +164,7 @@ class ContoResource extends JsonResource
             'impegnato'             => $impegnato,
             'percentuale_copertura' => $percentualeCopertura,
             'stato_copertura'       => $statoCopertura,
-            'piani_collegati'       => $this->pianiRate->pluck('nome'),
+            'piani_collegati'       => $pianiCollegati,
             'dettaglio_copertura'   => $dettaglioPiani,
             'has_rate_emesse'       => $hasHardLock,
             'sottoconti' => $this->whenLoaded('sottoconti', function () {
