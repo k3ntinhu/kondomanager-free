@@ -7,6 +7,7 @@ use App\Models\Condominio;
 use App\Models\Evento;      
 use App\Models\Anagrafica;   
 use App\Models\Gestionale\Conto;
+use App\Models\Gestionale\FatturaPassiva;
 use App\Models\Gestionale\PianoRate;
 use App\Services\Gestionale\BudgetCoverageService;
 use App\Traits\HasCondomini;
@@ -24,6 +25,7 @@ class DashboardController extends Controller
         $esercizio = $this->getEsercizioCorrente($condominio);
         $copertura = null;
         $pianiDisallineati = [];
+        $fattureScoperte = [];
 
         if ($esercizio) {
             $esercizio->load('gestioni');
@@ -52,12 +54,122 @@ class DashboardController extends Controller
             }
 
             // --- NUOVO: Recupero spese ad personam totali ---
+            // Nelle righe_fattura il false in MySQL spesso è salvato come 0.
             $addebitiPersonali = (int) DB::table('righe_fattura')
                 ->join('fatture_passive', 'righe_fattura.fattura_passiva_id', '=', 'fatture_passive.id')
                 ->where('fatture_passive.esercizio_id', $esercizio->id)
                 ->where('fatture_passive.stato_approvazione', '!=', 'contestata')
                 ->whereNotNull('righe_fattura.immobile_id') // Solo le spese private
+                ->where(function($q) {
+                    $q->where('righe_fattura.is_rateizzata', false)
+                      ->orWhere('righe_fattura.is_rateizzata', 0)
+                      ->orWhereNull('righe_fattura.is_rateizzata'); 
+                })
                 ->sum(DB::raw('righe_fattura.importo_imponibile + righe_fattura.importo_iva'));
+
+            // --- STEP 7: LISTA FATTURE SCOPERTE (Sopravvenienze + Ad Personam) ---
+            $fattureScoperteRaw = FatturaPassiva::with([
+                    'fornitore', 
+                    'coperture',
+                    'righe' => function ($q) {
+                        $q->with(['immobile', 'conto'])
+                        ->where(function($sq) {
+                            $sq->where('is_rateizzata', false)
+                                ->orWhere('is_rateizzata', 0)
+                                ->orWhereNull('is_rateizzata'); // FIX NULL
+                        })
+                        ->where(function ($inner) {
+                            $inner->where('is_sopravvenienza', true)
+                                    ->orWhereNotNull('immobile_id');
+                        });
+                    }
+                ])
+                ->where('esercizio_id', $esercizio->id)
+                ->where('stato_approvazione', '!=', 'contestata')
+                ->where('stato_pagamento', '!=', 'stornata')
+                ->where(function ($query) {
+                    $query->whereHas('righe', function ($q) {
+                        $q->where(function($sq) {
+                            $sq->where('is_rateizzata', false)
+                                ->orWhere('is_rateizzata', 0)
+                                ->orWhereNull('is_rateizzata'); // FIX NULL
+                        })
+                        ->where(function ($inner) {
+                            $inner->where('is_sopravvenienza', true)
+                                    ->orWhereNotNull('immobile_id');
+                        });
+                    })
+                    ->orWhere(function ($qPregresso) {
+                        $qPregresso->where('is_pregresso', 1)
+                                ->whereHas('coperture', function ($qCop) {
+                                    $qCop->where('tipo_copertura', 'sopravvenienza');
+                                });
+                    });
+                })
+                ->get();
+
+            $gestionePrincipaleId = $esercizio->gestioni->where('attiva', true)->first()?->id;
+
+            foreach ($fattureScoperteRaw as $fattura) {
+                $datiExtra = is_string($fattura->dati_extra) 
+                    ? json_decode($fattura->dati_extra, true) 
+                    : (array) $fattura->dati_extra;
+                
+                $strategia = $datiExtra['override_budget']['strategia_rientro'] ?? 
+                            $datiExtra['log_legale_sopravvenienza']['strategia_rientro'] ?? 
+                            'nessuna';
+
+                $totaleFatturaCents = 0;
+                $righeMappate = [];
+
+                foreach ($fattura->righe as $riga) {
+                    $importoRigaCents = (int) round(($riga->importo_imponibile + $riga->importo_iva));
+                    $totaleFatturaCents += $importoRigaCents;
+
+                    $righeMappate[] = [
+                        'id'          => 'r_' . $riga->id,
+                        'tipo'        => $riga->immobile_id ? 'ad_personam' : 'comune',
+                        'importo'     => $importoRigaCents, 
+                        'descrizione' => $riga->immobile_id 
+                            ? "Addebito personale (Art. 63)" 
+                            : "Parte comune (millesimale)",
+                        'dettaglio'   => $riga->immobile_id
+                            ? "Int. {$riga->immobile->interno}"
+                            : ($riga->conto ? "Voce: {$riga->conto->nome}" : "Imprevisto")
+                    ];
+                }
+
+                // Righe virtuali per sopravvenienze pregresse
+                if ($fattura->is_pregresso && $fattura->coperture->isNotEmpty()) {
+                    foreach ($fattura->coperture as $copertura) {
+                        if ($copertura->tipo_copertura === 'sopravvenienza') {
+                            $importoCopCents = (int) $copertura->importo;
+                            $totaleFatturaCents += $importoCopCents;
+
+                            $righeMappate[] = [
+                                'id'          => 'c_' . $copertura->id,
+                                'tipo'        => 'comune',
+                                'importo'     => $importoCopCents,
+                                'descrizione' => "Integrazione Debito Storico",
+                                'dettaglio'   => "Eccedenza da fattura anno precedente"
+                            ];
+                        }
+                    }
+                }
+
+                if ($totaleFatturaCents > 0) {
+                    $fattureScoperte[] = [
+                        'id'             => $fattura->id,
+                        'numero'         => $fattura->numero_documento,
+                        'fornitore'      => $fattura->fornitore->ragione_sociale ?? 'Sconosciuto',
+                        'totale_scoperto' => $totaleFatturaCents,
+                        'gestione_id'    => $gestionePrincipaleId,
+                        'strategia'      => $strategia,
+                        'righe'          => $righeMappate,
+                    ];
+                }
+            }
+            // ----------------------------------------------------------------------
 
             // --- 2. Recupero di TUTTE le strategie di sforo (SOLO SPESE COMUNI) ---
             $fattureSforo = DB::table('righe_fattura')
@@ -139,12 +251,13 @@ class DashboardController extends Controller
                         }
 
                         $vociScoperte[] = [
-                            'id'         => $item['id'],
-                            'nome'       => $item['nome'],
-                            'importo'    => $deficitRispettoRate, 
-                            'gestione'   => $gestione->nome,
-                            'is_sforo'   => isset($fatturatoMap[$item['id']]) && $fatturatoMap[$item['id']] > $item['budget'],
-                            'strategia'  => $tipoStrategia 
+                            'id'          => $item['id'],
+                            'nome'        => $item['nome'],
+                            'importo'     => $deficitRispettoRate, 
+                            'gestione'    => $gestione->nome,
+                            'gestione_id' => $gestione->id,
+                            'is_sforo'    => isset($fatturatoMap[$item['id']]) && $fatturatoMap[$item['id']] > $item['budget'],
+                            'strategia'   => $tipoStrategia 
                         ];
 
                     }
@@ -199,24 +312,30 @@ class DashboardController extends Controller
                 }
             }
 
-            $delta = $totPrev - ($totPian + $totVirtualeGlobale);
-            $isBilanciato = abs($delta) <= 500; 
+            // 1. Calcolo Fatturato Reale Condiviso
+            $totFatturatoCondiviso = array_sum($fatturatoMap);
+
+            // 2. Il delta è purissimo (Totale Fabbisogno - Rate Pianificate)
+            $deltaReale = $totPrev - ($totPian + $totVirtualeGlobale);
 
             $copertura = [
                 'preventivo'         => $totPrev, 
                 'pianificato'        => $totPian, 
                 'virtuale'           => $totVirtualeGlobale, 
-                'addebiti_personali' => $addebitiPersonali, // <--- AGGIUNTO
-                'uscite_totali'      => $totPrev + $addebitiPersonali, // <--- AGGIUNTO
-                'delta'              => $delta,
-                'scoperto'           => ($delta > 0 ? $delta : 0),
-                'percentuale'        => $totPrev > 0 ? round((($totPian + $totVirtualeGlobale) / $totPrev) * 100, 1) : 0,
-                'is_completo'        => $isBilanciato,
-                'orfani'             => $vociScoperte, 
+                'addebiti_personali' => $addebitiPersonali,
+                // Uscite totali verso i fornitori (vero debito di oggi!)
+                'uscite_totali'      => $totFatturatoCondiviso + $addebitiPersonali, 
+                'delta'              => $deltaReale,
+                'scoperto'           => max(0, $deltaReale),
+                'percentuale'        => $totPrev > 0 
+                                            ? round((($totPian + $totVirtualeGlobale) / $totPrev) * 100, 1) 
+                                            : 0,
+                'is_completo'        => abs($deltaReale) <= 500,
+                'has_sforo'          => $totPrev > $totBudgetPuro,
+                'orfani'             => $vociScoperte,
                 'scoperto_count'     => collect($vociScoperte)
-                    ->whereNotIn('strategia', ['conguaglio', 'fondo_riserva']) 
-                    ->count(),
-                'has_sforo'          => $totPrev > $totBudgetPuro
+                                            ->whereNotIn('strategia', ['conguaglio', 'fondo_riserva'])
+                                            ->count(),
             ];
         }
 
@@ -252,13 +371,14 @@ class DashboardController extends Controller
             });
 
         return Inertia::render('gestionale/dashboard/Dashboard', [
-            'condominio' => $condominio, 
-            'condomini'  => $this->getCondomini(),
-            'esercizio'  => $esercizio, 
-            'esercizi'   => $condominio->esercizi, 
-            'copertura'  => $copertura,
+            'condominio'        => $condominio, 
+            'condomini'         => $this->getCondomini(),
+            'esercizio'         => $esercizio, 
+            'esercizi'          => $condominio->esercizi, 
+            'copertura'         => $copertura,
+            'fattureScoperte'   => $fattureScoperte,
             'pianiDisallineati' => $pianiDisallineati,
-            'inboxTasks' => Inertia::scroll($inboxTasks)
+            'inboxTasks'        => Inertia::scroll($inboxTasks)
         ]);
     }
 }

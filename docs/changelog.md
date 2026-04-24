@@ -2,6 +2,109 @@
 
 Tutte le modifiche notevoli a questo progetto saranno documentate in questo file.
 
+## [1.9.25] - ERP Accounting Engine & Reverse Ledger (Latest)
+
+### Architettura ERP (Il Filtro Invertitore)
+* **Single Source of Truth Contabile:** Rifattorizzato interamente il core del `FatturaPassivaService` per l'emissione delle Note di Credito (Storni). Abbandonata la logica ibrida basata su moltiplicatori matematici e ternari condizionali.
+* **Paradigma "Write-Then-Reverse":** Il motore ora elabora le Note di Credito applicando la *Regola d'Oro* dei gestionali Enterprise. La Partita Doppia viene generata sempre come se fosse una fattura passiva standard (valori assoluti positivi, Costi in DARE, Debiti in AVERE). Solo all'ultimo millisecondo, un "Filtro Invertitore" interviene capovolgendo chirurgicamente i segni (DARE diventa AVERE e viceversa), garantendo un determinismo matematico assoluto e zero edge-case.
+
+### Sicurezza e Integrità (Il Guardiano Contabile)
+* **Double-Entry Validator:** Introdotto un sistema di validazione di quadratura insuperabile. Un istante prima di finalizzare il `DB::transaction`, il sistema calcola la somma esatta al centesimo del DARE e dell'AVERE. Qualsiasi sbilancio blocca fisicamente la transazione (Rollback totale), impedendo il salvataggio di scritture corrotte nel database.
+* **Audit Trail & Graceful Degradation:** In caso di sbilancio bloccato dal Validatore, il sistema scrive un log `CRITICAL` con l'impronta esatta dell'errore (User ID, importi, differenza) a uso dei dev. All'amministratore viene restituito un messaggio UI elegante tramite blocco `try/catch`, evitando crash di sistema (schermate 500).
+
+### Compliance Fiscale e Fondi (Critical Fixes)
+* **Storno Ritenute d'Acconto:** Risolto un bug fiscale critico che escludeva il calcolo della ritenuta d'acconto durante la generazione delle Note di Credito. Ora lo storno inverte correttamente il debito verso l'Erario (DARE), garantendo che la fattura annullata non generi falsi obblighi di versamento F24.
+* **Integrità Reportistica Fondi:** Modificata la registrazione delle coperture (`fattura_coperture`). Le Note di Credito ora registrano l'utilizzo dei Fondi di Riserva o delle Sopravvenienze con segno negativo. Questo garantisce che le query di reportistica sommino correttamente `1000€ (Fattura) + (-1000€) (Storno) = 0€`, mantenendo i saldi dei fondi perfettamente intatti.
+* **Pulizia Conti Fantasma (Garbage Collection):** Il controller di eliminazione fisica delle fatture (`FatturaPassivaController@destroy`) ora intercetta e distrugge automaticamente i "Conti Imprevisto" orfani creati dinamicamente dalle sopravvenienze, mantenendo l'Albero dei Conti pulito da voci inutilizzate.
+
+### Testing & Quality Assurance (Enterprise Grade)
+* **Test Suite Alignment (100% Pass Rate):** Aggiornati i test storici (`DashboardFinancialTest` e `BudgetCoverageServiceTest`) per supportare le nuove logiche strutturali introdotte in v1.9 (distribuzione equa Push-Down del budget e lettura parziali su tabelle Pivot `piano_rate_conto`).
+* **Copertura Edge-Case Totale:** Aggiunti test di quadratura granulari. Coperta la casistica "Spesa Imprevista Pura" verificando la corretta genesi del conto dinamico on-the-fly e la corretta registrazione nel Mastro `sopravvenienze_passive` (Art. 1130-bis).
+* **Agnostic Migrations per DB In-Memory:** Rifattorizzati gli script di migrazione storici (`piani_rate`, `saldi`, `scritture_contabili`). Ora tollerano perfettamente le esecuzioni veloci su SQLite (in RAM) per i test Pest, eseguendo le query raw (`ALTER TABLE ... ENUM`, `information_schema`) esclusivamente in ambiente di produzione MySQL/MariaDB.
+
+Per testare run php artisan test --filter="Scenario|fattura|nota di credito|fondo|mista"
+
+## [1.9.24] - Historical Debt Management & Financial UI
+
+### UI Finanziaria Avanzata (Widget Double Lock)
+* **Triplice Spaccato Finanziario:** Ridisegnato il pannello di controllo per la registrazione delle fatture pregresse. L'interfaccia guida ora l'amministratore attraverso tre "Card" analitiche indipendenti:
+    1.  **Quadratura (Scarto Economico):** Calcola la differenza tra il totale della fattura e il debito storico riconosciuto a bilancio, isolando il valore esatto che richiede una giustificazione (Rata Integrativa, Conguaglio o Fondo).
+    2.  **Liquidità Arretrati (Deficit Finanziario):** Confronta il debito storico con la reale capienza della "Rata 0" incassata dai condòmini. Adotta un colore ambra informativo (non bloccante) per avvisare se i morosi stanno costringendo il condominio ad attingere alla liquidità ordinaria.
+    3.  **Impatto Cassa (Netto Bancario):** Mostra la proiezione esatta del saldo di conto corrente post-operazione.
+* **Risoluzione Conflitto Cognitivo:** Separati visivamente gli allarmi. Lo "Scarto Economico" (che blocca il salvataggio) è ora rosso ed evidenziato, mentre il "Deficit Finanziario" (che è un problema di riscossione, non contabile) è stato declassato ad avviso informativo, riducendo drasticamente il carico cognitivo per l'utente.
+
+### Precisione Operativa & Legale
+* **Calcolo Bonifico Netto (UX):** La card "Impatto Cassa" ora scorpora intelligentemente le Ritenute d'Acconto dal totale del documento. Il sistema mostra all'amministratore l'esatto importo del bonifico netto da disporre in banca, evitando confusione tra il costo a bilancio (lordo) e l'uscita reale di cassa.
+* **Filtro Conti Liquidi:** Il menu a tendina "Conto Addebito" è stato blindato. Ora filtra alla radice il database mostrando esclusivamente i conti liquidi (Banche, Poste, Cassa Contanti), impedendo all'utente di selezionare erroneamente un Fondo Patrimoniale come origine del pagamento materiale.
+* **Data di Origine e Prescrizione:** Aggiunto il campo "Data di origine del debito" per le fatture pregresse. L'interfaccia calcola in tempo reale l'anzianità del debito e, se supera i 5 anni, fa scattare un alert rosso di "Rischio Prescrizione" (Art. 2948 c.c.), tutelando legalmente l'operato dell'amministratore.
+
+## [1.9.23] - Dashboard Intelligence & Clean Ledger (Latest)
+
+### Dashboard & Deficit Operativo (UX Finanziaria)
+* **Disaccoppiamento Delta Globale / Deficit Operativo:** Rivoluzionata la logica del widget di copertura. La barra di avanzamento continua a mostrare la salute globale del bilancio, ma il box di allerta ("Mancano € X") calcola ora lo **Scoperto Operativo Reale**. Il sistema somma al centesimo solo le spese scoperte che richiedono l'emissione di rate, ignorando i fondi avanzati in altri capitoli stagni.
+* **Pulizia Cognitiva:** Rimosso il widget ridondante delle "Fatture in sospeso" dalla vista principale della Dashboard. L'interfaccia torna a essere un macro-indicatore pulito, delegando l'operatività di dettaglio alla modale dedicata.
+
+### Audit Spese Scoperte (Modale "Financial X-Ray")
+* **Separazione Semantica Rigorosa:** La modale di Audit divide ora nettamente le anomalie: da una parte le "Fatture in sospeso" (Imprevisti e Art. 63), dall'altra i normali "Sforamenti Budget Preventivo". Imprevisti e spese ordinarie non vengono più mischiati.
+* **Esploso Fattura (Line-Level Breakdown):** Le fatture miste fuori budget mostrano il dettaglio riga per riga. L'amministratore vede a colpo d'occhio cosa compete al Condominio (Parte comune) e cosa al singolo proprietario (Addebito personale Art. 63, con indicazione dell'unità immobiliare).
+* **Smart Routing (Finanzia Spesa):** Ogni card fattura include un bottone operativo che reindirizza l'utente al wizard del Piano Rate (Straordinario o Integrativo), auto-popolando il "carrello" tramite Deep-Link nell'URL (`?tipo=straordinario&origine=dashboard&gestione_id=...&fatture[]=...`).
+
+### Piano dei Conti (Clean Ledger UI)
+* **Separazione Visiva Albero dei Conti:** Riprogettata l'interfaccia `ContiNew.vue`. Il preventivo ora divide l'albero in due sezioni distinte: "Preventivo deliberato" (modificabile) e "Sopravvenienze e imprevisti" (sola lettura).
+* **Sdoppiamento Totali Intelligente:** Il Controller calcola e separa alla radice il totale del preventivo ordinario da quello degli imprevisti. L'header della pagina mostra due badge distinti (es. *Preventivo: € 5.000* | *Sopravv: € 134*), evitando di gonfiare artificialmente il valore deliberato in assemblea.
+* **Badge Legale Art. 1130-bis c.c.:** Nel dettaglio delle voci tecniche (`DettaglioConto.vue`), compare ora un banner di avviso color ambra. Spiega all'amministratore che la voce è stata generata automaticamente da una fattura imprevista, bloccandone la modifica manuale a tutela della coerenza contabile.
+* **Resource Hardening:** Aggiunto il flag `is_tecnico` direttamente nella `ContoResource` per permettere al frontend di smistare e proteggere le voci di spesa in tempo reale.
+
+### Core Logic & Type Hardening (Bugfixes)
+* **Inertia.js FormData Sanitization:** Risolto un bug critico di perdita dati (es. `immobile_id` che spariva) durante il salvataggio delle fatture passive. Introdotto un `form.transform` che "igienizza" l'array delle righe prima del POST multipart, forzando il casting rigoroso in `Number` o `null`.
+* **TypeScript Hardening:** Risolto conflitto di tipi (`Type 'number' is not assignable to type 'string'`) nell'intercettazione dei Deep-Link URL per la pre-selezione della `gestione_id`.
+* **Prevenzione Falsi Positivi Booleani:** Blindata l'estrazione delle fatture orfane nel Controller. La query SQL ora intercetta correttamente i fallback numerici (`0`) delle colonne booleane (`is_rateizzata`) nativi nei database MySQL/SQLite, garantendo che nessuna spesa venga ignorata dal radar.
+* **Intellisense Fix:** Corretto un falso positivo nel Controller dei Piani Rate (`Undefined method 'rate'`) applicando il Type Hinting rigoroso (`instanceof`) sul modello Eloquent.
+
+### Hardening Legale & Tracciabilità (Backend Core)
+* **Migrazione Unificata:** Nuova migrazione che aggiunge `is_tecnico` su `conti`, 
+  `origine_tipo`/`stato_legale`/`stato_legale_aggiornato_at`/`riga_fattura_id`/`voce_id` 
+  su `rate_quote`, `is_rateizzata` su `righe_fattura`, e `contesto_creazione` su `piani_rate`. 
+  Include data migration retroattiva (D1-D5) per marcare i record esistenti.
+* **Conti Tecnici (Shadow Accounts):** Le sopravvenienze passive generate dal 
+  `FatturaPassivaService` nascono ora con `is_tecnico=true`. Invisibili al wizard 
+  ordinario, escluse dal dropdown capitoli, mostrate solo nel consuntivo (Art. 1130-bis c.c.).
+* **Scope `visibili()` su Model Conto:** Nuovo scope riusabile che filtra `is_tecnico=false`. 
+  Applicato su `FetchCapitoliContiController`, `FetchCapitoliPerGestioneController`, 
+  e `PianoRateController::store()` (emissione globale + sposta spesa).
+* **Euristica `origine_tipo`/`stato_legale` su Rate Quote:** 
+  `GenerateRateQuotesAction` popola automaticamente l'origine della quota 
+  (`condominiale` vs `ad_personam`) e lo stato legale (`certo` vs `contestabile`) 
+  in base al tipo di piano e alla presenza di `immobile_id`.
+* **Semaforo Dashboard (`is_rateizzata`):** Le righe fattura vengono marcate 
+  `is_rateizzata=true` alla creazione del piano straordinario e riaccese a `false` 
+  alla cancellazione, alimentando il widget "Fatture scoperte".
+* **Contesto Creazione Piano Rate:** Nuovo campo enum `contesto_creazione` 
+  (`preventivo_iniziale`/`integrazione_dashboard`/`libero_manuale`) per tracciare 
+  la genesi di ogni piano rate.
+
+### Fix Deep-Link Pre-selezione Fatture
+* **Race Condition Inertia/URL:** Risolto bug critico in `PianiRateNew.vue` dove 
+  Inertia sovrascriveva i parametri URL prima che il componente potesse leggerli. 
+  Gli ID fatture vengono ora salvati in una ref dedicata durante `onMounted`, 
+  sopravvivendo alla riscrittura URL del router.
+* **Compatibilità formato array URL:** Fix parsing parametri `fatture[]` vs 
+  `fatture[0]` (encoding differente tra browser/Inertia).
+
+---
+
+## [1.9.22] - Fund Governance & Audit-Ready Resources (Latest)
+
+### Governance Patrimoniale (Legal Compliance)
+* **Motore a Regole Giuridiche:** Rivoluzionata la gestione dei Fondi di Riserva. Il sistema non salva più semplici "etichette testuali", ma mappa la reale natura giuridica del fondo (`sottotipo_fondo`: Generico, Vincolato per Lavori, Accantonamento TFR, Morosità).
+* **Audit Trail e Sblocco in Deroga:** I fondi vincolati nascono bloccati di default per impedire distrazioni di cassa accidentali. È stato introdotto un interruttore di "Sblocco d'emergenza" (`is_override_assemblea`) che richiede obbligatoriamente l'inserimento degli estremi della delibera o della giustificazione legale, blindando l'operato dell'amministratore in caso di revisione contabile.
+* **Single Source of Truth (Flag Derivati):** Eliminata la persistenza di stati incoerenti nel database. L'attributo `is_utilizzabile_per_imprevisti` è ora calcolato dinamicamente in tempo reale dal Modello Eloquent in base alla natura del fondo e all'eventuale sblocco manuale.
+
+### Enterprise Data Table (Risorse e Fondi)
+* **Allineamento Matematico (Tabular Nums):** Riprogettata la colonna dei saldi. L'utilizzo di font `tabular-nums` e allineamento a destra garantisce un incolonnamento perfetto dei decimali, offrendo una leggibilità pari a quella di un estratto conto bancario.
+* **Semantica degli Stati Avanzata:** La tabella riconosce e traduce visivamente gli stati complessi del database in etichette chiare per il revisore: "Libero" (Verde), "Vincolato" (Rosso) e "Sbloccato in deroga" (Viola), aggregando le logiche di override in un'unica vista immediata.
+* **Smart Truncation & Type Hardening:** Introdotto il troncamento intelligente a 40 caratteri per i testi descrittivi lunghi (evitando la rottura del layout su schermi piccoli). Sostituiti i cast generici (`any`) con interfacce TypeScript rigorose (`TipoCassa`, `SottotipoFondo`) per garantire la validazione a compile-time su tutto il frontend.
+
 ## [1.9.21] - The Financial X-Ray & Single Source of Truth (Latest)
 
 ### Spaccato Finanziario Trasparente (Tenant Wallet UX)

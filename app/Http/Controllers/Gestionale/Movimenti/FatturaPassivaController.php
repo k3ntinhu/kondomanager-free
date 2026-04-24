@@ -242,21 +242,24 @@ class FatturaPassivaController extends Controller
             ->where('attiva', true)
             ->get()
             ->map(function($cassa) {
-                // Per ogni fondo, recuperiamo i movimenti DARE/AVERE dal suo conto contabile associato
                 $movimenti = DB::table('righe_scritture')
                     ->where('conto_contabile_id', $cassa->conto_contabile_id)
                     ->selectRaw("SUM(CASE WHEN tipo_riga = 'dare' THEN importo ELSE 0 END) as dare")
                     ->selectRaw("SUM(CASE WHEN tipo_riga = 'avere' THEN importo ELSE 0 END) as avere")
                     ->first();
 
-                // Calcolo: Saldo Iniziale (della tabella casse) + Entrate - Uscite
                 $saldoIniziale = $cassa->saldo_iniziale ?? 0;
                 $saldoAttuale = $saldoIniziale + ($movimenti->avere ?? 0) - ($movimenti->dare ?? 0);
 
                 return [
-                    'id'            => $cassa->conto_contabile_id, // L'ID del conto serve per la registrazione contabile
+                    'id'            => $cassa->conto_contabile_id, 
                     'nome'          => $cassa->nome,
                     'saldo_attuale' => (int) max(0, $saldoAttuale),
+                    
+                    // --- I DATI DI GOVERNANCE MANCANTI CHE SERVONO A VUE ---
+                    'sottotipo_fondo'                => $cassa->sottotipo_fondo,
+                    'is_override_assemblea'          => (bool) $cassa->is_override_assemblea,
+                    'is_utilizzabile_per_imprevisti' => (bool) $cassa->is_utilizzabile_per_imprevisti,
                 ];
             });
 
@@ -341,6 +344,7 @@ class FatturaPassivaController extends Controller
 
             'banche' => Cassa::where('condominio_id', $condominio->id)
                 ->where('attiva', true)
+                ->where('tipo', '!=', 'fondo')
                 ->withSum(['movimenti as totale_entrate' => function ($q) {
                     $q->where('tipo_riga', 'dare');
                 }], 'importo')
@@ -436,6 +440,7 @@ class FatturaPassivaController extends Controller
         $pivotPlan = DB::table('piano_rate_fatture')->where('fattura_passiva_id', $fattura->id)->first();
         
         if ($pivotPlan) {
+            /** @var \App\Models\Gestionale\PianoRate $piano */
             $piano = PianoRate::find($pivotPlan->piano_rate_id);
             
             if ($piano) {
@@ -445,7 +450,7 @@ class FatturaPassivaController extends Controller
 
                 if ($hasPagamenti || $hasEmissioni) {
                     return back()->with($this->flashError(
-                        'Operazione negata: La fattura è in un Piano Straordinario con rate già emesse o incassate. Usa lo Storno.'
+                        'Operazione negata: La fattura è in un piano straordinario con rate già emesse o incassate. Usa lo storno.'
                     ));
                 }
 
@@ -453,7 +458,7 @@ class FatturaPassivaController extends Controller
                 $stato = is_object($piano->stato) ? $piano->stato->value : $piano->stato;
                 if ($stato === 'approvato') {
                     return back()->with($this->flashError(
-                        'Operazione negata: La fattura è in un Piano Approvato. Riporta il piano in Bozza per poterla eliminare.'
+                        'Operazione negata: La fattura è in un piano approvato. Riporta il piano in bozza per poterla eliminare.'
                     ));
                 }
 
@@ -468,7 +473,13 @@ class FatturaPassivaController extends Controller
         if ($fattura->stato_pagamento !== 'aperta') {
             return back()->with($this->flashError(
                 'Operazione negata: La fattura risulta pagata o parzialmente saldata. ' .
-                'Per mantenere la coerenza del Libro Giornale, devi usare la funzione "Storna".'
+                'Per mantenere la coerenza del libro giornale, devi usare la funzione "Storna".'
+            ));
+        }
+
+        if ($fattura->scritture()->count() > 1) {
+            return back()->with($this->flashError(
+                'Operazione negata: la fattura è collegata a più scritture contabili.'
             ));
         }
 
@@ -491,9 +502,29 @@ class FatturaPassivaController extends Controller
             ->where('dati_extra->stornata_da_id', $fattura->id)
             ->first();
 
+        // --- FIX: RACCOLTA CONTI IMPREVISTI DA ELIMINARE ---
+        $contiImprevistiIds = collect();
+
+        // 1. Conti nati da righe correnti (Sopravvenienze)
+        foreach ($fattura->righe as $riga) {
+            if ($riga->is_sopravvenienza && $riga->conto_id) {
+                $contiImprevistiIds->push($riga->conto_id);
+            }
+        }
+
+        // 2. Conti nati da debiti pregressi frazionati
+        foreach ($fattura->coperture as $copertura) {
+            if ($copertura->tipo_copertura === 'sopravvenienza' && $copertura->conto_id) {
+                $contiImprevistiIds->push($copertura->conto_id);
+            }
+        }
+        
+        $contiImprevistiIds = $contiImprevistiIds->filter()->unique();
+        // ---------------------------------------------------
+
         // 2. ELIMINAZIONE FISICA E PULIZIA
         try {
-            DB::transaction(function () use ($fattura, $fatturaOriginale) {
+            DB::transaction(function () use ($fattura, $fatturaOriginale, $contiImprevistiIds) {
                 
                 // --- LA RESURREZIONE ---
                 if ($fatturaOriginale) {
@@ -509,13 +540,31 @@ class FatturaPassivaController extends Controller
 
                 $fattura->coperture()->delete();
                 $fattura->righe()->delete();
-                
-                foreach ($fattura->scritture as $scrittura) {
-                    $scrittura->righe()->delete();
-                    $scrittura->forceDelete(); 
-                }
+
+                $scritture = $fattura->scritture;
 
                 $fattura->scritture()->detach();
+
+                foreach ($scritture as $scrittura) {
+                    $scrittura->righe()->delete();
+                    $scrittura->forceDelete();
+                }
+
+                // --- FIX: ELIMINAZIONE CONTI FANTASMA ---
+                $contiDaEliminare = Conto::whereIn('id', $contiImprevistiIds)
+                    ->where('is_tecnico', true) // solo conti generati on-the-fly
+                    ->whereNotIn('id', function($q) {
+                        $q->select('conto_id')->from('righe_fattura')->whereNotNull('conto_id');
+                    })
+                    ->whereNotIn('id', function($q) {
+                        $q->select('conto_id')->from('fattura_coperture')->whereNotNull('conto_id');
+                    })
+                    ->pluck('id');
+
+                if ($contiDaEliminare->isNotEmpty()) {
+                    Conto::whereIn('id', $contiDaEliminare)->delete();
+                }
+                // ----------------------------------------
 
                 foreach ($fattura->documenti as $documento) {
                     if (Storage::disk('local')->exists($documento->path)) {
@@ -528,7 +577,7 @@ class FatturaPassivaController extends Controller
             });
 
             $msg = $fatturaOriginale 
-                ? 'Nota di Credito eliminata. La fattura originale è stata ripristinata e risulta di nuovo aperta.' 
+                ? 'Nota di credito eliminata. La fattura originale è stata ripristinata e risulta di nuovo aperta.' 
                 : 'Fattura eliminata fisicamente dal sistema.';
 
             return back()->with($this->flashSuccess($msg));

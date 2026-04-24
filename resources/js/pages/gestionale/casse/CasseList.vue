@@ -1,4 +1,5 @@
 <script setup lang="ts">
+
 import { computed } from "vue";
 import { Head, usePage } from '@inertiajs/vue3';
 import GestionaleLayout from '@/layouts/GestionaleLayout.vue';
@@ -9,10 +10,7 @@ import Alert from "@/components/Alert.vue";
 import { usePermission } from "@/composables/permissions";
 import { trans } from 'laravel-vue-i18n';
 import PageHeaderGuide from '@/components/PageHeaderGuide.vue';
-
-// Icone mirate per la gestione finanziaria e banche
 import { Landmark, Wallet, ShieldCheck } from 'lucide-vue-next';
-
 import type { Flash } from '@/types/flash';
 import type { Cassa } from '@/types/gestionale/casse';
 import type { Building } from '@/types/buildings';

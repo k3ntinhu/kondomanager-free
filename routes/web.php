@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Middleware\CheckExternalCron;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Http\Request; // Assicurati di importare Request
+use Illuminate\Http\Request;
 
 Route::get('/', WelcomeController::class)
     ->name('home');
@@ -174,7 +174,7 @@ Route::get('/system/run-scheduler', function (Request $request) {
     if (!$lock->get()) {
         // Se non riusciamo a prendere il lock, significa che sta già girando.
         return response()->json([
-            'status' => 'skipped',
+            'status'  => 'skipped',
             'message' => 'Scheduler già in esecuzione (Overlap Protection).',
         ], 429);
     }
@@ -184,8 +184,8 @@ Route::get('/system/run-scheduler', function (Request $request) {
         Artisan::call('schedule:run');
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Scheduler eseguito (WEB).',
+            'status'    => 'success',
+            'message'   => 'Scheduler eseguito (WEB).',
             'timestamp' => now()->toDateTimeString(),
         ]);
 

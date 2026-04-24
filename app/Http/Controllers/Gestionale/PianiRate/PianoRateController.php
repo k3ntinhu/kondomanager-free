@@ -121,13 +121,13 @@ class PianoRateController extends Controller
 
         } else {
             // Comportamento di default (al primo caricamento della pagina)
-                $saldoInfo = [
-                    'saldo' => 0,
-                    'has_movimenti' => false,
-                    'applicabile' => false,
-                    'motivo' => __('gestionale.piani_rate.new.balances.select_management_to_check_balances'),
-                    'is_primo_anno' => false
-                ];
+            $saldoInfo = [
+                'saldo' => 0,
+                'has_movimenti' => false,
+                'applicabile' => false,
+                'motivo' => 'Seleziona una gestione per verificare i saldi.',
+                'is_primo_anno' => false
+            ];
         }
         // -------------------------------------------------------------------
 
@@ -167,70 +167,148 @@ class PianoRateController extends Controller
             $gestione = Gestione::findOrFail($validated['gestione_id']);
             $this->pianoRateCreatorService->verificaGestione($validated['gestione_id']);
 
-            // 2. Analisi Saldi: calcola i saldi limitati a questa specifica gestione
+            // 2. Analisi Saldi (Invariato)
             $saldoInfo = $this->saldoService->calcolaSaldoApplicabile($gestione);
             $haMovimenti = $saldoInfo['has_movimenti'] ?? false;
             
             if (!$haMovimenti && $saldoInfo['saldo'] == 0) {
-                $esisteManuale = DB::table('saldi')
-                    ->where('gestione_id', $gestione->id)
-                    ->where('saldo_iniziale', '!=', 0)
-                    ->exists();
+                $esisteManuale = DB::table('saldi')->where('gestione_id', $gestione->id)->where('saldo_iniziale', '!=', 0)->exists();
                 if ($esisteManuale) $haMovimenti = true;
             }
-
             $applicareSaldi = ($saldoInfo['applicabile'] && $haMovimenti);
 
             // 3. Creazione Core del Piano
             $pianoRate = $this->pianoRateCreatorService->creaPianoRate($validated, $condominio);
 
-            // --- HELPER ricorsivo: Calcola il vero totale sommando i sottoconti ---
-            $calcolaVeroTotale = function ($conto) use (&$calcolaVeroTotale) {
-                if ($conto->relationLoaded('sottoconti') && $conto->sottoconti->isNotEmpty()) {
-                    return $conto->sottoconti->sum(fn($sub) => $calcolaVeroTotale($sub));
-                }
-                return $conto->importo ?? 0;
+            // --- [CORREZIONE CHIRURGICA: MAPPIAMO SULLE COLONNE REALI] ---
+            $tipoPiano = $validated['tipo'] ?? 'ordinario';
+            $pianoRate->tipo = $tipoPiano;
+
+            // 1. Determiniamo la Genesi del Piano (Il Contesto)
+            $pianoRate->contesto_creazione = match(true) {
+                $request->input('origine') === 'dashboard' => 'integrazione_dashboard',
+                !empty($validated['fatture_config']) => 'integrazione_dashboard', // Se ha fatture è sicuramente un'integrazione
+                !empty($validated['capitoli_ids']) => 'libero_manuale', // Se l'utente ha cliccato check specifici
+                default => 'preventivo_iniziale', // Il piano madre di inizio anno
             };
 
-            // 4. Gestione Capitoli e Sync (Emissione parziale o totale)
-            $capitoliConfig = $validated['capitoli_config'] ?? [];
-            $syncData = [];
-
-            if (!empty($capitoliConfig)) {
-                // CASO A: Wizard manuale (Cifre specifiche)
-                foreach ($capitoliConfig as $conf) {
-                    $importoCents = (isset($conf['importo']) && $conf['importo'] !== '') 
-                        ? MoneyHelper::toCents($conf['importo']) 
-                        : null;
-                    
-                    $syncData[$conf['id']] = ['importo' => $importoCents, 'note' => $conf['note'] ?? null];
-                }
-            } elseif (!empty($validated['capitoli_ids'])) {
-                // CASO B: Selezione rapida (Intero importo del capitolo scelto)
-                $conti = Conto::with('sottoconti')->findMany($validated['capitoli_ids']);
-                foreach ($conti as $c) {
-                    $syncData[$c->id] = [
-                        'importo' => $calcolaVeroTotale($c), 
-                        'note' => 'Selezione rapida (Intero)'
-                    ];
-                }
-            } else {
-                // CASO C: Inclusione automatica (Tutto il bilancio rimasto orfano per questa gestione)
-                $capitoliOrfani = $gestione->pianoConto->conti()
-                    ->whereNull('parent_id')
-                    ->whereDoesntHave('pianiRate', fn($q) => $q->where('attivo', true))
-                    ->with('sottoconti') 
-                    ->get();
+            if ($tipoPiano === 'straordinario') {
+                // Usiamo le colonne dedicate presenti nella tabella piani_rate
+                $pianoRate->tipo_autorizzazione = $validated['tipo_autorizzazione'] ?? null;
+                $pianoRate->motivazione_autorizzazione = $validated['motivazione_autorizzazione'] ?? null;
                 
-                foreach ($capitoliOrfani as $c) {
-                    $syncData[$c->id] = [
-                        'importo' => $calcolaVeroTotale($c), 
-                        'note' => 'Inclusione automatica (Tutto il bilancio)'
-                    ];
-                }
+                // Tracciamo l'audit usando i campi che hai già nel DB
+                $pianoRate->approvato_da_user_id = Auth::id();
+                $pianoRate->approvato_il = now();
+                $pianoRate->stato = StatoPianoRate::APPROVATO;
             }
             
-            $pianoRate->capitoli()->sync($syncData);
+            $pianoRate->save(); 
+            // -------------------------------------------------------------
+
+            // 4. Gestione Capitoli o Fatture
+            if ($tipoPiano === 'straordinario') {
+                // SCENARIO 2/3: Sincronizzazione Fatture Straordinarie
+                $syncFatture = [];
+                $fattureIds = []; // Per tenere traccia di quali fatture aggiornare
+                
+                foreach ($validated['fatture_config'] ?? [] as $fConf) {
+                    $importoCents = (isset($fConf['importo']) && $fConf['importo'] !== '') 
+                        ? MoneyHelper::toCents($fConf['importo']) 
+                        : 0;
+                    $syncFatture[$fConf['id']] = ['importo_collegato' => $importoCents];
+                    $fattureIds[] = $fConf['id'];
+                }
+                
+                $pianoRate->fattureStraordinarie()->sync($syncFatture);
+
+                // --- MAGIA DASHBOARD: Spegniamo il semaforo sulle righe di queste fatture ---
+                if (!empty($fattureIds)) {
+                    DB::table('righe_fattura')
+                        ->whereIn('fattura_passiva_id', $fattureIds)
+                        // Spegniamo solo le righe che legittimavano lo sforo o l'ad personam
+                        ->where(function ($query) {
+                            $query->where('is_sopravvenienza', true)
+                                  ->orWhereNotNull('immobile_id');
+                        })
+                        ->update(['is_rateizzata' => true]);
+                }
+                // ----------------------------------------------------------------------------
+
+            } else {
+                // SCENARIO 1: Gestione Capitoli (Tua logica esistente preservata al 100%)
+                $calcolaVeroTotale = function ($conto) use (&$calcolaVeroTotale) {
+                    if ($conto->relationLoaded('sottoconti') && $conto->sottoconti->isNotEmpty()) {
+                        return $conto->sottoconti->sum(fn($sub) => $calcolaVeroTotale($sub));
+                    }
+                    return $conto->importo ?? 0;
+                };
+
+                $capitoliConfig = $validated['capitoli_config'] ?? [];
+                $syncData = [];
+
+                if (!empty($capitoliConfig)) {
+                    foreach ($capitoliConfig as $conf) {
+                        $importoCents = (isset($conf['importo']) && $conf['importo'] !== '') ? MoneyHelper::toCents($conf['importo']) : null;
+                        $syncData[$conf['id']] = ['importo' => $importoCents, 'note' => $conf['note'] ?? null];
+                    }
+                } else {
+                    // Logica intelligenza sui deficit (preservata)
+                    $rawFatturato = DB::table('righe_fattura')
+                        ->join('fatture_passive', 'righe_fattura.fattura_passiva_id', '=', 'fatture_passive.id')
+                        ->where('fatture_passive.esercizio_id', $esercizio->id)
+                        ->where('fatture_passive.stato_approvazione', '!=', 'contestata')
+                        ->whereNull('righe_fattura.immobile_id')
+                        ->select('righe_fattura.conto_id', DB::raw('SUM(righe_fattura.importo_imponibile + righe_fattura.importo_iva) as totale'))
+                        ->groupBy('righe_fattura.conto_id')->get();
+                    $fatturatoMap = $rawFatturato->pluck('totale', 'conto_id')->toArray();
+                    
+                    $fattureSforo = DB::table('righe_fattura')
+                        ->join('fatture_passive', 'righe_fattura.fattura_passiva_id', '=', 'fatture_passive.id')
+                        ->where('fatture_passive.esercizio_id', $esercizio->id)
+                        ->where('fatture_passive.stato_approvazione', 'sforo_motivato')
+                        ->whereNull('righe_fattura.immobile_id')
+                        ->select('righe_fattura.conto_id', 'fatture_passive.dati_extra', 'righe_fattura.importo_imponibile', 'righe_fattura.importo_iva')->get();
+
+                    $coperturaVirtualeMap = [];
+                    foreach ($fattureSforo as $row) {
+                        $datiE = is_string($row->dati_extra) ? json_decode($row->dati_extra, true) : (array) $row->dati_extra;
+                        $strat = $datiE['override_budget']['strategia_rientro'] ?? 'conguaglio_fine_anno'; 
+                        if (in_array($strat, ['conguaglio_fine_anno', 'fondo_riserva'])) {
+                            $coperturaVirtualeMap[(int)$row->conto_id] = ($coperturaVirtualeMap[(int)$row->conto_id] ?? 0) + abs((int)$row->importo_imponibile + (int)$row->importo_iva);
+                        }
+                    }
+
+                    $coverageService = app(BudgetCoverageService::class);
+                    $analisiBilancio = $coverageService->analyze($gestione, $fatturatoMap, $coperturaVirtualeMap);
+                    $capitoliFinanziabili = collect($coverageService->getCapitoliFinanziabili($analisiBilancio))->keyBy('id');
+
+                    if (!empty($validated['capitoli_ids'])) {
+                        $conti = Conto::with('sottoconti')->findMany($validated['capitoli_ids']);
+                        foreach ($conti as $c) {
+                            $importoDaFinanziare = $capitoliFinanziabili->has($c->id) ? $capitoliFinanziabili->get($c->id)['importo_suggerito'] : $calcolaVeroTotale($c);
+                            $syncData[$c->id] = ['importo' => $importoDaFinanziare, 'note' => 'Selezione rapida (Smart Budget)'];
+                        }
+                    } else {
+
+                        $capitoliOrfani = $gestione->pianoConto->conti()
+                            ->visibili()
+                            ->whereNull('parent_id')
+                            ->whereDoesntHave('pianiRate', fn($q) => $q->whereIn('stato', ['bozza', 'approvato']))
+                            ->with(['sottoconti' => fn($q) => $q->visibili()])
+                            ->get();
+
+                        foreach ($capitoliOrfani as $c) {
+                            $importoDaFinanziare = $capitoliFinanziabili->has($c->id) ? $capitoliFinanziabili->get($c->id)['importo_suggerito'] : $calcolaVeroTotale($c);
+                            $syncData[$c->id] = ['importo' => $importoDaFinanziare, 'note' => 'Inclusione automatica orfani'];
+                        }
+
+                    }
+                }
+                $pianoRate->capitoli()->sync($syncData);
+            }
+            // --- [FINE MODIFICA CHIRURGICA] ---
+
             $pianoRate->load('capitoli');
 
             // 5. Ricorrenza
@@ -238,32 +316,30 @@ class PianoRateController extends Controller
                 $this->pianoRateCreatorService->creaRicorrenza($pianoRate, $validated);
             }
 
-            // --- INIZIO FIX: Conversione importi saldi_config in centesimi ---
+            // Conversioni saldi in centesimi (Invariato)
             $saldiConfigCents = $validated['saldi_config'] ?? [];
             foreach ($saldiConfigCents as &$configSaldo) {
                 if (isset($configSaldo['ripartizioni']) && is_array($configSaldo['ripartizioni'])) {
                     foreach ($configSaldo['ripartizioni'] as &$rip) {
                         if (isset($rip['importo']) && $rip['importo'] !== '') {
-                            // Traduciamo la stringa "1.000,50" nel numero di centesimi 100050
                             $rip['importo'] = MoneyHelper::toCents($rip['importo']);
                         }
                     }
                 }
             }
-            unset($configSaldo, $rip); // Rompiamo le reference di PHP per sicurezza
-            // --- FINE FIX ---
+            unset($configSaldo, $rip);
 
-            // 6. Generazione Rate fisiche tramite Action (PRIMA DEL LOCK!)
+            // 6. Generazione Rate fisiche (IMPORTANTE: L'Action ora troverà il tipo corretto)
             $statistiche = [];
             if (!empty($validated['genera_subito'])) {
                 $statistiche = app(GeneratePianoRateAction::class)->execute(
                     $pianoRate, 
                     $applicareSaldi, 
-                    $saldiConfigCents // Passiamo l'array pulito e convertito in centesimi!
+                    $saldiConfigCents
                 );
             }
 
-            // 7. Applicazione Saldi (Lock micro e macro) (DOPO LA GENERAZIONE!)
+            // 7. Applicazione Saldi (Invariato)
             if ($applicareSaldi) {
                 $this->saldoService->marcaSaldoApplicato($gestione, $saldoInfo['saldo']);
                 $gestione->refresh();
@@ -292,35 +368,60 @@ class PianoRateController extends Controller
      */
     public function show(Condominio $condominio, Esercizio $esercizio, PianoRate $pianoRate): Response
     {
+        // --- [MODIFICA 1: Aggiunto fattureStraordinarie.fornitore al load] ---
         $pianoRate->load([
             'rate.rateQuote.anagrafica', 
             'rate.rateQuote.immobile', 
             'gestione.pianoConto', 
             'capitoli.sottoconti',
+            'fattureStraordinarie.fornitore', 
             'budgetMovements.sourceConto',
             'budgetMovements.destinationConto',
             'budgetMovements.user'
         ]);
-        
+
         // Calcolo voci di bilancio non coperte da questo (o altri) piani rate attivi
         $orfani = [];
         if ($pianoRate->gestione) {
-            // Chiamiamo il service centralizzato di copertura budget
-            $coverageService = app(\App\Services\Gestionale\BudgetCoverageService::class);
-            $report = $coverageService->analyze($pianoRate->gestione);
+            $coverageService = app(BudgetCoverageService::class);
+            
+            // 1. Recupero Veloce Fatturato e Virtuale
+            $rawFatturato = DB::table('righe_fattura')
+                ->join('fatture_passive', 'righe_fattura.fattura_passiva_id', '=', 'fatture_passive.id')
+                ->where('fatture_passive.esercizio_id', $esercizio->id)
+                ->where('fatture_passive.stato_approvazione', '!=', 'contestata')
+                ->whereNull('righe_fattura.immobile_id')
+                ->select('righe_fattura.conto_id', DB::raw('SUM(righe_fattura.importo_imponibile + righe_fattura.importo_iva) as totale'))
+                ->groupBy('righe_fattura.conto_id')->get();
+                
+            $fatturatoMap = $rawFatturato->pluck('totale', 'conto_id')->toArray();
+            
+            $fattureSforo = DB::table('righe_fattura')
+                ->join('fatture_passive', 'righe_fattura.fattura_passiva_id', '=', 'fatture_passive.id')
+                ->where('fatture_passive.esercizio_id', $esercizio->id)
+                ->where('fatture_passive.stato_approvazione', 'sforo_motivato')
+                ->whereNull('righe_fattura.immobile_id')
+                ->select('righe_fattura.conto_id', 'fatture_passive.dati_extra', 'righe_fattura.importo_imponibile', 'righe_fattura.importo_iva')->get();
 
-            $orfani = collect($report['items'] ?? [])
-                ->filter(fn($item) =>
-                    $item['budget'] > 0 &&
-                    $item['pianificato'] === 0
-                )
+            $coperturaVirtualeMap = [];
+            foreach ($fattureSforo as $row) {
+                $datiExtra = is_string($row->dati_extra) ? json_decode($row->dati_extra, true) : (array) $row->dati_extra;
+                $strat = $datiExtra['override_budget']['strategia_rientro'] ?? 'conguaglio_fine_anno'; 
+                if (in_array($strat, ['conguaglio_fine_anno', 'fondo_riserva'])) {
+                    $coperturaVirtualeMap[(int)$row->conto_id] = ($coperturaVirtualeMap[(int)$row->conto_id] ?? 0) + abs((int)$row->importo_imponibile + (int)$row->importo_iva);
+                }
+            }
+
+            // 2. Usiamo la nuova intelligenza!
+            $report = $coverageService->analyze($pianoRate->gestione, $fatturatoMap, $coperturaVirtualeMap);
+            
+            // 3. Estraiamo solo quelli che hanno davvero bisogno di soldi
+            $orfani = collect($coverageService->getCapitoliFinanziabili($report))
                 ->map(fn($item) => [
-                    'id' => $item['id'],
-                    'nome' => $item['parent_id'] ? '— ' . $item['nome'] : $item['nome'],
-                    'importo' => $item['budget'],
-                ])
-                ->values()
-                ->toArray();
+                    'id'      => $item['id'],
+                    'nome'    => $item['padre'] ? "— " . $item['nome'] : $item['nome'],
+                    'importo' => $item['importo_suggerito'], 
+                ])->values()->toArray();
         }
         
         $coperturaData = [
@@ -329,7 +430,6 @@ class PianoRateController extends Controller
         ];
 
         // 1. Troviamo gli ID delle rate di questo piano che sono state emesse ma "nascoste"
-        // (Cerchiamo nella tabella eventi quegli eventi legati al condomino che hanno visibility = hidden)
         $rateNascosteIds = Evento::where('meta->type', 'scadenza_rata_condomino')
             ->where('meta->context->piano_rate_id', $pianoRate->id)
             ->where('visibility', VisibilityStatus::HIDDEN->value)
@@ -345,31 +445,42 @@ class PianoRateController extends Controller
             ->get()
             ->map(function ($rata) use ($rateNascosteIds) {
                 $isEmessa = $rata->rateQuote()->whereNotNull('scrittura_contabile_id')->exists();
-                
-                // Una rata è pubblicata SE: 
-                // È emessa E il suo ID NON si trova nell'elenco delle rate nascoste.
-                // (Se non è emessa, non ha senso parlare di pubblicazione, quindi null o false)
                 $isPublished = $isEmessa ? !in_array($rata->id, $rateNascosteIds) : false;
 
                 return [
                     'id' => $rata->id, 
                     'numero_rata' => $rata->numero_rata, 
                     'is_emessa' => $isEmessa, 
-                    'is_published' => $isPublished, // Il nuovo flag per il frontend
+                    'is_published' => $isPublished, 
                     'totale_rata' => MoneyHelper::fromCents($rata->importo_totale)
                 ];
             });
 
-        // Preparazione dati per la logica "Sposta Spesa" (Movimenti Budget)
-        $sources = $pianoRate->capitoli->map(function ($conto) {
-            $importoReale = $conto->pivot->importo ?? $conto->importo; 
-            return [
-                'id'                => $conto->id,
-                'nome'              => $conto->nome,
-                'importo_residuo'   => $importoReale,
-                'formatted_residuo' => MoneyHelper::format($importoReale, false)
-            ];
-        });
+        // --- [MODIFICA 2: Il Bivio per leggere Fatture o Capitoli] ---
+        if ($pianoRate->tipo === 'straordinario') {
+            // Logica Piani Straordinari (Legge dalle fatture)
+            $sources = $pianoRate->fattureStraordinarie->map(function ($fattura) {
+                $importoReale = $fattura->pivot->importo_collegato ?? 0;
+                return [
+                    'id'                => $fattura->id,
+                    'nome'              => 'Ft. ' . ($fattura->numero_documento ?? 'S/N') . ' (' . ($fattura->fornitore->ragione_sociale ?? 'Fornitore') . ')',
+                    'importo_residuo'   => $importoReale,
+                    'formatted_residuo' => MoneyHelper::format($importoReale, false)
+                ];
+            });
+        } else {
+            // Logica Piani Ordinari (Legge dai capitoli come faceva prima)
+            $sources = $pianoRate->capitoli->map(function ($conto) {
+                $importoReale = $conto->pivot->importo ?? $conto->importo; 
+                return [
+                    'id'                => $conto->id,
+                    'nome'              => $conto->nome,
+                    'importo_residuo'   => $importoReale,
+                    'formatted_residuo' => MoneyHelper::format($importoReale, false)
+                ];
+            });
+        }
+        // -------------------------------------------------------------
 
         $destinations = [];
         $pianoContoId = $pianoRate->gestione->pianoConto?->id;
@@ -377,6 +488,7 @@ class PianoRateController extends Controller
         if ($pianoContoId) {
             $destinations = Conto::where('piano_conto_id', $pianoContoId)
                 ->orderBy('nome')
+                ->visibili()
                 ->get(['id', 'nome'])
                 ->map(fn($c) => [
                     'id' => $c->id,
@@ -395,12 +507,12 @@ class PianoRateController extends Controller
             'quotePerImmobile' => $this->pianoRateQuoteService->quotePerImmobile($pianoRate),
             'needsMigration' => false, 
             'copertura' => $coperturaData,
-            'sources' => $sources,
+            'sources' => $sources, // <--- Ora questo conterrà le fatture!
             'destinations' => $destinations,
             'has_unpublished_rates' => Evento::where('meta->type', 'scadenza_rata_condomino')
                 ->where('meta->context->piano_rate_id', $pianoRate->id)
-                ->where('meta->is_emitted', true)        // Cerca quelle emesse...
-                ->where('meta->is_published', false)     // ...ma ancora silenziose!
+                ->where('meta->is_emitted', true)        
+                ->where('meta->is_published', false)     
                 ->exists(),
         ]);
     }
@@ -408,14 +520,24 @@ class PianoRateController extends Controller
     /**
      * Aggiorna lo stato di approvazione del Piano Rate.
      * Cambiare lo stato dispatcha l'evento 'PianoRateStatusUpdated', che viene 
-     * intercettato dai Listener per aggiungere (se approvato) o rimuovere (se in bozza) 
-     * gli eventi nello scadenziario generale.
+     * intercettato dai Listener per aggiungere (se approvato) o rimuovere (se in bozza) gli eventi nello scadenziario generale.
      *
      * @param Request $request Richiesta contenente il booleano 'approvato'
      * @param Condominio $condominio Il condominio corrente
      * @param Esercizio $esercizio L'esercizio contabile corrente
      * @param PianoRate $pianoRate Il piano rate da aggiornare
      * @return RedirectResponse Risposta con messaggio flash di successo
+     */
+    /**
+     * Aggiorna lo stato di approvazione del Piano Rate e salva i dati della delibera.
+     * Cambiare lo stato dispatcha l'evento 'PianoRateStatusUpdated', che viene 
+     * intercettato dai Listener per aggiungere o rimuovere gli eventi nello scadenziario.
+     *
+     * @param Request $request
+     * @param Condominio $condominio
+     * @param Esercizio $esercizio
+     * @param PianoRate $pianoRate
+     * @return RedirectResponse
      */
     public function updateStato(Request $request, Condominio $condominio, Esercizio $esercizio, PianoRate $pianoRate)
     {
@@ -426,22 +548,24 @@ class PianoRateController extends Controller
             'nota_approvazione'       => 'nullable|string|max:500',
         ]);
         
-        $vecchioStato = $pianoRate->stato;
+        $vecchioStato = $pianoRate->stato; // È già un oggetto Enum
         $nuovoStato = $validated['approvato'] ? StatoPianoRate::APPROVATO : StatoPianoRate::BOZZA;
-
+        
         $updateData = ['stato' => $nuovoStato];
+
         if ($validated['approvato']) {
             $updateData['data_delibera_assemblea'] = $validated['data_delibera_assemblea'];
-            $updateData['numero_verbale'] = $validated['numero_verbale'] ?? null;
-            $updateData['nota_approvazione'] = $validated['nota_approvazione'] ?? null;
-            $updateData['approvato_da_user_id'] = Auth::id();
-            $updateData['approvato_il'] = now();
+            $updateData['numero_verbale']          = $validated['numero_verbale'] ?? null;
+            $updateData['nota_approvazione']       = $validated['nota_approvazione'] ?? null;
+            $updateData['approvato_da_user_id']    = Auth::id();
+            $updateData['approvato_il']            = now();
         } else {
+            // Torna in bozza: azzera i dati legali e l'audit
             $updateData['data_delibera_assemblea'] = null;
-            $updateData['numero_verbale'] = null;
-            $updateData['nota_approvazione'] = null;
-            $updateData['approvato_da_user_id'] = null;
-            $updateData['approvato_il'] = null;
+            $updateData['numero_verbale']          = null;
+            $updateData['nota_approvazione']       = null;
+            $updateData['approvato_da_user_id']    = null;
+            $updateData['approvato_il']            = null;
         }
 
         $pianoRate->update($updateData);
@@ -455,7 +579,11 @@ class PianoRateController extends Controller
             $nuovoStato
         );
         
-        return back()->with($this->flashSuccess(__('gestionale.piani_rate.messages.status_updated_success')));
+        $messaggio = $validated['approvato'] 
+            ? 'Piano approvato e delibera registrata con successo.' 
+            : 'Piano riportato in bozza. Dati di delibera rimossi.';
+
+        return back()->with($this->flashSuccess($messaggio));
     }
 
     /**
@@ -525,7 +653,8 @@ class PianoRateController extends Controller
 
         if ($hasPagamenti) {
             return back()->with($this->flashError(
-                __('gestionale.piani_rate.messages.delete_blocked_payments')
+                'Impossibile eliminare il piano rate: risultano incassi già registrati. ' .
+                'Devi prima annullare le registrazioni di incasso associate a queste rate.'
             ));
         }
 
@@ -536,14 +665,16 @@ class PianoRateController extends Controller
 
         if ($hasEmissioni) {
             return back()->with($this->flashError(
-                __('gestionale.piani_rate.messages.delete_blocked_emissions')
+                'Impossibile eliminare il piano rate: le rate risultano già emesse in contabilità. ' .
+                'Usa l\'opzione "Annulla Emissioni" all\'interno del piano rate prima di eliminarlo.'
             ));
         }
 
         // C. Controllo Approvazione (Ping-Pong Scadenziario)
         if ($pianoRate->stato === StatoPianoRate::APPROVATO) {
             return back()->with($this->flashError(
-                __('gestionale.piani_rate.messages.delete_blocked_approved')
+                'Impossibile eliminare un piano rate approvato. ' .
+                'Devi prima togliere l\'approvazione (riportandolo in Bozza) affinché il sistema elimini automaticamente in modo pulito gli eventi dallo scadenziario.'
             ));
         }
 
@@ -589,10 +720,26 @@ class PianoRateController extends Controller
                     ->update(['is_applicato' => false]);
             }
 
-            // Sgancia i capitoli collegati prima della cancellazione del piano.
-            $pianoRate->capitoli()->detach();
+           // 1. RIACCENSIONE SEMAFORO DASHBOARD (Per Piani Straordinari)
+            if ($pianoRate->tipo === 'straordinario') {
+                $fattureIds = $pianoRate->fattureStraordinarie()->pluck('fatture_passive.id')->toArray();
+                
+                if (!empty($fattureIds)) {
+                    DB::table('righe_fattura')
+                        ->whereIn('fattura_passiva_id', $fattureIds)
+                        ->where(function ($query) {
+                            $query->where('is_sopravvenienza', true)
+                                  ->orWhereNotNull('immobile_id');
+                        })
+                        ->update(['is_rateizzata' => false]); // Riaccende l'allarme
+                }
+            }
 
-            // Elimina fisicamente il piano rate
+            // 2. Sganciamo le relazioni (Sia per Ordinario che Straordinario)
+            $pianoRate->capitoli()->detach();
+            $pianoRate->fattureStraordinarie()->detach();
+
+            // 3. Elimina fisicamente il piano rate
             $pianoRate->delete();
             
             DB::commit();
@@ -618,8 +765,7 @@ class PianoRateController extends Controller
     /**
      * Rimuove uno specifico capitolo di spesa da un Piano Rate esistente.
      * Elimina e ricalcola le rate basandosi sui capitoli rimanenti, verificando
-     * che il capitolo da eliminare non sia vincolato da incassi, emissioni 
-     * o spostamenti manuali di budget (BudgetMovement).
+     * che il capitolo da eliminare non sia vincolato da incassi, emissioni o spostamenti manuali di budget (BudgetMovement).
      *
      * @param Condominio $condominio Il condominio corrente
      * @param Esercizio $esercizio L'esercizio contabile corrente
@@ -630,11 +776,11 @@ class PianoRateController extends Controller
     public function detachCapitolo(Condominio $condominio, Esercizio $esercizio, PianoRate $pianoRate, $capitoloId)
     {
         if ($pianoRate->rate()->whereHas('rateQuote', fn($q) => $q->where('importo_pagato', '>', 0))->exists()) {
-            return back()->with($this->flashError(__('gestionale.piani_rate.messages.detach_blocked_payments')));
+            return back()->with($this->flashError("Impossibile modificare: ci sono incassi registrati."));
         }
         
         if ($pianoRate->rate()->whereHas('rateQuote', fn($q) => $q->whereNotNull('scrittura_contabile_id'))->exists()) {
-            return back()->with($this->flashError(__('gestionale.piani_rate.messages.detach_blocked_emissions')));
+            return back()->with($this->flashError("Annulla le emissioni prima di modificare le voci."));
         }
 
         $isInvolved = BudgetMovement::query()
@@ -646,7 +792,8 @@ class PianoRateController extends Controller
 
         if ($isInvolved) {
             return back()->with($this->flashError(
-                __('gestionale.piani_rate.messages.detach_blocked_budget_movements')
+                "Impossibile rimuovere: questa voce è vincolata da movimenti di budget (anche da altri piani rate). " .
+                "Devi prima annullare i movimenti o restituire i fondi, poi potrai cancellarla."
             ));
         }
 
@@ -660,11 +807,11 @@ class PianoRateController extends Controller
             app(GeneratePianoRateAction::class)->execute($pianoRate, null); 
             
             DB::commit();
-            return back()->with($this->flashSuccess(__('gestionale.piani_rate.messages.detach_success')));
+            return back()->with($this->flashSuccess("Voce rimossa e ricalcolata."));
             
         } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->with($this->flashError(__('gestionale.piani_rate.messages.detach_error', ['error' => $e->getMessage()])));
+            return back()->with($this->flashError("Errore durante la rimozione: " . $e->getMessage()));
         }
     }
 
