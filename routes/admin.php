@@ -17,6 +17,7 @@ use App\Http\Controllers\Fornitori\Anagrafiche\FornitoreAnagraficaController;
 use App\Http\Controllers\Fornitori\Documenti\FornitoreDocumentoController;
 use App\Http\Controllers\Fornitori\FornitoreController;
 use App\Http\Controllers\Fornitori\FornitoreSituazioneDebitoriaController;
+use App\Http\Controllers\Newsletter\NewsletterController;
 use App\Http\Controllers\Notifications\NotificationPreferenceController;
 use App\Http\Controllers\Segnalazioni\SegnalazioneApprovalController;
 use App\Http\Controllers\Segnalazioni\SegnalazioneController;
@@ -29,6 +30,10 @@ Route::prefix('admin')->as('admin.')
 
     Route::get('/dashboard', DashboardController::class)
         ->name('dashboard');
+    
+    // ROTTA NEWSLETTER
+    Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
+        ->name('newsletter.subscribe');
     
     /*
     |--------------------------------------------------------------------------

@@ -1,83 +1,84 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use App\Models\Gestionale\PianoRate;
-use App\Models\Gestionale\Conto; // Assicurati di usare il Model per sfruttare le relazioni se serve, o DB builder
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 return new class extends Migration {
-    
+
     public function up(): void
     {
-        // 1. PULIZIA TOTALE (Siamo in Beta, rifacciamo i calcoli da zero per sicurezza)
-        // Rimuoviamo tutte le associazioni esistenti per ricrearle corrette con i totali giusti.
-        DB::table('piano_rate_capitoli')->truncate();
+        // Critico su Windows / hosting condiviso: questa migration gira dentro
+        // una richiesta HTTP (Artisan::call in SystemUpgradeController).
+        // max_execution_time = 60s di default — insufficiente con molti piani rate.
+        set_time_limit(0);
 
-        // 2. Recuperiamo tutti i piani attivi
-        $pianiGlobali = PianoRate::where('attivo', true)->get();
+        // PULIZIA SELETTIVA: Ricalcoliamo lo storico solo per i piani in bozza o approvati.
+        // I piani emessi o chiusi hanno già generato rate e il loro snapshot non deve
+        // essere alterato retroattivamente, altrimenti perdono la storicizzazione.
+        $pianiDaRicalcolare = DB::table('piani_rate')
+            ->where('attivo', true)
+            ->whereIn('stato', ['bozza', 'approvato'])
+            ->pluck('id');
 
-        foreach ($pianiGlobali as $piano) {
-            
-            // Troviamo i capitoli RADICE della gestione
-            $capitoliRadice = DB::table('conti')
-                ->join('piani_conti', 'conti.piano_conto_id', '=', 'piani_conti.id')
-                ->where('piani_conti.gestione_id', $piano->gestione_id)
-                ->whereNull('conti.parent_id') // Solo i padri
-                ->select('conti.id', 'conti.importo') 
-                ->get();
+        DB::table('piano_rate_capitoli')
+            ->whereIn('piano_rate_id', $pianiDaRicalcolare)
+            ->delete();
 
-            foreach ($capitoliRadice as $capitolo) {
-                
-                // CALCOLO INTELLIGENTE DELL'IMPORTO
-                $importoReale = $capitolo->importo;
+        // Recuperiamo i piani da ricalcolare via cursor (lazy) invece di ->get()
+        // per evitare di caricare potenzialmente migliaia di record in RAM
+        DB::table('piani_rate')
+            ->whereIn('id', $pianiDaRicalcolare)
+            ->orderBy('id')
+            ->lazyById()
+            ->each(function (object $piano) {
 
-                // Se l'importo del padre è 0, significa che è un contenitore.
-                // Dobbiamo sommare i figli.
-                if ($importoReale == 0) {
-                    // Sommiamo tutti i discendenti (figli e nipoti)
-                    // Usiamo una funzione ricorsiva helper o una query sui figli diretti.
-                    // Per semplicità e performance qui sommiamo i figli diretti (livello 1)
-                    // Se hai 3 livelli, questa logica va adattata ricorsivamente.
-                    
-                    $sommaFigli = DB::table('conti')
-                        ->where('parent_id', $capitolo->id)
-                        ->sum('importo');
-                    
-                    $importoReale = $sommaFigli;
-                    
-                    // (Opzionale) Se anche i figli sono 0, controlliamo i nipoti?
-                    // Se la tua struttura è complessa, l'importoReale si aggiorna solo se > 0
-                }
+                // Capitoli RADICE della gestione per questo piano
+                $capitoliRadice = DB::table('conti')
+                    ->join('piani_conti', 'conti.piano_conto_id', '=', 'piani_conti.id')
+                    ->where('piani_conti.gestione_id', $piano->gestione_id)
+                    ->whereNull('conti.parent_id')
+                    ->select('conti.id', 'conti.importo')
+                    ->get();
 
-                // Inseriamo il collegamento con il TOTALE CALCOLATO
-                if ($importoReale > 0) {
-                     DB::table('piano_rate_capitoli')->insert([
+                foreach ($capitoliRadice as $capitolo) {
+
+                    $importoReale = $capitolo->importo;
+
+                    // Padre vuoto = contenitore: sommiamo i figli diretti
+                    if ($importoReale == 0) {
+                        $importoReale = DB::table('conti')
+                            ->where('parent_id', $capitolo->id)
+                            ->sum('importo');
+                    }
+
+                    DB::table('piano_rate_capitoli')->insert([
                         'piano_rate_id' => $piano->id,
                         'conto_id'      => $capitolo->id,
-                        'importo'       => $importoReale, // Ora salviamo la somma dei figli!
-                        'note'          => 'Migrazione V1.9 (Totale Aggregato)',
-                        'created_at'    => now(),
-                        'updated_at'    => now(),
-                    ]);
-                } else {
-                    // Caso raro: Capitolo vuoto e figli vuoti. 
-                    // Lo inseriamo comunque come blocco "Tutto", ma con importo 0 è ininfluente.
-                    // Oppure lo inseriamo con NULL per indicare "Qualsiasi cosa ci sia dentro".
-                     DB::table('piano_rate_capitoli')->insert([
-                        'piano_rate_id' => $piano->id,
-                        'conto_id'      => $capitolo->id,
-                        'importo'       => 0, 
-                        'note'          => 'Capitolo vuoto',
+                        'importo'       => $importoReale > 0 ? $importoReale : 0,
+                        'note'          => $importoReale > 0
+                                            ? 'Migrazione V1.9 (Totale Aggregato)'
+                                            : 'Capitolo vuoto',
                         'created_at'    => now(),
                         'updated_at'    => now(),
                     ]);
                 }
-            }
-        }
+
+                Log::info("Pivot piano_rate_capitoli popolata per piano ID: {$piano->id}");
+            });
     }
 
     public function down(): void
     {
-        DB::table('piano_rate_capitoli')->truncate();
+        // Rollback simmetrico all'up(): rimuoviamo solo i capitoli dei piani
+        // che avremmo ripopolato, preservando lo snapshot dei piani emessi/chiusi.
+        $pianiDaRimuovere = DB::table('piani_rate')
+            ->where('attivo', true)
+            ->whereIn('stato', ['bozza', 'approvato'])
+            ->pluck('id');
+
+        DB::table('piano_rate_capitoli')
+            ->whereIn('piano_rate_id', $pianiDaRimuovere)
+            ->delete();
     }
 };

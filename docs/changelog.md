@@ -2,6 +2,125 @@
 
 Tutte le modifiche notevoli a questo progetto saranno documentate in questo file.
 
+## [1.9.29] - Piano Rate Engine Fixes & Snapshot Architecture
+
+### Bugfix: Calcolo Totale Piano Rate (Filtro Snapshot)
+
+**Contesto:** Il sistema utilizza un filtro di "fotografia temporale" (snapshot) durante il calcolo del piano rate per evitare che i sottoconti aggiunti successivamente alla sua creazione ne gonfino l'importo.
+**Problema:** Se la struttura del piano dei conti veniva popolata in un momento successivo (es. tramite la migrazione automatica della v1.9), il filtro escludeva completamente interi capitoli di spesa (come "Manutenzione Ordinaria") perché tutti i suoi sottoconti risultavano creati dopo il piano rate. Questo portava a un totale rate inferiore al preventivo (es. 4.610€ anziché 9.600€).
+**Soluzione:** Aggiunto un fallback in `CalcoloQuoteService`: se il filtro snapshot esclude tutti i figli, ma esiste un importo totale già congelato (override) nella tabella pivot `piano_rate_capitoli`, il sistema usa ora tutti i figli correnti per distribuire l'importo corretto, preservando la quadratura senza gonfiare il preventivo.
+
+### Ottimizzazione: Deep Eager Loading Motore di Calcolo
+
+**Problema:** Il `CalcoloQuoteService` caricava le relazioni in modo superficiale. Durante la discesa ricorsiva nei sottoconti, Laravel era costretto a eseguire il lazy loading delle tabelle millesimali per ogni singola voce. Nelle versioni di Laravel con `preventLazyLoading(true)` questo generava un Fatal Error, o in alternativa causava un elevato numero di query (N+1 problem).
+**Soluzione:** Implementato il Deep Eager Loading (`sottoconti.tabelleMillesimali...`) direttamente all'avvio del calcolo, riducendo drasticamente le query e prevenendo crash.
+
+### Hardening: Fallback Divisione Equa (Penny-Perfect)
+
+**Problema:** Se un capitolo padre aveva dei sottoconti, ma il totale del loro budget era 0 (es. struttura creata manualmente o non ancora valorizzata), l'importo congelato del padre veniva ignorato silenziosamente e andava perso.
+**Soluzione:** Aggiunto un comportamento di emergenza in `CalcoloQuoteService`: se il budget totale dei figli è zero, l'importo del padre viene distribuito in parti uguali tra i figli, garantendo sempre che l'intero budget allocato venga ripartito sulle rate.
+
+### Architettura: Snapshot Puro per i Capitoli Orfani
+
+**Problema (Debito Tecnico):** L'azione `SyncOrphanChaptersAction` associava i nuovi capitoli orfani al piano rate inserendoli nella pivot con importo `NULL`. Questo forzava il motore a leggere il valore "live" dal preventivo, rompendo il principio di immutabilità (snapshot) necessario per la corretta chiusura dell'esercizio futuro.
+**Soluzione:** Sostituita la logica con un calcolo "Snapshot Puro". Durante la sincronizzazione, il sistema esegue ora una somma ricorsiva del preventivo effettivo (filtrando i conti tecnici) e salva il valore esatto nella pivot, congelandolo definitivamente per mantenere la coerenza storica anche in caso di future modifiche al preventivo.
+
+## [1.9.28] - Migration Resilience & Collation Fix (Hosting Condivisi)
+
+### Hardening: Pattern Idempotente `cleanupPartialMigration` sulle Migration Critiche
+
+**Contesto:** Su hosting condivisi (es. Netsons, SiteGround, Aruba) con PHP-FPM, oppure su ambiente Windows, il `max_execution_time` del webserver può interrompere una migration `ALTER TABLE` a metà esecuzione. La successiva esecuzione automatica del comando `migrate` (lanciato da `SystemUpgradeController`) trovava colonne parzialmente create e andava in crash con errori `Duplicate column name` o `Can't DROP ... check it exists`. Il pattern `cleanupPartialMigration` rende ogni migration auto-riparante: prima di aggiungere colonne, verifica e rimuove quelle orfane lasciate dall'esecuzione precedente.
+
+**Problema specifico risolto in questa release:** La migration `add_fornitore_and_description_to_saldi_table` applicava `dropForeign` + `dropIndex` in sequenza fissa, assumendo che l'indice composito `idx_saldi_condominio_fornitore` esistesse sempre quando `fornitore_id` era presente. Se il timeout avveniva *dopo* `ADD COLUMN fornitore_id` ma *prima* di `ADD INDEX idx_saldi_condominio_fornitore`, il cleanup esplodeva su `dropIndex` con "Can't drop index ... check it exists". Lo stesso rischio esisteva nel `down()`.
+
+**File Modificati (3 migration):**
+
+* **`2026_03_16_223813_add_fornitore_and_description_to_saldi_table`** — Aggiunta guard `information_schema.STATISTICS` prima di ogni `dropIndex('idx_saldi_condominio_fornitore')`, sia nel `cleanupPartialMigration()` che nel `down()`. L'indice viene droppato solo se la query su `STATISTICS` conferma che esiste effettivamente. Aggiunto import `DB`. Stesso pattern già presente correttamente in `hardening_legale_e_tracciabilita_fatture`.
+
+* **`2026_03_27_160203_add_mastri_costo_e_ripara_voci_orfane`** — Refactoring della data migration da pattern N+1 (`whereHas` con subquery correlata) a `DB::join()` che sfrutta gli indici FK esistenti su `conti.piano_conto_id`. Aggiunto `set_time_limit(0)` in cima all'`up()` per prevenire il timeout su ambienti Windows/hosting condiviso. Loop su `Condominio` convertito da `all()` a `lazy()` (cursor DB) per eliminare il rischio OOM su installazioni con molti condomini.
+
+* **`2026_04_19_072947_hardening_legale_e_tracciabilita_fatture`** — Già conforme al pattern: la guard `information_schema.STATISTICS` era presente per `idx_recupero_crediti` su `rate_quote`. Nessuna modifica necessaria; è la migration di riferimento che ha ispirato il fix della saldi.
+
+**Invarianti garantiti:** Nessuna modifica allo schema finale delle tabelle. Il comportamento su installazioni pulite (primo deploy) è identico. Le guard `information_schema` sono a costo zero su DB già corretti.
+
+---
+
+### Bug Fix Critico: Collation Mismatch MySQL su Hosting Condivisi (Error 1267)
+
+**Problema:** Il dashboard di produzione su Netsons (e hosting analoghi con MySQL 5.7/8.0 su `utf8mb3_general_ci`) crashava con `SQLSTATE[HY000]: General error: 1267 Illegal mix of collations (utf8mb3_general_ci,COERCIBLE) and (utf8mb3_unicode_ci,COERCIBLE) for operation '='`. Il crash avveniva ad ogni caricamento della dashboard (ogni 8 minuti, come da log).
+
+**Causa Radice:** `JSON_UNQUOTE(JSON_EXTRACT(meta, '$.type'))` restituisce una stringa con la **collation della connessione** (`utf8mb3_general_ci` su Netsons), mentre i letterali stringa PHP confrontati (`'emissione_rata'`, `'scadenza_rata_condomino'`, ecc.) ereditavano la collation della colonna `meta` della tabella `eventi` (`utf8mb3_unicode_ci`). Entrambe le sorgenti avevano lo stesso livello di coercizione (`COERCIBLE`), quindi MySQL non poteva risolvere il conflitto autonomamente e lanciava l'errore 1267.
+
+**Soluzione:** Wrapping sistematico di tutti i risultati `JSON_UNQUOTE` con `CONVERT(... USING utf8mb4)`, che forza la reinterpretazione in un charset univoco prima del confronto, eliminando l'ambiguità di coercizione.
+
+**File Modificati (3):**
+
+* **`app/Services/RecurrenceService`** — Refactoring completo delle query JSON su tabella `eventi`. Tutti i confronti `where('meta->type', ...)` / `where('meta->status', ...)` convertiti in `whereRaw("CONVERT(JSON_UNQUOTE(JSON_EXTRACT(...)) USING utf8mb4) = ?", [...])` con binding parametrizzato. Sostituito `where('meta->requires_action', true)` con `whereJsonContains('meta->requires_action', true)` per uniformità. Aggiunto null-check su `$user` in `isAdmin()`. Refactoring `getUserScopedRecurringEvents` e `expandRecurringEvent` per leggibilità. Corretti tutti i punti in `applyFilters()` compreso il filtro `exclude_type`.
+
+* **`app/Services/Gestionale/InboxService`** — Aggiunto `CONVERT(... USING utf8mb4)` ai due confronti `JSON_UNQUOTE(JSON_EXTRACT(meta, '$.type'))` dentro `selectRaw` di `getCounts()`. I confronti con `'verifica_pagamento'` e `'segnalazione_guasto'` erano vulnerabili allo stesso identico errore 1267.
+
+* **`app/Http/Resources/Gestionale/PianiRate/PianoRateResource`** — Refactoring del `whereRaw` nella clausola `has_saldi`: il confronto `!= '0'` e il check `IS NOT NULL` erano concatenati in una singola stringa grezza. Separati in due `whereRaw` distinti dentro un `orWhere(closure)` per leggibilità e manutenibilità. Nota: il confronto con `'0'` subisce un cast numerico implicito da MySQL e non è soggetto a 1267; la modifica è di qualità, non di sicurezza.
+
+**File non modificati (già sicuri):** Tutti i Listener (`SyncScadenziarioWithFattura`, `AggiornaScadenziarioCondomino`, `CompletaEventoScadenziario`, `SyncScadenziarioWithPianoRate`), i Controller (`ActionInboxController`, `DashboardController`, `SituazioneDebitoriaController`, `StornoIncassoController`), il Model `Evento` e `GeneratePianoRateAction` usano `whereJsonContains` o `where('meta->...')` — la sintassi Laravel che passa i valori come binding PDO, immune al problema di collation.
+
+## [1.9.27] - Tabelle Millesimali Multi-Coefficiente & Copertura Straordinaria Granulare
+
+### Funzionalità: Gestione Multi-Tabella con Coefficienti Controllati
+
+**Contesto:** Fino a questa versione era possibile associare più tabelle millesimali a una voce di spesa, ma il coefficiente della tabella creata al momento dell'inserimento restava bloccato al 100% senza possibilità di modifica. Questo rendeva impossibile scenari reali come "50% Tabella Generale + 50% Tabella Scale".
+
+**File Modificati (7):**
+
+* **`AssociaTabellaController`** — Aggiunto blocco hard: prima di creare una nuova associazione, il sistema verifica che `somma_coefficienti_esistenti + nuovo_coefficiente ≤ 100`. In caso di violazione la richiesta viene rigettata con messaggio esplicito che indica il residuo disponibile.
+
+* **`AggiornaTabellaController`** *(nuovo)* — Controller invocabile via `PUT` per modificare `coefficiente` e ripartizioni per soggetto di un'associazione esistente. Applica lo stesso blocco hard escludendo dal calcolo la riga corrente (`WHERE id != $contoTabella->id`) per evitare falsi positivi quando si modifica l'unica tabella al 100%.
+
+* **`routes/gestionale.php`** — Aggiunta route `PUT esercizi/{esercizio}/piani-conti/{pianoConto}/conti/{conto}/aggiorna-tabella/{tabella}` con nome `esercizi.piani-conti.conti.aggiorna-tabella`.
+
+* **`DettaglioConto.vue`** — Ogni riga della tabella "Ripartizione ordinaria" espone ora un bottone ✏️ edit (accanto all'esistente 🗑️ elimina). L'header della card mostra una barra visiva della somma dei coefficienti (arancione se parziale, verde se 100%) e il bottone "Aggiungi" diventa disabilitato con tooltip esplicativo quando la somma raggiunge il 100%, guidando l'utente a modificare prima una tabella esistente. Layout tabella rifattorizzato: nome con `truncate` + tooltip per testi lunghi, badge percentuali compatti (`h-5 px-1.5 text-[11px]`), larghezze colonne fisse.
+
+* **`ModalAssociaTabella.vue`** — Supporto modalità dual-mode (crea / modifica). In edit mode il dropdown tabella è sostituito da un campo bloccato con il nome. In entrambe le modalità il campo coefficiente mostra un badge "max X% disponibile", è pre-compilato con il residuo e il `max` dell'input è vincolato al massimo consentito. Il bottone submit resta disabilitato finché coefficiente e somma percentuali soggetti non sono validi.
+
+* **`Index.vue`** — Unica istanza `ModalAssociaTabella` condivisa per crea e modifica. `onAggiungiTabella` azzera `tabellaDaModificare` (→ crea), `onModificaTabella` la popola (→ edit). Il callback `gestisciTabella` smista su `router.post` o `router.put` in base al flag `_isEdit`. Aggiunto `computed residuoDisponibile` passato come prop alla modale.
+
+---
+
+### Bug Fix: Copertura Piani Straordinari Tracciabile e Collegabile
+
+**Problema:** Nella card "Analisi Copertura" del dettaglio voce, la riga relativa ai piani rate straordinari veniva generata come fallback generico (`$mancanteStraordinario`) senza `piano_rate_id`, rendendo impossibile il collegamento diretto al piano. Il nome mostrato era la concatenazione di tutti i piani straordinari della gestione, indipendentemente da quale coprisse effettivamente quella voce.
+
+**Causa Radice:** `BudgetCoverageService` Step 3 calcola la copertura straordinaria attraverso `piano_rate_fatture → righe_fattura → conto_id`, ma questa copertura non lascia traccia in `piano_rate_capitoli`. Quando `ContoResource` cercava di spiegare `$impegnato` guardando `$this->pianiRate()` (che usa `piano_rate_capitoli`), il gap rimaneva inesplicato e veniva tappato dal fallback.
+
+**File Modificati (3):**
+
+* **`PianoContiController::show()`** — Replica la logica dello Step 3 del `BudgetCoverageService` (stessa query su `righe_fattura`, stessa proporzione `importo_riga / totale_fattura * importo_collegato`) per costruire `$pianiStraordinariMap`: una mappa `conto_id → [{id, nome, stato, importo}]` granulare per piano. Se lo stesso conto è coperto da due piani straordinari distinti, entrambi appaiono come entry separate. La mappa viene passata a `ContoResource::$pianiStraordinariMap`.
+
+* **`ContoResource`** — Aggiunta proprietà statica `$pianiStraordinariMap`. Il blocco `$mancanteStraordinario` ora ha due percorsi: se la mappa contiene dati produce una riga per ogni piano straordinario con `piano_rate_id` reale; se è vuota (dati storici privi di `importo_collegato`) cade nel fallback esistente con `piano_rate_id: null`. Aggiunto `piano_rate_id` a tutti e quattro i punti di costruzione di `$dettaglioPiani` (copertura null, esplicita, indiretta, straordinaria).
+
+* **`DettaglioConto.vue`** — Il nome del piano rate nella tabella di analisi copertura è ora un `<InertiaLink>` cliccabile quando `item.piano_rate_id` è valorizzato, testo semplice altrimenti. Risolve anche un conflitto di nome con l'icona `Link` di lucide-vue-next, ora importata come `InertiaLink`.
+
+**Invarianti garantiti:** Nessuna migration necessaria. Il fallback generico viene mantenuto per compatibilità con dati storici privi di `importo_collegato` sul pivot `piano_rate_fatture`. La suite di test, la logica contabile e il Penny-Perfect Algorithm rimangono invariati.
+
+## [1.9.26] - Piano Rate Snapshot Engine (Bug Fix)
+
+### Bug Fix Critico: Isolamento Temporale dei Piani Rate
+
+**Problema:** L'aggiunta di una nuova voce di spesa come sottoconto di un capitolo già incluso in un piano rate attivo causava l'inclusione automatica e silenziosa della nuova voce nel piano esistente. Il bug si manifestava esclusivamente su voci aggiunte come figlie di un capitolo padre già presente in `piano_rate_capitoli` — le voci standalone non erano affette.
+
+**Causa Radice:** Il sistema non aveva il concetto di "snapshot temporale". I sottoconti venivano sempre letti dinamicamente dalla relazione Eloquent al momento del calcolo, includendo qualsiasi figlio aggiunto dopo la creazione del piano rate.
+
+**File Modificati (4):**
+
+* **`CalcoloQuoteService`** — Nel path con override del padre (pivot `importo` NOT NULL), i sottoconti vengono ora filtrati per `created_at <= piano_rate.created_at` prima di distribuire proporzionalmente il budget. I figli aggiunti dopo sono invisibili al calcolo delle quote.
+
+* **`BudgetCoverageService`** — STEP 1 del `calcolaCoperturaReale()`: il push-down del budget dai padri ai figli applica lo stesso filtro temporale, escludendo i nuovi sottoconti dalla coverage map. Risolve la barra verde "gonfiata" nell'albero dei conti.
+
+* **`PianoRateController::store`** — I nuovi piani rate ora salvano in `piano_rate_capitoli` gli ID delle **foglie** (sottoconti esistenti al momento della creazione) anziché l'ID del padre. Questo rende il problema strutturalmente impossibile per i piani futuri, indipendentemente dal filtro `created_at`.
+
+* **`PianoRateResource`** — La serializzazione del campo `figli_names` e il calcolo di `importo_originale` applicano lo stesso snapshot temporale, eliminando dal frontend i nomi e gli importi dei sottoconti aggiunti dopo.
+
+**Invarianti garantiti:** Nessuna migration necessaria. La logica per i piani straordinari, il calcolo saldi, il Penny-Perfect Algorithm e tutta la suite di test esistente rimangono invariati.
+
 ## [1.9.25] - ERP Accounting Engine & Reverse Ledger (Latest)
 
 ### Architettura ERP (Il Filtro Invertitore)

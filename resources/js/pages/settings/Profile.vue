@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { trans } from 'laravel-vue-i18n';
 import { type BreadcrumbItem, type SharedData, type User } from '@/types';
 import { trans } from 'laravel-vue-i18n';
 

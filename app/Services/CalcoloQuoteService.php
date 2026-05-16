@@ -11,46 +11,39 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Servizio per il calcolo delle quote di spesa/entrata per ogni gestione.
- * * VERSION: 1.9.4 (RIPARTIZIONE MISTA - Straordinario + Override Immobile)
- * * =========================================================================
+ *
+ * VERSION: 1.9.5-hotfix1 (DIAGNOSTIC LOGGING)
+ *
+ * =========================================================================
  * ARCHITETTURA DEL RULE ENGINE (Motore di Ripartizione)
  * =========================================================================
- * Il calcolo segue una gerarchia di precedenza stretta e deterministica:
- * * Livello 1: OVERRIDE STRUTTURALE (immobile_id NOT NULL su riga_fattura).
- * Blocca le tabelle millesimali. Il 100% dell'importo viene 
- * addebitato all'immobile specificato (Gestito da addebitaDiretto).
- * * Livello 2: REGOLA NATURA SPESA (conto_id NOT NULL su riga_fattura).
- * Se l'immobile_id è NULL, il sistema recupera il conto di budget
- * e applica le tabelle millesimali e le ripartizioni (Es. 50% Prop, 50% Inq)
- * configurate a monte (Gestito da distribuisciSuTabelle).
- * * Livello 3: FALLBACK LEGALE (Soggetto Pagatore).
- * Se la regola di Livello 2 impone il pagamento all'inquilino, ma 
- * l'immobile ne è sprovvisto, il debito rimbalza automaticamente 
- * al proprietario (Solidarietà condominiale).
- * * Livello 4: PENNY-PERFECT ALGORITHM.
- * In caso di comproprietà (es. 2 proprietari al 50%), gli arrotondamenti
- * sui centesimi vengono compensati assegnando l'eventuale centesimo
- * rimanente all'ultimo soggetto della lista, garantendo la quadratura
- * algebrica perfetta (DARE = AVERE).
+ * Livello 1: OVERRIDE STRUTTURALE (immobile_id NOT NULL su riga_fattura).
+ * Livello 2: REGOLA NATURA SPESA (conto_id NOT NULL su riga_fattura).
+ * Livello 3: FALLBACK LEGALE (Soggetto Pagatore).
+ * Livello 4: PENNY-PERFECT ALGORITHM.
  */
 class CalcoloQuoteService
 {
     private ?Gestione $gestioneCorrente = null;
     private array $pivotOverrides = [];
+    private ?\Carbon\Carbon $pianoRateCreatedAt = null;
 
-    /**
-     * Motore per Piani Ordinari.
-     * Legge gli importi previsti dal Piano dei Conti (Budget Preventivo)
-     * o le sovrascritture manuali (overrides) impostate in fase di creazione rate.
-     */
+    // =========================================================================
+    // MOTORE ORDINARIO
+    // =========================================================================
+
     public function calcolaPerGestione(Gestione $gestione, ?PianoRate $pianoRate = null): array
     {
         $this->gestioneCorrente = $gestione;
-        $this->pivotOverrides = [];
+        $this->pivotOverrides   = [];
+        $this->pianoRateCreatedAt = $pianoRate?->created_at;
         $totali = [];
         $pianoConto = $gestione->pianoConto;
 
-        if (!$pianoConto) return [];
+        if (!$pianoConto) {
+            Log::error("calcolaPerGestione: gestione ID={$gestione->id} non ha un piano dei conti associato.");
+            return [];
+        }
 
         $capitoliIds = [];
         if ($pianoRate) {
@@ -61,13 +54,24 @@ class CalcoloQuoteService
                     $this->pivotOverrides[$capitolo->id] = (int) $capitolo->pivot->importo;
                 }
             }
+
+            // [DIAG] Log capitoli senza override (importo pivot NULL)
+            $senzaOverride = $pianoRate->capitoli->filter(fn($c) => is_null($c->pivot->importo));
+            if ($senzaOverride->isNotEmpty()) {
+                Log::debug("calcolaPerGestione: capitoli senza override (pivot.importo NULL)", [
+                    'piano_rate_id' => $pianoRate->id,
+                    'capitoli_senza_override' => $senzaOverride->pluck('nome', 'id')->toArray(),
+                ]);
+            }
         }
 
         $query = $pianoConto->conti()
             ->with([
                 'tabelleMillesimali.tabella.quote.immobile.anagrafiche',
                 'tabelleMillesimali.ripartizioni',
-                'sottoconti.sottoconti', 
+                'sottoconti.tabelleMillesimali.tabella.quote.immobile.anagrafiche',
+                'sottoconti.tabelleMillesimali.ripartizioni',
+                'sottoconti.sottoconti',
             ]);
 
         if (!empty($capitoliIds)) {
@@ -78,21 +82,54 @@ class CalcoloQuoteService
 
         $conti = $query->get();
 
-        Log::info("=== INIZIO CALCOLO QUOTE ORDINARIO V1.9.4 ===", [
+        // [DIAG] Log se non vengono trovati conti
+        if ($conti->isEmpty()) {
+            Log::warning("calcolaPerGestione: nessun conto trovato per il piano dei conti ID={$pianoConto->id}", [
+                'piano_rate_id' => $pianoRate?->id,
+                'capitoli_cercati' => $capitoliIds,
+            ]);
+            return [];
+        }
+
+        Log::info("=== INIZIO CALCOLO QUOTE ORDINARIO V1.9.5 ===", [
             'piano_rate_id' => $pianoRate?->id,
-            'overrides' => count($this->pivotOverrides)
+            'overrides'     => count($this->pivotOverrides),
+            'conti_caricati' => $conti->count(),
         ]);
 
         $this->processaConti($conti, $totali);
 
+        // [DIAG] Riepilogo delta: importo pianificato vs importo effettivamente distribuito
+        $totaleOverrides   = array_sum($this->pivotOverrides);
+        $totaleDistribuito = 0;
+        foreach ($totali as $immobili) {
+            foreach ($immobili as $importo) {
+                $totaleDistribuito += $importo;
+            }
+        }
+        $delta = $totaleOverrides - $totaleDistribuito;
+
+        Log::info("Riepilogo Ripartizione", [
+            'piano_rate_id'              => $pianoRate?->id,
+            'importo_override_pianificato' => $totaleOverrides,
+            'importo_effettivamente_distribuito' => $totaleDistribuito,
+            'delta_non_ripartito'        => $delta,
+            'soggetti_trovati'           => count($totali),
+        ]);
+
+        if ($delta !== 0) {
+            Log::warning("calcolaPerGestione: delta non ripartito = {$delta} centesimi. Verificare tabelle millesimali.", [
+                'piano_rate_id' => $pianoRate?->id,
+            ]);
+        }
+
         return $totali;
     }
 
-    /**
-     * FEATURE 2 — RIPARTIZIONE MISTA (Motore per Piani Straordinari).
-     * Legge direttamente le righe fattura collegate al piano, bypassando il budget.
-     * Implementa la regola dell'Override Individuale.
-     */
+    // =========================================================================
+    // MOTORE STRAORDINARIO
+    // =========================================================================
+
     public function calcolaDaFattureStraordinarie(PianoRate $pianoRate): array
     {
         $fattureIds = $pianoRate->fatture->pluck('id')->toArray();
@@ -114,12 +151,9 @@ class CalcoloQuoteService
 
             if ($importoCents === 0) continue;
 
-            // RULE ENGINE: Livello 1 (Override Strutturale Ad Personam)
             if (!is_null($riga->immobile_id)) {
                 $this->addebitaDiretto((int) $riga->immobile_id, $importoCents, $totali);
             } else {
-                
-                // RULE ENGINE: Livello 2 (Regola Natura Spesa / Millesimi)
                 if (is_null($riga->conto_id)) {
                     Log::warning("calcolaDaFattureStraordinarie: riga senza conto_id e senza immobile_id, saltata.", [
                         'riga_id'            => $riga->id,
@@ -138,7 +172,6 @@ class CalcoloQuoteService
                     continue;
                 }
 
-                // Il segno segue il tipo del conto (spesa = positivo)
                 $importoConto = in_array($conto->tipo, ['spesa', 'uscita'])
                     ? $importoCents
                     : -$importoCents;
@@ -157,21 +190,18 @@ class CalcoloQuoteService
         return $totali;
     }
 
-    /**
-     * Applica l'addebito diretto al 100% sull'immobile (Override),
-     * dividendo la quota solo tra gli eventuali comproprietari, applicando
-     * l'algoritmo Penny-Perfect per evitare scompensi centesimali.
-     */
+    // =========================================================================
+    // METODI PRIVATI
+    // =========================================================================
+
     private function addebitaDiretto(int $immobileId, int $importoCents, array &$totali): void
     {
-        // 1. Cerchiamo i proprietari attivi
         $proprietari = DB::table('anagrafica_immobile')
             ->where('immobile_id', $immobileId)
             ->where('attivo', true)
             ->where('tipologia', 'proprietario')
             ->get();
 
-        // 2. Fallback: Qualsiasi occupante attivo se non ci sono proprietari
         if ($proprietari->isEmpty()) {
             $proprietari = DB::table('anagrafica_immobile')
                 ->where('immobile_id', $immobileId)
@@ -179,7 +209,6 @@ class CalcoloQuoteService
                 ->get();
         }
 
-        // Se l'immobile è davvero un fantasma, saltiamo e logghiamo l'errore grave
         if ($proprietari->isEmpty()) {
             Log::warning("addebitaDiretto: nessun occupante attivo per immobile_id={$immobileId}. Importo {$importoCents} centesimi non assegnato.");
             return;
@@ -194,8 +223,6 @@ class CalcoloQuoteService
 
         foreach ($proprietari as $prop) {
             $i++;
-
-            // Penny-perfect algorithm: L'ultimo comproprietario assorbe il residuo esatto
             if ($i === $count) {
                 $quotaDaPagare = $importoCents - $assegnato;
             } else {
@@ -205,73 +232,82 @@ class CalcoloQuoteService
 
             if ($quotaDaPagare === 0) continue;
 
-            // Inizializza l'array se non esiste per evitare warning
-            if (!isset($totali[$prop->anagrafica_id])) {
-                $totali[$prop->anagrafica_id] = [];
-            }
-            if (!isset($totali[$prop->anagrafica_id][$immobileId])) {
-                $totali[$prop->anagrafica_id][$immobileId] = 0;
-            }
+            if (!isset($totali[$prop->anagrafica_id])) $totali[$prop->anagrafica_id] = [];
+            if (!isset($totali[$prop->anagrafica_id][$immobileId])) $totali[$prop->anagrafica_id][$immobileId] = 0;
 
             $totali[$prop->anagrafica_id][$immobileId] += $quotaDaPagare;
         }
     }
 
-    // =========================================================================
-    // METODI PRIVATI CONDIVISI (usati da entrambi i motori per il calcolo standard)
-    // =========================================================================
-
     private function processaConti(Collection $conti, array &$totali): void
     {
         foreach ($conti as $conto) {
-            
+
             $hasOverride = isset($this->pivotOverrides[$conto->id]);
-            
+
             if ($hasOverride) {
                 $importoOverride = $this->pivotOverrides[$conto->id];
 
                 if ($conto->tabelleMillesimali->isNotEmpty()) {
-                    $importoConto = in_array($conto->tipo, ['spesa', 'uscita']) 
-                        ? abs($importoOverride) : -abs($importoOverride);
-                    
+                    $importoConto = in_array($conto->tipo, ['spesa', 'uscita'])
+                        ? abs($importoOverride)
+                        : -abs($importoOverride);
+
                     $this->distribuisciSuTabelle($conto, $importoConto, $totali);
-                    continue; 
+                    continue;
                 }
-                
+
                 elseif ($conto->sottoconti->isNotEmpty()) {
-                    
-                    $totaleOriginaleFigli = (int) $conto->sottoconti->sum('importo');
 
-                    if ($totaleOriginaleFigli != 0) {
-                        $ratio = $importoOverride / $totaleOriginaleFigli;
-                        
-                        $sommaAssegnata = 0;
-                        $counter = 0;
-                        $totaleFigli = $conto->sottoconti->count();
+                    $sottocontiFiltrati = $this->pianoRateCreatedAt
+                        ? $conto->sottoconti->filter(
+                            fn($s) => $s->created_at->lte($this->pianoRateCreatedAt)
+                        )
+                        : $conto->sottoconti;
 
-                        foreach ($conto->sottoconti as $figlio) {
-                            $counter++;
-                            
-                            if ($counter === $totaleFigli) {
-                                $quotaFiglio = $importoOverride - $sommaAssegnata;
-                            } else {
-                                $quotaFiglio = (int) round($figlio->importo * $ratio);
-                                $sommaAssegnata += $quotaFiglio;
-                            }
-
-                            $this->pivotOverrides[$figlio->id] = $quotaFiglio;
-                        }
-                        
-                        $this->processaConti($conto->sottoconti, $totali);
-                        continue;
+                    if ($sottocontiFiltrati->isEmpty() && $importoOverride > 0) {
+                        Log::warning("processaConti: snapshot vuoto per conto ID={$conto->id} ('{$conto->nome}'), fallback su tutti i sottoconti correnti.", [
+                            'importo_override' => $importoOverride,
+                        ]);
+                        $sottocontiFiltrati = $conto->sottoconti;
                     }
+
+                    if ($sottocontiFiltrati->isEmpty()) continue;
+
+                    $totaleOriginaleFigli = (int) $sottocontiFiltrati->sum('importo');
+                    $totaleFigli  = $sottocontiFiltrati->count();
+                    $sommaAssegnata = 0;
+                    $counter = 0;
+
+                    foreach ($sottocontiFiltrati as $figlio) {
+                        $counter++;
+                        if ($counter === $totaleFigli) {
+                            $quotaFiglio = $importoOverride - $sommaAssegnata;
+                        } elseif ($totaleOriginaleFigli > 0) {
+                            $quotaFiglio = (int) round($importoOverride * ($figlio->importo / $totaleOriginaleFigli));
+                        } else {
+                            $quotaFiglio = (int) round($importoOverride / $totaleFigli);
+                        }
+                        $sommaAssegnata += $quotaFiglio;
+                        $this->pivotOverrides[$figlio->id] = $quotaFiglio;
+                    }
+
+                    $this->processaConti($sottocontiFiltrati, $totali);
+                    continue;
                 }
-                
-                continue; 
+
+                // [DIAG] Silent discard intercettato — questo è il bug che causa quote_create:0
+                Log::warning("processaConti: SILENT DISCARD — conto ID={$conto->id} ('{$conto->nome}') ha override ma nessuna tabella millesimale e nessun sottoconto.", [
+                    'importo_override_ignorato_cents' => $importoOverride,
+                    'conto_tipo'  => $conto->tipo,
+                    'conto_nome'  => $conto->nome,
+                ]);
+                continue;
             }
 
+            // Branch senza override: usa importo live del conto
             $importoLordo = (int) $conto->importo;
-            
+
             if ($importoLordo !== 0) {
                 $tipo = $conto->tipo ?? 'spesa';
                 $importoConto = in_array($tipo, ['spesa', 'uscita'])
@@ -287,30 +323,71 @@ class CalcoloQuoteService
         }
     }
 
-    private function distribuisciSuTabelle($conto, $importoConto, array &$totali): void
+    private function distribuisciSuTabelle(Conto $conto, int $importoConto, array &$totali): void
     {
         $weights = [];
 
+        // [DIAG] Nessuna tabella millesimale collegata al conto
+        if ($conto->tabelleMillesimali->isEmpty()) {
+            Log::warning("distribuisciSuTabelle: conto ID={$conto->id} ('{$conto->nome}') non ha tabelle millesimali collegate. Importo {$importoConto} non distribuito.");
+            return;
+        }
+
         foreach ($conto->tabelleMillesimali as $ctm) {
             $tabella = $ctm->tabella ?? null;
-            if (!$tabella) continue;
+
+            if (!$tabella) {
+                Log::warning("distribuisciSuTabelle: conto_tabella_millesimale ID={$ctm->id} non ha una tabella collegata.", [
+                    'conto_id' => $conto->id,
+                ]);
+                continue;
+            }
 
             $coeff = (float) $ctm->coefficiente;
-            if ($coeff <= 0) continue;
+            if ($coeff <= 0) {
+                Log::debug("distribuisciSuTabelle: coefficiente <= 0 per tabella ID={$tabella->id}, conto ID={$conto->id}. Saltata.");
+                continue;
+            }
 
             $weightCoeff = $coeff / 100.0;
             $quote = $tabella->quote;
-            if ($quote->isEmpty()) continue;
+
+            // [DIAG] Tabella senza quote millesimali
+            if ($quote->isEmpty()) {
+                Log::warning("distribuisciSuTabelle: tabella millesimale ID={$tabella->id} ('{$tabella->nome}') non ha quote inserite. Importo non distribuito per conto ID={$conto->id}.", [
+                    'conto_nome'   => $conto->nome,
+                    'tabella_nome' => $tabella->nome,
+                ]);
+                continue;
+            }
 
             $sommaValori = (float) $quote->sum('valore');
-            if ($sommaValori <= 0.0) continue;
+
+            // [DIAG] Somma millesimi = 0
+            if ($sommaValori <= 0.0) {
+                Log::warning("distribuisciSuTabelle: tabella ID={$tabella->id} ('{$tabella->nome}') ha quote ma la somma dei valori è zero. Verificare i millesimi inseriti.", [
+                    'conto_id'    => $conto->id,
+                    'conto_nome'  => $conto->nome,
+                    'num_quote'   => $quote->count(),
+                ]);
+                continue;
+            }
 
             foreach ($quote as $quota) {
                 $immobile = $quota->immobile ?? null;
-                if (!$immobile) continue;
+
+                if (!$immobile) {
+                    Log::debug("distribuisciSuTabelle: quota ID={$quota->id} in tabella ID={$tabella->id} non ha immobile associato. Saltata.");
+                    continue;
+                }
 
                 $valore = (float) $quota->valore;
-                if ($valore <= 0.0) continue;
+
+                // [DIAG] Valore millesimale zero per immobile specifico
+                if ($valore <= 0.0) {
+                    Log::debug("distribuisciSuTabelle: immobile ID={$immobile->id} ha valore millesimale zero nella tabella ID={$tabella->id}. Saltato.");
+                    continue;
+                }
 
                 $weightImmobile = $weightCoeff * ($valore / $sommaValori);
 
@@ -328,14 +405,23 @@ class CalcoloQuoteService
                         ->where('pivot.attivo', true)
                         ->where('pivot.tipologia', $rip->soggetto);
 
-                    // RULE ENGINE: Livello 3 (Fallback Legale al Proprietario)
+                    // Rule Engine Livello 3: Fallback legale al proprietario
                     if ($anagrafiche->isEmpty() && in_array($rip->soggetto, ['inquilino', 'usufruttuario'])) {
+                        Log::debug("distribuisciSuTabelle: nessun {$rip->soggetto} attivo per immobile ID={$immobile->id}, fallback al proprietario.");
                         $anagrafiche = $immobile->anagrafiche
                             ->where('pivot.attivo', true)
                             ->where('pivot.tipologia', 'proprietario');
                     }
 
-                    if ($anagrafiche->isEmpty()) continue;
+                    // [DIAG] Nessuna anagrafica attiva per questo immobile e ruolo
+                    if ($anagrafiche->isEmpty()) {
+                        Log::warning("distribuisciSuTabelle: nessuna anagrafica attiva con ruolo '{$rip->soggetto}' (né fallback proprietario) per immobile ID={$immobile->id}. Quota non assegnata.", [
+                            'conto_id'    => $conto->id,
+                            'tabella_id'  => $tabella->id,
+                            'immobile_id' => $immobile->id,
+                        ]);
+                        continue;
+                    }
 
                     $sommaQuote = (float) $anagrafiche->sum('pivot.quota');
                     if ($sommaQuote <= 0.0) $sommaQuote = 1.0;
@@ -352,7 +438,15 @@ class CalcoloQuoteService
             }
         }
 
-        if (empty($weights)) return;
+        // [DIAG] Pesi finali vuoti: nessuna quota sarà generata per questo conto
+        if (empty($weights)) {
+            Log::warning("distribuisciSuTabelle: nessun peso calcolato per conto ID={$conto->id} ('{$conto->nome}'). Importo {$importoConto} centesimi NON distribuito. Causa probabile: tabelle millesimali vuote o anagrafiche mancanti.", [
+                'conto_id'    => $conto->id,
+                'conto_nome'  => $conto->nome,
+                'importo'     => $importoConto,
+            ]);
+            return;
+        }
 
         $pesoTotale = array_sum($weights);
         if ($pesoTotale <= 0.0) return;
@@ -365,13 +459,9 @@ class CalcoloQuoteService
 
         foreach ($importiDistributi as $key => $importoCentesimi) {
             [$aid, $iid] = array_map('intval', explode('|', $key));
-            
-            if (!isset($totali[$aid])) {
-                $totali[$aid] = [];
-            }
-            if (!isset($totali[$aid][$iid])) {
-                $totali[$aid][$iid] = 0;
-            }
+
+            if (!isset($totali[$aid])) $totali[$aid] = [];
+            if (!isset($totali[$aid][$iid])) $totali[$aid][$iid] = 0;
 
             $totali[$aid][$iid] += $importoCentesimi;
         }
@@ -385,16 +475,16 @@ class CalcoloQuoteService
             return $result;
         }
 
-        $sign = $importoTotale < 0 ? -1 : 1;
-        $totAbs = abs($importoTotale);
-        $bases = [];
+        $sign    = $importoTotale < 0 ? -1 : 1;
+        $totAbs  = abs($importoTotale);
+        $bases      = [];
         $remainders = [];
-        $sumBase = 0;
+        $sumBase    = 0;
 
         foreach ($weights as $key => $w) {
-            $raw = $totAbs * $w;
-            $base = (int) floor($raw);
-            $bases[$key] = $base;
+            $raw   = $totAbs * $w;
+            $base  = (int) floor($raw);
+            $bases[$key]      = $base;
             $remainders[$key] = $raw - $base;
             $sumBase += $base;
         }

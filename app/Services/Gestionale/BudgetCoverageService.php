@@ -108,23 +108,51 @@ class BudgetCoverageService
 
                 if ($contoModel && $contoModel->sottoconti->isNotEmpty()) {
 
+                    // FIX: solo sottoconti che esistevano alla creazione del piano.
+                    // Guard difensiva: se created_at è assente o NULL (es. stdClass
+                    // nei test unitari) includiamo tutti i sottoconti correnti.
+                    $pianoCreatedAt = $piano->created_at ?? null;
+                    $sottocontiValidi = ($pianoCreatedAt instanceof \Carbon\Carbon)
+                        ? $contoModel->sottoconti->filter(
+                            fn($s) => $s->created_at?->lte($pianoCreatedAt) ?? true
+                          )
+                        : $contoModel->sottoconti;
+
+                    if ($sottocontiValidi->isEmpty()) {
+                        // FALLBACK identico a CalcoloQuoteService (commit 3dc7981):
+                        // se il filtro snapshot svuota la lista ma la pivot ha un
+                        // importo congelato > 0, usiamo tutti i figli correnti.
+                        // Il valore pivot è già uno snapshot — non si gonfia.
+                        // Caso reale: piano creato alle 13:28, sottoconti aggiunti
+                        // alle 13:37-43, migration popola la pivot giorni dopo.
+                        $pivotImporto = (int) ($capitolo->pivot->importo ?? 0);
+                        if ($pivotImporto > 0) {
+                            $sottocontiValidi = $contoModel->sottoconti;
+                        } else {
+                            continue;
+                        }
+                    }
+
                     $residuoPiano = is_null($capitolo->pivot->importo)
-                        ? (int) $capitolo->importo
+                        ? (function () use ($capitolo, $contoModel): int {
+                            $padreBudget = (int) $capitolo->importo;
+                            // Mastro padre (importo=0): NULL significa "copri tutto il fabbisogno dei figli"
+                            if ($padreBudget === 0) {
+                                $padreBudget = (int) $contoModel->sottoconti->sum('importo');
+                            }
+                            return $padreBudget;
+                          })()
                         : (int) $capitolo->pivot->importo;
 
                     $map[$contoModel->id] = ($map[$contoModel->id] ?? 0) + $residuoPiano;
 
                     $figliDaSoddisfare = [];
-                    foreach ($contoModel->sottoconti as $figlio) {
+                    foreach ($sottocontiValidi as $figlio) {
                         $budgetTeorico  = (int) $figlio->importo;
                         $copertoAttuale = $map[$figlio->id] ?? 0;
                         $deficit        = $budgetTeorico - $copertoAttuale;
-
                         if ($deficit > 0) {
-                            $figliDaSoddisfare[] = [
-                                'id'      => $figlio->id,
-                                'deficit' => $deficit,
-                            ];
+                            $figliDaSoddisfare[] = ['id' => $figlio->id, 'deficit' => $deficit];
                         }
                     }
 
@@ -141,7 +169,7 @@ class BudgetCoverageService
                                     $map[$f['id']] = ($map[$f['id']] ?? 0) + 1;
                                     $residuoPiano -= 1;
                                 }
-                                break; 
+                                break;
                             }
 
                             $nuoviFigli = [];
@@ -150,7 +178,6 @@ class BudgetCoverageService
                                 $map[$f['id']] = ($map[$f['id']] ?? 0) + $daAssegnare;
                                 $residuoPiano -= $daAssegnare;
                                 $f['deficit'] -= $daAssegnare;
-
                                 if ($f['deficit'] > 0) {
                                     $nuoviFigli[] = $f;
                                 }
@@ -181,10 +208,10 @@ class BudgetCoverageService
         // FIX: Le righe con conto_id = NULL (spese private ad personam) vengono escluse
         // sia dal totale della fattura che dalla distribuzione della copertura.
         $straordinari = $pianiRate->filter(fn($p) => $p->tipo === 'straordinario');
-        
+
         if ($straordinari->isNotEmpty()) {
             $fattureIds = $straordinari->flatMap->fattureStraordinarie->pluck('id')->unique()->toArray();
-            
+
             if (!empty($fattureIds)) {
                 $righe = DB::table('righe_fattura')
                     ->whereIn('fattura_passiva_id', $fattureIds)
@@ -199,19 +226,22 @@ class BudgetCoverageService
                         $righeFattura = $righe->get($fattura->id, collect());
                         if ($righeFattura->isEmpty()) continue;
 
-                        // FIX: Escludiamo le righe private (conto_id NULL) dal totale
-                        // per evitare che la copertura venga distribuita su un denominatore
-                        // gonfiato, generando un deficit silenzioso sulle righe comuni.
                         $righeComuniFattura = $righeFattura->filter(fn($r) => !is_null($r->conto_id));
-                        $totaleFattura      = $righeComuniFattura->sum(fn($r) => $r->importo_imponibile + $r->importo_iva);
+                        $totaleComune       = $righeComuniFattura->sum(fn($r) => $r->importo_imponibile + $r->importo_iva);
+
+                        // FIX: scala importo_collegato alla sola quota comune
+                        // $righeFattura include anche le private → è il totale lordo reale
+                        $totaleLordo = $righeFattura->sum(fn($r) => $r->importo_imponibile + $r->importo_iva);
+                        $importoFinanziatoScalato = $totaleLordo > 0
+                            ? (int) round(($totaleComune / $totaleLordo) * $importoFinanziato)
+                            : $importoFinanziato;
 
                         foreach ($righeFattura as $riga) {
-                            // FIX: Salta esplicitamente le righe private
                             if (is_null($riga->conto_id)) continue;
 
                             $importoRiga = $riga->importo_imponibile + $riga->importo_iva;
-                            if ($totaleFattura > 0) {
-                                $quota = (int) round(($importoRiga / $totaleFattura) * $importoFinanziato);
+                            if ($totaleComune > 0) {
+                                $quota = (int) round(($importoRiga / $totaleComune) * $importoFinanziatoScalato);
                                 if (isset($contiById[$riga->conto_id])) {
                                     $map[$riga->conto_id] = ($map[$riga->conto_id] ?? 0) + $quota;
                                 }

@@ -75,13 +75,11 @@ return [
             'json',
         ],
         'permissions' => [
-            'storage/' => 'writable',
-            'bootstrap/cache/'      => 'writable',
             'storage/'              => 'writable',
+            'bootstrap/cache/'      => 'writable',
             'storage/app/'          => 'writable',
             'storage/framework/'    => 'writable',
             'storage/logs/'         => 'writable',
-            'bootstrap/cache/'      => 'writable',
             '.env'                  => 'writable',
         ],
         'environment' => [
@@ -91,7 +89,17 @@ return [
             'mail'          => true,
         ],
         'link_storage'      => true,  // True to link storage
-        'seed_database'     => true, // Enable DB seeding after migrations
+        /*
+        | Database Seeding Logic
+        | Set 'enabled' to true to run seeders after migrations.
+        | If 'classes' is empty, the default DatabaseSeeder will be executed.
+        */
+        'seeding' => [
+            'enabled' => true,
+            'classes' => [
+                // \Database\Seeders\RoleAndPermissionSeeder::class,
+            ],
+        ],
     ],
 
     /*
